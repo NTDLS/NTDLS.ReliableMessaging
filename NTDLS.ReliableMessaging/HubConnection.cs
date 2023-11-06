@@ -1,4 +1,5 @@
-﻿using NTDLS.StreamFraming.Payloads;
+﻿using NTDLS.StreamFraming;
+using NTDLS.StreamFraming.Payloads;
 using System.Net.Sockets;
 
 namespace NTDLS.ReliableMessaging
@@ -25,10 +26,10 @@ namespace NTDLS.ReliableMessaging
         }
 
         public void SendNotification(IFramePayloadNotification notification)
-            => _stream.SendNotificationFrame(notification);
+            => _stream.WriteNotification(notification);
 
         public Task<T> SendQuery<T>(IFramePayloadQuery query) where T : IFramePayloadQueryReply
-            => _stream.SendQueryFrame<T>(query);
+            => _stream.WriteQuery<T>(query);
 
         public void RunAsync()
         {
@@ -41,7 +42,7 @@ namespace NTDLS.ReliableMessaging
 
             try
             {
-                while (_keepRunning && _stream.ReceiveAndProcessStreamFrames(_frameBuffer,
+                while (_keepRunning && _stream.ReadAndProcessFrames(_frameBuffer,
                     (payload) => _hub.InvokeOnNotificationReceived(Id, payload),
                     (payload) => _hub.InvokeOnQueryReceived(Id, payload)))
                 {
