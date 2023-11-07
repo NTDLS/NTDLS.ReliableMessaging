@@ -5,16 +5,19 @@
     <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
     <Title>NTDLS.ReliableMessaging</Title>
     <Authors>NetworkDLS</Authors>
+    <Nullable>Enable</Nullable>
     <Company>NetworkDLS</Company>
     <Description>Simple TCPIP wrapper that allows for easy one way or two way IPC with notification and query/reply support.</Description>
     <Copyright>Copyright © 2023 NetworkDLS</Copyright>
     <PackageProjectUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</PackageProjectUrl>
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
-    <PackageReleaseNotes>Initial release.</PackageReleaseNotes>
-    <AssemblyVersion>1.0.0</AssemblyVersion>
-    <FileVersion>1.0.0</FileVersion>
-    <VersionPrefix>1.0.0</VersionPrefix>
+    <PackageReleaseNotes>
+      Renames and updated stream framing.
+    </PackageReleaseNotes>
+    <AssemblyVersion>1.0.1</AssemblyVersion>
+    <FileVersion>1.0.1</FileVersion>
+    <VersionPrefix>1.0.1</VersionPrefix>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageTags>txpip;ipc;stream;messaging;message-framing;</PackageTags>
     <IncludeSymbols>False</IncludeSymbols>
@@ -44,7 +47,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NTDLS.StreamFraming" Version="1.0.2" />
+    <PackageReference Include="NTDLS.StreamFraming" Version="1.0.4" />
   </ItemGroup>
 
 </Project>

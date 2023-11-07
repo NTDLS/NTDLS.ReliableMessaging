@@ -4,18 +4,18 @@ using System.Net.Sockets;
 
 namespace NTDLS.ReliableMessaging
 {
-    internal class HubConnection
+    internal class PeerConnection
     {
         private readonly FrameBuffer _frameBuffer = new(4096);
         private readonly TcpClient _tcpclient; //The TCP/IP connection associated with this connection.
         private readonly Thread _dataPumpThread; //The thread that receives data for this connection.
         private readonly NetworkStream _stream; //The stream for the TCP/IP connection (used for reading and writing).
-        private readonly IHub _hub;
+        private readonly IMessageHub _hub;
         private bool _keepRunning;
 
         public Guid Id { get; private set; }
 
-        public HubConnection(IHub hub, TcpClient tcpClient)
+        public PeerConnection(IMessageHub hub, TcpClient tcpClient)
         {
             Id = Guid.NewGuid();
             _hub = hub;
@@ -25,10 +25,10 @@ namespace NTDLS.ReliableMessaging
             _stream = tcpClient.GetStream();
         }
 
-        public void SendNotification(IFramePayloadNotification notification)
+        public void SendNotification(IFrameNotification notification)
             => _stream.WriteNotification(notification);
 
-        public Task<T> SendQuery<T>(IFramePayloadQuery query) where T : IFramePayloadQueryReply
+        public Task<T> SendQuery<T>(IFrameQuery query) where T : IFrameQueryReply
             => _stream.WriteQuery<T>(query);
 
         public void RunAsync()

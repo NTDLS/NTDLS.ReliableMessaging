@@ -4,19 +4,19 @@ using System.Net.Sockets;
 
 namespace NTDLS.ReliableMessaging
 {
-    public class HubClient : IHub
+    public class MessageClient : IMessageHub
     {
         public event NotificationReceivedEvent? OnNotificationReceived;
         public event QueryReceivedEvent? OnQueryReceived;
         public event DisconnectedEvent? OnDisconnected;
 
         public delegate void DisconnectedEvent(Guid connectionId);
-        public delegate void NotificationReceivedEvent(Guid connectionId, IFramePayloadNotification payload);
-        public delegate IFramePayloadQueryReply QueryReceivedEvent(Guid connectionId, IFramePayloadQuery payload);
+        public delegate void NotificationReceivedEvent(Guid connectionId, IFrameNotification payload);
+        public delegate IFrameQueryReply QueryReceivedEvent(Guid connectionId, IFrameQuery payload);
 
         private readonly TcpClient _client = new();
-        private HubConnection? _activeConnection;
-        public bool _keepRunning;
+        private PeerConnection? _activeConnection;
+        private bool _keepRunning;
 
         public void Connect(string hostName, int port)
         {
@@ -27,7 +27,7 @@ namespace NTDLS.ReliableMessaging
             _keepRunning = true;
 
             _client.Connect(hostName, port);
-            _activeConnection = new HubConnection(this, _client);
+            _activeConnection = new PeerConnection(this, _client);
             _activeConnection.RunAsync();
         }
 
@@ -40,7 +40,7 @@ namespace NTDLS.ReliableMessaging
             _keepRunning = true;
 
             _client.Connect(ipAddress, port);
-            _activeConnection = new HubConnection(this, _client);
+            _activeConnection = new PeerConnection(this, _client);
             _activeConnection.RunAsync();
         }
 
@@ -50,13 +50,13 @@ namespace NTDLS.ReliableMessaging
             _activeConnection?.Disconnect(true);
         }
 
-        public void SendNotification(IFramePayloadNotification notification)
+        public void SendNotification(IFrameNotification notification)
         {
             Utility.EnsureNotNull(_activeConnection);
             _activeConnection.SendNotification(notification);
         }
 
-        public async Task<T?> SendQuery<T>(IFramePayloadQuery query) where T: IFramePayloadQueryReply
+        public async Task<T?> SendQuery<T>(IFrameQuery query) where T : IFrameQueryReply
         {
             Utility.EnsureNotNull(_activeConnection);
             return await _activeConnection.SendQuery<T>(query);
@@ -68,7 +68,7 @@ namespace NTDLS.ReliableMessaging
             OnDisconnected?.Invoke(connectionId);
         }
 
-        public void InvokeOnNotificationReceived(Guid connectionId, IFramePayloadNotification payload)
+        public void InvokeOnNotificationReceived(Guid connectionId, IFrameNotification payload)
         {
             if (OnNotificationReceived == null)
             {
@@ -77,7 +77,7 @@ namespace NTDLS.ReliableMessaging
             OnNotificationReceived.Invoke(connectionId, payload);
         }
 
-        public IFramePayloadQueryReply InvokeOnQueryReceived(Guid connectionId, IFramePayloadQuery payload)
+        public IFrameQueryReply InvokeOnQueryReceived(Guid connectionId, IFrameQuery payload)
         {
             if (OnQueryReceived == null)
             {
