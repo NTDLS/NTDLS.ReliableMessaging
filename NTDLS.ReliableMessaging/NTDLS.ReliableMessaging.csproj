@@ -13,11 +13,11 @@
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageReleaseNotes>
-      Added new events and fixed (infinite) server shutdown delay.
+      Resolved race condition on stopping server with connected clients.
     </PackageReleaseNotes>
-    <AssemblyVersion>1.1.0</AssemblyVersion>
-    <FileVersion>1.1.0</FileVersion>
-    <VersionPrefix>1.1.0</VersionPrefix>
+    <AssemblyVersion>1.2.0</AssemblyVersion>
+    <FileVersion>1.2.0</FileVersion>
+    <VersionPrefix>1.2.0</VersionPrefix>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageTags>txpip;ipc;stream;messaging;message-framing;</PackageTags>
     <IncludeSymbols>False</IncludeSymbols>

@@ -9,7 +9,7 @@ namespace NTDLS.ReliableMessaging
     /// </summary>
     public class MessageClient : IMessageHub
     {
-        private readonly TcpClient _client = new();
+        private readonly TcpClient _tcpClient = new();
         private PeerConnection? _activeConnection;
         private bool _keepRunning;
 
@@ -77,8 +77,8 @@ namespace NTDLS.ReliableMessaging
             }
             _keepRunning = true;
 
-            _client.Connect(hostName, port);
-            _activeConnection = new PeerConnection(this, _client);
+            _tcpClient.Connect(hostName, port);
+            _activeConnection = new PeerConnection(this, _tcpClient);
             _activeConnection.RunAsync();
         }
 
@@ -95,8 +95,8 @@ namespace NTDLS.ReliableMessaging
             }
             _keepRunning = true;
 
-            _client.Connect(ipAddress, port);
-            _activeConnection = new PeerConnection(this, _client);
+            _tcpClient.Connect(ipAddress, port);
+            _activeConnection = new PeerConnection(this, _tcpClient);
             _activeConnection.RunAsync();
         }
 

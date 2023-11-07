@@ -93,7 +93,11 @@ namespace NTDLS.ReliableMessaging
             _keepRunning = false;
             Utility.TryAndIgnore(() => _listener?.Stop());
             _listenerThreadProc?.Join();
-            _activeConnections.Use((o) => o.ForEach(c => c.Disconnect(true)));
+            _activeConnections.Use((o) =>
+            {
+                o.ForEach(c => c.Disconnect(true));
+                o.Clear();
+            });
         }
 
         void ListenerThreadProc()
@@ -174,7 +178,10 @@ namespace NTDLS.ReliableMessaging
 
         void IMessageHub.InvokeOnDisconnected(Guid connectionId)
         {
-            _activeConnections.Use((o) => o.RemoveAll(o => o.Id == connectionId));
+            if (_keepRunning) //Avoid a race condition with the client thread waiting on a lock on _activeConnections that is held by Server.Stop().
+            {
+                _activeConnections.Use((o) => o.RemoveAll(o => o.Id == connectionId));
+            }
             OnDisconnected?.Invoke(this, connectionId);
         }
 

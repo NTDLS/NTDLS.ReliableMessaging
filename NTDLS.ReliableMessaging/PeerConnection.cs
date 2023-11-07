@@ -7,7 +7,7 @@ namespace NTDLS.ReliableMessaging
     internal class PeerConnection
     {
         private readonly FrameBuffer _frameBuffer = new(4096);
-        private readonly TcpClient _tcpclient; //The TCP/IP connection associated with this connection.
+        private readonly TcpClient _tcpClient; //The TCP/IP connection associated with this connection.
         private readonly Thread _dataPumpThread; //The thread that receives data for this connection.
         private readonly NetworkStream _stream; //The stream for the TCP/IP connection (used for reading and writing).
         private readonly IMessageHub _hub;
@@ -19,7 +19,7 @@ namespace NTDLS.ReliableMessaging
         {
             Id = Guid.NewGuid();
             _hub = hub;
-            _tcpclient = tcpClient;
+            _tcpClient = tcpClient;
             _dataPumpThread = new Thread(DataPumpThreadProc);
             _keepRunning = true;
             _stream = tcpClient.GetStream();
@@ -58,13 +58,18 @@ namespace NTDLS.ReliableMessaging
 
         public void Disconnect(bool waitOnThread)
         {
-            _keepRunning = false;
-            try { _stream.Close(); } catch { }
-            try { _tcpclient.Close(); } catch { }
-
-            if (waitOnThread)
+            if (_keepRunning)
             {
-                _dataPumpThread.Join();
+                _keepRunning = false;
+                try { _stream.Close(); } catch { }
+                try { _stream.Dispose(); } catch { }
+                try { _tcpClient.Close(); } catch { }
+                try { _tcpClient.Dispose(); } catch { }
+
+                if (waitOnThread)
+                {
+                    _dataPumpThread.Join();
+                }
             }
         }
     }
