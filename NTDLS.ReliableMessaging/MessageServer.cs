@@ -98,24 +98,35 @@ namespace NTDLS.ReliableMessaging
 
         void ListenerThreadProc()
         {
-            Utility.EnsureNotNull(_listener);
-
-            Thread.CurrentThread.Name = $"ListenerThreadProc:{Thread.CurrentThread.ManagedThreadId}";
-
-            _listener.Start();
-
-            while (_keepRunning)
+            try
             {
-                var tcpClient = _listener.AcceptTcpClient(); //Wait for an inbound connection.
+                Utility.EnsureNotNull(_listener);
 
-                if (tcpClient.Connected)
+                Thread.CurrentThread.Name = $"ListenerThreadProc:{Thread.CurrentThread.ManagedThreadId}";
+
+                _listener.Start();
+
+                while (_keepRunning)
                 {
-                    if (_keepRunning) //Check again, we may have received a connection while shutting down.
+                    var tcpClient = _listener.AcceptTcpClient(); //Wait for an inbound connection.
+
+                    if (tcpClient.Connected)
                     {
-                        var activeConnection = new PeerConnection(this, tcpClient);
-                        _activeConnections.Use((o) => o.Add(activeConnection));
-                        activeConnection.RunAsync();
+                        if (_keepRunning) //Check again, we may have received a connection while shutting down.
+                        {
+                            var activeConnection = new PeerConnection(this, tcpClient);
+                            _activeConnections.Use((o) => o.Add(activeConnection));
+                            activeConnection.RunAsync();
+                        }
                     }
+                }
+            }
+            catch (SocketException ex)
+            {
+                if (ex.SocketErrorCode != SocketError.Interrupted
+                    && ex.SocketErrorCode != SocketError.Shutdown)
+                {
+                    throw;
                 }
             }
         }

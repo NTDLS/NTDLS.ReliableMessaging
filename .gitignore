@@ -4,3 +4,7 @@
 NTDLS.ReliableMessaging/obj/
 
 NTDLS.ReliableMessaging/bin/
+
+TestHarness/obj/
+
+TestHarness/bin/
