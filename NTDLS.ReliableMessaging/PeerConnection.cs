@@ -6,7 +6,7 @@ namespace NTDLS.ReliableMessaging
 {
     internal class PeerConnection
     {
-        private readonly FrameBuffer _frameBuffer = new(4096);
+        private readonly FrameBuffer _frameBuffer = new();
         private readonly TcpClient _tcpClient; //The TCP/IP connection associated with this connection.
         private readonly Thread _dataPumpThread; //The thread that receives data for this connection.
         private readonly NetworkStream _stream; //The stream for the TCP/IP connection (used for reading and writing).
@@ -25,11 +25,11 @@ namespace NTDLS.ReliableMessaging
             _stream = tcpClient.GetStream();
         }
 
-        public void SendNotification(IFrameNotification notification)
-            => _stream.WriteNotification(notification);
+        public void SendNotification(IFramePayloadNotification notification)
+            => _stream.WriteNotificationFrame(notification);
 
-        public Task<T> SendQuery<T>(IFrameQuery query) where T : IFrameQueryReply
-            => _stream.WriteQuery<T>(query);
+        public Task<T> SendQuery<T>(IFramePayloadQuery query) where T : IFramePayloadQueryReply
+            => _stream.WriteQueryFrame<T>(query);
 
         public void RunAsync()
         {
@@ -48,8 +48,13 @@ namespace NTDLS.ReliableMessaging
                 {
                 }
             }
-            catch
+            catch (IOException)
             {
+                //Closing the connection.
+            }
+            catch(Exception ex)
+            {
+                //_hub.InvokeOnLog()
                 //TODO: log this.
             }
 

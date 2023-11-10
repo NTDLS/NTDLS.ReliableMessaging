@@ -6,7 +6,7 @@ namespace TestHarness
     internal class Program
     {
         //Class used to send a notification.
-        internal class MyNotification : IFrameNotification
+        internal class MyNotification : IFramePayloadNotification
         {
             public string Message { get; set; }
 
@@ -17,7 +17,7 @@ namespace TestHarness
         }
 
         //Class used to send a query (which expects a response).
-        internal class MyQuery : IFrameQuery
+        internal class MyQuery : IFramePayloadQuery
         {
             public string Message { get; set; }
 
@@ -28,7 +28,7 @@ namespace TestHarness
         }
 
         //Class used to reply to a query.
-        internal class MyQueryReply : IFrameQueryReply
+        internal class MyQueryReply : IFramePayloadQueryReply
         {
             public string Message { get; set; }
 
@@ -72,7 +72,7 @@ namespace TestHarness
             server.Stop();
         }
 
-        private static void Server_OnNotificationReceived(MessageServer server, Guid connectionId, IFrameNotification payload)
+        private static void Server_OnNotificationReceived(MessageServer server, Guid connectionId, IFramePayloadNotification payload)
         {
             if (payload is MyNotification notification)
             {
@@ -84,7 +84,7 @@ namespace TestHarness
             }
         }
 
-        private static IFrameQueryReply Server_OnQueryReceived(MessageServer server, Guid connectionId, IFrameQuery payload)
+        private static IFramePayloadQueryReply Server_OnQueryReceived(MessageServer server, Guid connectionId, IFramePayloadQuery payload)
         {
             if (payload is MyQuery query)
             {

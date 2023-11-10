@@ -11,7 +11,7 @@ namespace NTDLS.ReliableMessaging
     public class MessageServer : IMessageHub
     {
         private TcpListener? _listener;
-        private readonly CriticalResource<List<PeerConnection>> _activeConnections = new();
+        private readonly PessimisticSemaphore<List<PeerConnection>> _activeConnections = new();
         private Thread? _listenerThreadProc;
         private bool _keepRunning;
 
@@ -49,7 +49,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="server">The instance of the server that is calling the event.</param>
         /// <param name="connectionId">The id of the client which send the notification.</param>
         /// <param name="payload"></param>
-        public delegate void NotificationReceivedEvent(MessageServer server, Guid connectionId, IFrameNotification payload);
+        public delegate void NotificationReceivedEvent(MessageServer server, Guid connectionId, IFramePayloadNotification payload);
 
         /// <summary>
         /// Event fired when a query is received from a client.
@@ -62,7 +62,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="connectionId">The id of the client which send the query.</param>
         /// <param name="payload"></param>
         /// <returns></returns>
-        public delegate IFrameQueryReply QueryReceivedEvent(MessageServer server, Guid connectionId, IFrameQuery payload);
+        public delegate IFramePayloadQueryReply QueryReceivedEvent(MessageServer server, Guid connectionId, IFramePayloadQuery payload);
 
         #endregion
 
@@ -141,7 +141,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="connectionId">The connection id of the client</param>
         /// <param name="notification">The notification message to send.</param>
         /// <exception cref="Exception"></exception>
-        public void Notify(Guid connectionId, IFrameNotification notification)
+        public void Notify(Guid connectionId, IFramePayloadNotification notification)
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.Id == connectionId).FirstOrDefault());
             if (connection == null)
@@ -160,7 +160,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="query">The query message to send.</param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task<T?> Query<T>(Guid connectionId, IFrameQuery query) where T : IFrameQueryReply
+        public async Task<T?> Query<T>(Guid connectionId, IFramePayloadQuery query) where T : IFramePayloadQueryReply
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.Id == connectionId).FirstOrDefault());
             if (connection == null)
@@ -185,7 +185,7 @@ namespace NTDLS.ReliableMessaging
             OnDisconnected?.Invoke(this, connectionId);
         }
 
-        void IMessageHub.InvokeOnNotificationReceived(Guid connectionId, IFrameNotification payload)
+        void IMessageHub.InvokeOnNotificationReceived(Guid connectionId, IFramePayloadNotification payload)
         {
             if (OnNotificationReceived == null)
             {
@@ -194,7 +194,7 @@ namespace NTDLS.ReliableMessaging
             OnNotificationReceived.Invoke(this, connectionId, payload);
         }
 
-        IFrameQueryReply IMessageHub.InvokeOnQueryReceived(Guid connectionId, IFrameQuery payload)
+        IFramePayloadQueryReply IMessageHub.InvokeOnQueryReceived(Guid connectionId, IFramePayloadQuery payload)
         {
             if (OnQueryReceived == null)
             {

@@ -47,7 +47,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="client">The instance of the client that is calling the event.</param>
         /// <param name="connectionId">The id of the client which send the notification.</param>
         /// <param name="payload"></param>
-        public delegate void NotificationReceivedEvent(MessageClient client, Guid connectionId, IFrameNotification payload);
+        public delegate void NotificationReceivedEvent(MessageClient client, Guid connectionId, IFramePayloadNotification payload);
 
         /// <summary>
         /// Event fired when a query is received from a client.
@@ -60,7 +60,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="connectionId">The id of the client which send the query.</param>
         /// <param name="payload"></param>
         /// <returns></returns>
-        public delegate IFrameQueryReply QueryReceivedEvent(MessageClient client, Guid connectionId, IFrameQuery payload);
+        public delegate IFramePayloadQueryReply QueryReceivedEvent(MessageClient client, Guid connectionId, IFramePayloadQuery payload);
 
         #endregion
 
@@ -113,7 +113,7 @@ namespace NTDLS.ReliableMessaging
         /// Dispatches a one way notification to the connected server.
         /// </summary>
         /// <param name="notification">The notification message to send.</param>
-        public void Notify(IFrameNotification notification)
+        public void Notify(IFramePayloadNotification notification)
         {
             Utility.EnsureNotNull(_activeConnection);
             _activeConnection.SendNotification(notification);
@@ -126,7 +126,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="query">The query message to send.</param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task<T?> Query<T>(IFrameQuery query) where T : IFrameQueryReply
+        public async Task<T?> Query<T>(IFramePayloadQuery query) where T : IFramePayloadQueryReply
         {
             Utility.EnsureNotNull(_activeConnection);
             return await _activeConnection.SendQuery<T>(query);
@@ -143,7 +143,7 @@ namespace NTDLS.ReliableMessaging
             OnDisconnected?.Invoke(this, connectionId);
         }
 
-        void IMessageHub.InvokeOnNotificationReceived(Guid connectionId, IFrameNotification payload)
+        void IMessageHub.InvokeOnNotificationReceived(Guid connectionId, IFramePayloadNotification payload)
         {
             if (OnNotificationReceived == null)
             {
@@ -152,7 +152,7 @@ namespace NTDLS.ReliableMessaging
             OnNotificationReceived.Invoke(this, connectionId, payload);
         }
 
-        IFrameQueryReply IMessageHub.InvokeOnQueryReceived(Guid connectionId, IFrameQuery payload)
+        IFramePayloadQueryReply IMessageHub.InvokeOnQueryReceived(Guid connectionId, IFramePayloadQuery payload)
         {
             if (OnQueryReceived == null)
             {
