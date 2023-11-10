@@ -2,18 +2,18 @@
 
 📦 Be sure to check out the NuGet pacakge: https://www.nuget.org/packages/NTDLS.ReliableMessaging
 
-NTDLS.ReliableMessaging provides incredibly lightweight, reliable and high-performance TCP/IP based inter-process-communication functionality. This includes a server which listens for incoming connections and a client which makes a connection to the server.
+NTDLS.ReliableMessaging provides incredibly lightweight, reliable, and high-performance TCP/IP based inter-process-communication functionality. This includes a server which listens for incoming connections and a client which makes a connection to the server.
 
 Once connected the server and the client can send fire-and-forget style notifications or dispatch queries which require a reply.
 
 All messages are guaranteed to be received in their entirety and in the order in which they were dispatched.
 
 
-**Example of server and client sneding notifications and a query:**
+**Example of server and client sending notifications and a query:**
 
 ```csharp
 //Class used to send a notification.
-internal class MyNotification : IFrameNotification
+internal class MyNotification : IFramePayloadNotification
 {
     public string Message { get; set; }
 
@@ -24,7 +24,7 @@ internal class MyNotification : IFrameNotification
 }
 
 //Class used to send a query (which expects a response).
-internal class MyQuery : IFrameQuery
+internal class MyQuery : IFramePayloadQuery
 {
     public string Message { get; set; }
 
@@ -35,7 +35,7 @@ internal class MyQuery : IFrameQuery
 }
 
 //Class used to reply to a query.
-internal class MyQueryReply : IFrameQueryReply
+internal class MyQueryReply : IFramePayloadQueryReply
 {
     public string Message { get; set; }
 
@@ -79,7 +79,7 @@ static void Main()
     server.Stop();
 }
 
-private static void Server_OnNotificationReceived(MessageServer server, Guid connectionId, IFrameNotification payload)
+private static void Server_OnNotificationReceived(MessageServer server, Guid connectionId, IFramePayloadNotification payload)
 {
     if (payload is MyNotification notification)
     {
@@ -91,7 +91,7 @@ private static void Server_OnNotificationReceived(MessageServer server, Guid con
     }
 }
 
-private static IFrameQueryReply Server_OnQueryReceived(MessageServer server, Guid connectionId, IFrameQuery payload)
+private static IFramePayloadQueryReply Server_OnQueryReceived(MessageServer server, Guid connectionId, IFramePayloadQuery payload)
 {
     if (payload is MyQuery query)
     {
