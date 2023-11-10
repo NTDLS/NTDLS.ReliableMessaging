@@ -11,7 +11,7 @@ All messages are guaranteed to be received in their entirety and in the order in
 
 **Example of server and client sneding notifications and a query:**
 
-```
+```csharp
 //Class used to send a notification.
 internal class MyNotification : IFrameNotification
 {
