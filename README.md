@@ -1,5 +1,7 @@
 # NTDLS.ReliableMessaging
 
+📦 Be sure to check out the NuGet pacakge: https://www.nuget.org/packages/NTDLS.ReliableMessaging
+
 NTDLS.ReliableMessaging provides incredibly lightweight, reliable and high-performance TCP/IP based inter-process-communication functionality. This includes a server which listens for incoming connections and a client which makes a connection to the server.
 
 Once connected the server and the client can send fire-and-forget style notifications or dispatch queries which require a reply.
