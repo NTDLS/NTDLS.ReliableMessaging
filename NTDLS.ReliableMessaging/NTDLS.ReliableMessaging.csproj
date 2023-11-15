@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <ImplicitUsings>enable</ImplicitUsings>
-    <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
+    <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
     <Title>NTDLS.ReliableMessaging</Title>
     <Authors>NetworkDLS</Authors>
     <Nullable>Enable</Nullable>
@@ -13,11 +13,11 @@
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageReleaseNotes>
-      Updated StreamFraming framework.
+      net8
     </PackageReleaseNotes>
-    <AssemblyVersion>1.2.1</AssemblyVersion>
-    <FileVersion>1.2.1</FileVersion>
-    <VersionPrefix>1.2.1</VersionPrefix>
+    <AssemblyVersion>1.2.2</AssemblyVersion>
+    <FileVersion>1.2.2</FileVersion>
+    <VersionPrefix>1.2.2</VersionPrefix>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageTags>txpip;ipc;stream;messaging;message-framing;</PackageTags>
     <IncludeSymbols>False</IncludeSymbols>
@@ -47,7 +47,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NTDLS.StreamFraming" Version="1.1.0" />
+    <PackageReference Include="NTDLS.StreamFraming" Version="1.2.0" />
   </ItemGroup>
 
 </Project>
