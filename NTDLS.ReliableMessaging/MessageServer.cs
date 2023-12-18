@@ -18,6 +18,18 @@ namespace NTDLS.ReliableMessaging
         #region Events.
 
         /// <summary>
+        /// Event fired when an excaption occurs.
+        /// </summary>
+        public event ExceptionEvent? OnException;
+        /// <summary>
+        /// Event fired when a client connects to the server.
+        /// </summary>
+        /// <param name="client">The instance of the client that is calling the event.</param>
+        /// <param name="connectionId">The id of the client which was connected.</param>
+        /// <param name="ex">The exception that was thrown.</param>
+        public delegate void ExceptionEvent(MessageServer client, Guid connectionId, Exception ex);
+
+        /// <summary>
         /// Event fired when a client connects to the server.
         /// </summary>
         public event ConnectedEvent? OnConnected;
@@ -174,6 +186,15 @@ namespace NTDLS.ReliableMessaging
         void IMessageHub.InvokeOnConnected(Guid connectionId)
         {
             OnConnected?.Invoke(this, connectionId);
+        }
+
+        void IMessageHub.InvokeOnException(Guid connectionId, Exception ex)
+        {
+            if (OnException == null)
+            {
+                throw ex;
+            }
+            OnException.Invoke(this, connectionId, ex);
         }
 
         void IMessageHub.InvokeOnDisconnected(Guid connectionId)

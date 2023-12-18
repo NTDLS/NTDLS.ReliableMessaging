@@ -1,5 +1,6 @@
 ﻿using NTDLS.StreamFraming;
 using NTDLS.StreamFraming.Payloads;
+using System;
 using System.Net.Sockets;
 
 namespace NTDLS.ReliableMessaging
@@ -54,8 +55,7 @@ namespace NTDLS.ReliableMessaging
             }
             catch(Exception ex)
             {
-                //_hub.InvokeOnLog()
-                //TODO: log this.
+                _hub.InvokeOnException(Id, ex);
             }
 
             _hub.InvokeOnDisconnected(Id);

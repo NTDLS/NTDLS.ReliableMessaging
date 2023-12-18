@@ -13,7 +13,25 @@ namespace NTDLS.ReliableMessaging
         private PeerConnection? _activeConnection;
         private bool _keepRunning;
 
+        /// <summary>
+        /// Returns true if the client is connected.
+        /// </summary>
+        /// <returns></returns>
+        public bool IsConnected => _tcpClient?.Connected ?? false;
+
         #region Events.
+
+        /// <summary>
+        /// Event fired when an excaption occurs.
+        /// </summary>
+        public event ExceptionEvent? OnException;
+        /// <summary>
+        /// Event fired when a client connects to the server.
+        /// </summary>
+        /// <param name="client">The instance of the client that is calling the event.</param>
+        /// <param name="connectionId">The id of the client which was connected.</param>
+        /// <param name="ex">The exception that was thrown.</param>
+        public delegate bool ExceptionEvent(MessageClient client, Guid connectionId, Exception ex);
 
         /// <summary>
         /// Event fired when a client connects to the server.
@@ -135,6 +153,15 @@ namespace NTDLS.ReliableMessaging
         void IMessageHub.InvokeOnConnected(Guid connectionId)
         {
             OnConnected?.Invoke(this, connectionId);
+        }
+
+        void IMessageHub.InvokeOnException(Guid connectionId, Exception ex)
+        {
+            if (OnException == null)
+            {
+                throw ex;
+            }
+            OnException.Invoke(this, connectionId, ex);
         }
 
         void IMessageHub.InvokeOnDisconnected(Guid connectionId)
