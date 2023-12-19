@@ -41,6 +41,8 @@ namespace NTDLS.ReliableMessaging
         {
             Thread.CurrentThread.Name = $"DataPumpThreadProc:{Thread.CurrentThread.ManagedThreadId}";
 
+            _hub.InvokeOnConnected(Id);
+
             try
             {
                 while (_keepRunning && _stream.ReadAndProcessFrames(_frameBuffer,
