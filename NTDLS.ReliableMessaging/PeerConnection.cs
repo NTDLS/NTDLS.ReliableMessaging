@@ -32,10 +32,9 @@ namespace NTDLS.ReliableMessaging
         public Task<T> SendQuery<T>(IFramePayloadQuery query) where T : IFramePayloadQueryReply
             => _stream.WriteQueryFrame<T>(query);
 
-        public void RunAsync()
-        {
-            _dataPumpThread.Start();
-        }
+        public void RunAsync() => _dataPumpThread.Start();
+
+        public TcpClient GetClient() => _tcpClient;
 
         internal void DataPumpThreadProc()
         {
@@ -55,7 +54,7 @@ namespace NTDLS.ReliableMessaging
             {
                 //Closing the connection.
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _hub.InvokeOnException(Id, ex);
             }

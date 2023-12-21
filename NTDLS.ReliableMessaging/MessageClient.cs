@@ -129,6 +129,14 @@ namespace NTDLS.ReliableMessaging
         }
 
         /// <summary>
+        /// Gets the underlying TcpClient.
+        /// </summary>
+        public TcpClient? GetClient()
+        {
+            return _activeConnection?.GetClient();
+        }
+
+        /// <summary>
         /// Dispatches a one way notification to the connected server.
         /// </summary>
         /// <param name="notification">The notification message to send.</param>

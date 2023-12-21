@@ -113,6 +113,43 @@ namespace NTDLS.ReliableMessaging
             });
         }
 
+        /// <summary>
+        /// Gets the underlying TcpClient for the given connection id.
+        /// </summary>
+        /// <param name="connectionId">The connection to get the TcpClient for.</param>
+        public TcpClient? GetClient(Guid connectionId)
+        {
+            return _activeConnections.Use((o) =>
+            {
+                return o.Where(c => c.Id == connectionId).FirstOrDefault()?.GetClient();
+            });
+        }
+
+        /// <summary>
+        /// Disconnects the connection with the given connection id. Does not wait on the thread to exit.
+        /// </summary>
+        /// <param name="connectionId">The connection to disconnect.</param>
+        public void Disconnect(Guid connectionId)
+        {
+            _activeConnections.Use((o) =>
+            {
+                o.Where(c => c.Id == connectionId).FirstOrDefault()?.Disconnect(false);
+            });
+        }
+
+        /// <summary>
+        /// Disconnects the connection with the given connection id.
+        /// </summary>
+        /// <param name="connectionId">The connection to disconnect.</param>
+        /// <param name="waitOnThreadToExit">Whether or not the server should wait on the client thread to exit before returning.</param>
+        public void Disconnect(Guid connectionId, bool waitOnThreadToExit)
+        {
+            _activeConnections.Use((o) =>
+            {
+                o.Where(c => c.Id == connectionId).FirstOrDefault()?.Disconnect(waitOnThreadToExit);
+            });
+        }
+
         void ListenerThreadProc()
         {
             try

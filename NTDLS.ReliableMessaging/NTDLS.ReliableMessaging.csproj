@@ -13,11 +13,11 @@
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageReleaseNotes>
-      Added tcpClient to OnConnected event.
+      Added server Disconnect() and GetClient() to get underlying TcpClient.
     </PackageReleaseNotes>
-    <AssemblyVersion>1.3.0</AssemblyVersion>
-    <FileVersion>1.3.0</FileVersion>
-    <VersionPrefix>1.3.0</VersionPrefix>
+    <AssemblyVersion>1.3.1</AssemblyVersion>
+    <FileVersion>1.3.1</FileVersion>
+    <VersionPrefix>1.3.1</VersionPrefix>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageTags>txpip;ipc;stream;messaging;message-framing;</PackageTags>
     <IncludeSymbols>False</IncludeSymbols>
