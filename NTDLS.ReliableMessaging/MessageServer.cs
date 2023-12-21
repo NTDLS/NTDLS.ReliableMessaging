@@ -38,7 +38,8 @@ namespace NTDLS.ReliableMessaging
         /// </summary>
         /// <param name="server">The instance of the server that is calling the event.</param>
         /// <param name="connectionId">The id of the client which was connected.</param>
-        public delegate void ConnectedEvent(MessageServer server, Guid connectionId);
+        /// <param name="tcpClient">The underlying TCP client for the connection.</param>
+        public delegate void ConnectedEvent(MessageServer server, Guid connectionId, TcpClient tcpClient);
 
         /// <summary>
         /// Event fired when a client is disconnected from the server.
@@ -183,9 +184,9 @@ namespace NTDLS.ReliableMessaging
             return await connection.SendQuery<T>(query);
         }
 
-        void IMessageHub.InvokeOnConnected(Guid connectionId)
+        void IMessageHub.InvokeOnConnected(Guid connectionId, TcpClient tcpClient)
         {
-            OnConnected?.Invoke(this, connectionId);
+            OnConnected?.Invoke(this, connectionId, tcpClient);
         }
 
         void IMessageHub.InvokeOnException(Guid connectionId, Exception ex)

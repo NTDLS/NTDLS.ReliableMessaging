@@ -41,7 +41,7 @@ namespace NTDLS.ReliableMessaging
         {
             Thread.CurrentThread.Name = $"DataPumpThreadProc:{Thread.CurrentThread.ManagedThreadId}";
 
-            _hub.InvokeOnConnected(Id);
+            _hub.InvokeOnConnected(Id, _tcpClient);
 
             try
             {
