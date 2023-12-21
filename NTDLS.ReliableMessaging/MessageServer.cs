@@ -1,6 +1,7 @@
 ﻿using NTDLS.Semaphore;
 using NTDLS.StreamFraming.Payloads;
 using System.Net;
+using System.Net.Http;
 using System.Net.Sockets;
 
 namespace NTDLS.ReliableMessaging
