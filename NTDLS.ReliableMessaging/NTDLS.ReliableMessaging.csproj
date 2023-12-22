@@ -46,4 +46,8 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="NTDLS.StreamFraming" Version="1.2.2" />
+  </ItemGroup>
+
 </Project>
