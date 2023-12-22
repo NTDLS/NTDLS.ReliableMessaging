@@ -1,7 +1,6 @@
 ﻿using NTDLS.Semaphore;
 using NTDLS.StreamFraming.Payloads;
 using System.Net;
-using System.Net.Http;
 using System.Net.Sockets;
 
 namespace NTDLS.ReliableMessaging
@@ -229,11 +228,7 @@ namespace NTDLS.ReliableMessaging
 
         void IMessageHub.InvokeOnException(Guid connectionId, Exception ex)
         {
-            if (OnException == null)
-            {
-                throw ex;
-            }
-            OnException.Invoke(this, connectionId, ex);
+            OnException?.Invoke(this, connectionId, ex);
         }
 
         void IMessageHub.InvokeOnDisconnected(Guid connectionId)

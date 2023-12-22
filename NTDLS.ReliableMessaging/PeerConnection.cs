@@ -1,6 +1,6 @@
 ﻿using NTDLS.StreamFraming;
 using NTDLS.StreamFraming.Payloads;
-using System;
+using NTDLS.StreamFraming.Payloads.Concrete;
 using System.Net.Sockets;
 
 namespace NTDLS.ReliableMessaging
@@ -42,24 +42,53 @@ namespace NTDLS.ReliableMessaging
 
             _hub.InvokeOnConnected(Id, _tcpClient);
 
-            try
+            while (_keepRunning)
             {
-                while (_keepRunning && _stream.ReadAndProcessFrames(_frameBuffer,
-                    (payload) => _hub.InvokeOnNotificationReceived(Id, payload),
-                    (payload) => _hub.InvokeOnQueryReceived(Id, payload)))
+                try
                 {
+                    while (_stream.ReadAndProcessFrames(_frameBuffer,
+                        (payload) => OnNotificationReceived(Id, payload),
+                        (payload) => OnQueryReceived(Id, payload)))
+                    {
+                        //the famous do nothing loop!
+                    }
+                }
+                catch (IOException)
+                {
+                    //Closing the connection.
+                }
+                catch (Exception ex)
+                {
+                    _hub.InvokeOnException(Id, ex);
                 }
             }
-            catch (IOException)
+
+            _hub.InvokeOnDisconnected(Id);
+        }
+
+        private void OnNotificationReceived(Guid connectionId, IFramePayloadNotification payload)
+        {
+            try
             {
-                //Closing the connection.
+                _hub.InvokeOnNotificationReceived(Id, payload);
             }
             catch (Exception ex)
             {
                 _hub.InvokeOnException(Id, ex);
             }
+        }
 
-            _hub.InvokeOnDisconnected(Id);
+        private IFramePayloadQueryReply OnQueryReceived(Guid connectionId, IFramePayloadQuery payload)
+        {
+            try
+            {
+                return _hub.InvokeOnQueryReceived(Id, payload);
+            }
+            catch (Exception ex)
+            {
+                _hub.InvokeOnException(Id, ex);
+                return new FramePayloadQueryReplyException(ex);
+            }
         }
 
         public void Disconnect(bool waitOnThread)
