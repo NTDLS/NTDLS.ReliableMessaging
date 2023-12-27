@@ -240,6 +240,46 @@ namespace NTDLS.ReliableMessaging
             return await connection.SendQueryAsync<T>(query);
         }
 
+        /// <summary>
+        /// Sends a query to the specified client and expects a reply.
+        /// </summary>
+        /// <typeparam name="T">The type of reply that is expected.</typeparam>
+        /// <param name="connectionId">The connection id of the client</param>
+        /// <param name="query">The query message to send.</param>
+        /// <param name="queryTimeout">The number of milliseconds to wait on a reply to the query.</param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public async Task<T?> Query<T>(Guid connectionId, IFramePayloadQuery query, int queryTimeout) where T : IFramePayloadQueryReply
+        {
+            var connection = _activeConnections.Use((o) => o.Where(c => c.Id == connectionId).FirstOrDefault());
+            if (connection == null)
+            {
+                throw new Exception($"The connection with id {connectionId} was not found.");
+            }
+
+            return await connection.SendQuery<T>(query, queryTimeout);
+        }
+
+        /// <summary>
+        /// Sends a query to the specified client and expects a reply.
+        /// </summary>
+        /// <typeparam name="T">The type of reply that is expected.</typeparam>
+        /// <param name="connectionId">The connection id of the client</param>
+        /// <param name="query">The query message to send.</param>
+        /// <param name="queryTimeout">The number of milliseconds to wait on a reply to the query.</param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public async Task<T?> QueryAsync<T>(Guid connectionId, IFramePayloadQuery query, int queryTimeout) where T : IFramePayloadQueryReply
+        {
+            var connection = _activeConnections.Use((o) => o.Where(c => c.Id == connectionId).FirstOrDefault());
+            if (connection == null)
+            {
+                throw new Exception($"The connection with id {connectionId} was not found.");
+            }
+
+            return await connection.SendQueryAsync<T>(query, queryTimeout);
+        }
+
         void IMessageHub.InvokeOnConnected(Guid connectionId, TcpClient tcpClient)
         {
             OnConnected?.Invoke(this, connectionId, tcpClient);

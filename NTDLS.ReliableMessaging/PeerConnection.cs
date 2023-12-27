@@ -35,6 +35,12 @@ namespace NTDLS.ReliableMessaging
         public Task<T> SendQuery<T>(IFramePayloadQuery query) where T : IFramePayloadQueryReply
             => _stream.WriteQueryFrame<T>(query);
 
+        public Task<T> SendQueryAsync<T>(IFramePayloadQuery query, int queryTimeout) where T : IFramePayloadQueryReply
+            => _stream.WriteQueryFrameAsync<T>(query, queryTimeout);
+
+        public Task<T> SendQuery<T>(IFramePayloadQuery query, int queryTimeout) where T : IFramePayloadQueryReply
+            => _stream.WriteQueryFrame<T>(query, queryTimeout);
+
         public void RunAsync() => _dataPumpThread.Start();
 
         public TcpClient GetClient() => _tcpClient;
