@@ -13,11 +13,11 @@
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageReleaseNotes>
-      Added exception handling to peer data pump and query reply.
+      Added QueryAsync().
     </PackageReleaseNotes>
-    <AssemblyVersion>1.3.3</AssemblyVersion>
-    <FileVersion>1.3.3</FileVersion>
-    <VersionPrefix>1.3.3</VersionPrefix>
+    <AssemblyVersion>1.3.4</AssemblyVersion>
+    <FileVersion>1.3.4</FileVersion>
+    <VersionPrefix>1.3.4</VersionPrefix>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageTags>txpip;ipc;stream;messaging;message-framing;</PackageTags>
     <IncludeSymbols>False</IncludeSymbols>
@@ -47,7 +47,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NTDLS.StreamFraming" Version="1.2.2" />
+    <PackageReference Include="NTDLS.StreamFraming" Version="1.2.3" />
   </ItemGroup>
 
 </Project>

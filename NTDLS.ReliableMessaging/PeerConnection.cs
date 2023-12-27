@@ -29,6 +29,9 @@ namespace NTDLS.ReliableMessaging
         public void SendNotification(IFramePayloadNotification notification)
             => _stream.WriteNotificationFrame(notification);
 
+        public Task<T> SendQueryAsync<T>(IFramePayloadQuery query) where T : IFramePayloadQueryReply
+            => _stream.WriteQueryFrameAsync<T>(query);
+
         public Task<T> SendQuery<T>(IFramePayloadQuery query) where T : IFramePayloadQueryReply
             => _stream.WriteQueryFrame<T>(query);
 
