@@ -13,18 +13,18 @@
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageReleaseNotes>
-      Added Query timeout.
+      Added slightly more robust exception handling.
     </PackageReleaseNotes>
-    <AssemblyVersion>1.3.5</AssemblyVersion>
-    <FileVersion>1.3.5</FileVersion>
-    <VersionPrefix>1.3.5</VersionPrefix>
+    <AssemblyVersion>1.3.6</AssemblyVersion>
+    <FileVersion>1.3.6</FileVersion>
+    <VersionPrefix>1.3.6</VersionPrefix>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageTags>txpip;ipc;stream;messaging;message-framing;</PackageTags>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <Version>$(VersionPrefix)</Version>
 
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <IncludeSymbols>False</IncludeSymbols>
+    <IncludeSymbols>True</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
 

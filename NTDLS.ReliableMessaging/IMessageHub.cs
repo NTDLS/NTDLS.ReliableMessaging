@@ -5,7 +5,7 @@ namespace NTDLS.ReliableMessaging
 {
     internal interface IMessageHub
     {
-        internal void InvokeOnException(Guid connectionId, Exception ex);
+        internal void InvokeOnException(Guid connectionId, Exception ex, IFramePayload? payload);
         internal void InvokeOnConnected(Guid connectionId, TcpClient tcpClient);
         internal void InvokeOnDisconnected(Guid connectionId);
         internal void InvokeOnNotificationReceived(Guid connectionId, IFramePayloadNotification payload);

@@ -27,7 +27,8 @@ namespace NTDLS.ReliableMessaging
         /// <param name="client">The instance of the client that is calling the event.</param>
         /// <param name="connectionId">The id of the client which was connected.</param>
         /// <param name="ex">The exception that was thrown.</param>
-        public delegate void ExceptionEvent(MessageServer client, Guid connectionId, Exception ex);
+        /// <param name="payload">The payload which was involved in the exception.</param>
+        public delegate void ExceptionEvent(MessageServer client, Guid connectionId, Exception ex, IFramePayload? payload);
 
         /// <summary>
         /// Event fired when a client connects to the server.
@@ -285,9 +286,9 @@ namespace NTDLS.ReliableMessaging
             OnConnected?.Invoke(this, connectionId, tcpClient);
         }
 
-        void IMessageHub.InvokeOnException(Guid connectionId, Exception ex)
+        void IMessageHub.InvokeOnException(Guid connectionId, Exception ex, IFramePayload? payload)
         {
-            OnException?.Invoke(this, connectionId, ex);
+            OnException?.Invoke(this, connectionId, ex, payload);
         }
 
         void IMessageHub.InvokeOnDisconnected(Guid connectionId)

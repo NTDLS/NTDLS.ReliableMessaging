@@ -68,7 +68,7 @@ namespace NTDLS.ReliableMessaging
                 }
                 catch (Exception ex)
                 {
-                    _hub.InvokeOnException(Id, ex);
+                    _hub.InvokeOnException(Id, ex, null);
                 }
             }
 
@@ -83,7 +83,7 @@ namespace NTDLS.ReliableMessaging
             }
             catch (Exception ex)
             {
-                _hub.InvokeOnException(Id, ex);
+                _hub.InvokeOnException(Id, ex, payload);
             }
         }
 
@@ -95,7 +95,7 @@ namespace NTDLS.ReliableMessaging
             }
             catch (Exception ex)
             {
-                _hub.InvokeOnException(Id, ex);
+                _hub.InvokeOnException(Id, ex, payload);
                 return new FramePayloadQueryReplyException(ex);
             }
         }
