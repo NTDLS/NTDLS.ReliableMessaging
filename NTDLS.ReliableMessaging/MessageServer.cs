@@ -11,7 +11,7 @@ namespace NTDLS.ReliableMessaging
     public class MessageServer : IMessageHub
     {
         private TcpListener? _listener;
-        private readonly PessimisticSemaphore<List<PeerConnection>> _activeConnections = new();
+        private readonly PessimisticCriticalResource<List<PeerConnection>> _activeConnections = new();
         private Thread? _listenerThreadProc;
         private bool _keepRunning;
 
