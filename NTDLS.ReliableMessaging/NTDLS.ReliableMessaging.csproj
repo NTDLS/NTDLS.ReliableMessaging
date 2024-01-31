@@ -13,12 +13,12 @@
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageReleaseNotes>
-      Nuget updates.
+      Resolved issue with infinite loop on non-graceful disconnect.
+      Added non-async methods.
     </PackageReleaseNotes>
-    <Version>1.3.9</Version>
-    <AssemblyVersion>1.3.9</AssemblyVersion>
-    <FileVersion>1.3.9</FileVersion>
-    <VersionPrefix>1.3.9</VersionPrefix>
+    <AssemblyVersion>1.3.10</AssemblyVersion>
+    <FileVersion>1.3.10</FileVersion>
+    <VersionPrefix>1.3.10</VersionPrefix>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageTags>txpip;ipc;stream;messaging;message-framing;</PackageTags>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>

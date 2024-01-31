@@ -154,10 +154,10 @@ namespace NTDLS.ReliableMessaging
         /// <param name="query">The query message to send.</param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task<T?> Query<T>(IFramePayloadQuery query) where T : IFramePayloadQueryReply
+        public Task<T> Query<T>(IFramePayloadQuery query) where T : IFramePayloadQueryReply
         {
             Utility.EnsureNotNull(_activeConnection);
-            return await _activeConnection.SendQuery<T>(query);
+            return _activeConnection.SendQuery<T>(query);
         }
 
         /// <summary>
@@ -167,7 +167,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="query">The query message to send.</param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task<T?> QueryAsync<T>(IFramePayloadQuery query) where T : IFramePayloadQueryReply
+        public async Task<T> QueryAsync<T>(IFramePayloadQuery query) where T : IFramePayloadQueryReply
         {
             Utility.EnsureNotNull(_activeConnection);
             return await _activeConnection.SendQueryAsync<T>(query);
@@ -181,10 +181,10 @@ namespace NTDLS.ReliableMessaging
         /// <param name="queryTimeout">The number of milliseconds to wait on a reply to the query.</param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task<T?> Query<T>(IFramePayloadQuery query, int queryTimeout) where T : IFramePayloadQueryReply
+        public Task<T> Query<T>(IFramePayloadQuery query, int queryTimeout) where T : IFramePayloadQueryReply
         {
             Utility.EnsureNotNull(_activeConnection);
-            return await _activeConnection.SendQuery<T>(query, queryTimeout);
+            return _activeConnection.SendQuery<T>(query, queryTimeout);
         }
 
         /// <summary>
@@ -195,7 +195,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="queryTimeout">The number of milliseconds to wait on a reply to the query.</param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task<T?> QueryAsync<T>(IFramePayloadQuery query, int queryTimeout) where T : IFramePayloadQueryReply
+        public async Task<T> QueryAsync<T>(IFramePayloadQuery query, int queryTimeout) where T : IFramePayloadQueryReply
         {
             Utility.EnsureNotNull(_activeConnection);
             return await _activeConnection.SendQueryAsync<T>(query, queryTimeout);

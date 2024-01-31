@@ -55,7 +55,7 @@ static void Main()
 
     //Start a client and connect to the server.
     var client = new MessageClient();
-    client.Connect("localhost", 45784);
+    client.Connect("127.0.0.1", 45784);
 
     client.Notify(new MyNotification("This is message 001 from the client."));
     client.Notify(new MyNotification("This is message 002 from the client."));
