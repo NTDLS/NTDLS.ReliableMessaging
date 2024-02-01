@@ -32,7 +32,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="connectionId">The id of the client which was connected.</param>
         /// <param name="ex">The exception that was thrown.</param>
         /// <param name="payload">The payload which was involved in the exception.</param>
-        public delegate bool ExceptionEvent(MessageClient client, Guid connectionId, Exception ex, IFramePayload? payload);
+        public delegate void ExceptionEvent(MessageClient client, Guid connectionId, Exception ex, IFramePayload? payload);
 
         /// <summary>
         /// Event fired when a client connects to the server.
