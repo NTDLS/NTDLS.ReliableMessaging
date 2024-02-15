@@ -1,10 +1,58 @@
 
 .vs/
 
-NTDLS.ReliableMessaging/obj/
+NTDLS.SignalMessaging/obj/
 
-NTDLS.ReliableMessaging/bin/
+NTDLS.SignalMessaging/bin/
 
 TestHarness/obj/
 
 TestHarness/bin/
+
+NTDLS.SignalRPC/bin/
+
+NTDLS.SignalRPC/obj/
+
+NTDLS.MedianRPC/bin/
+
+NTDLS.MedianRPC/obj/
+
+Test.Client/bin/
+
+Test.Client/obj/
+
+Test.Library/bin/
+
+Test.Library/obj/
+
+Test.Server/bin/
+
+Test.Server/obj/
+
+NTDLS.TightRPC/bin/
+
+NTDLS.TightRPC/obj/
+
+NTDLS.ReliableMessaging/bin/
+
+NTDLS.ReliableMessaging/obj/
+
+TestHarness/Convention/Test.ClientByConvention/bin/
+
+TestHarness/Convention/Test.ClientByConvention/obj/
+
+TestHarness/Convention/Test.ServerByConvention/bin/
+
+TestHarness/Convention/Test.ServerByConvention/obj/
+
+TestHarness/Eventing/Test.ClientByEventing/bin/
+
+TestHarness/Eventing/Test.ClientByEventing/obj/
+
+TestHarness/Eventing/Test.ServerByEventing/obj/
+
+TestHarness/Eventing/Test.ServerByEventing/bin/
+
+TestHarness/Test.Library/bin/
+
+TestHarness/Test.Library/obj/

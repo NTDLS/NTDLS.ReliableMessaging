@@ -1,34 +1,38 @@
-﻿using NTDLS.Semaphore;
-using NTDLS.StreamFraming.Payloads;
+﻿using NTDLS.ReliableMessaging.Internal;
+using NTDLS.Semaphore;
 using System.Net;
 using System.Net.Sockets;
 
 namespace NTDLS.ReliableMessaging
 {
     /// <summary>
-    /// Listens for connections from MessageClients and processes the incoming notifications/queries.
+    /// Listens for connections from Median RPC Clients and processes the incoming notifications/queries.
     /// </summary>
-    public class MessageServer : IMessageHub
+    public class RmServer : IRmEndpoint
     {
         private TcpListener? _listener;
         private readonly PessimisticCriticalResource<List<PeerConnection>> _activeConnections = new();
         private Thread? _listenerThreadProc;
         private bool _keepRunning;
 
+        /// <summary>
+        /// Cache of class instances and method reflection information for message handlers.
+        /// </summary>
+        public ReflectionCache ReflectionCache { get; private set; } = new();
+
         #region Events.
 
         /// <summary>
-        /// Event fired when an excaption occurs.
+        /// Event fired when an exception occurs.
         /// </summary>
         public event ExceptionEvent? OnException;
         /// <summary>
         /// Event fired when a client connects to the server.
         /// </summary>
-        /// <param name="client">The instance of the client that is calling the event.</param>
-        /// <param name="connectionId">The id of the client which was connected.</param>
+        /// <param name="context">Information about the connection.</param>
         /// <param name="ex">The exception that was thrown.</param>
         /// <param name="payload">The payload which was involved in the exception.</param>
-        public delegate void ExceptionEvent(MessageServer client, Guid connectionId, Exception ex, IFramePayload? payload);
+        public delegate void ExceptionEvent(RmContext context, Exception ex, IRmPayload? payload);
 
         /// <summary>
         /// Event fired when a client connects to the server.
@@ -37,10 +41,8 @@ namespace NTDLS.ReliableMessaging
         /// <summary>
         /// Event fired when a client connects to the server.
         /// </summary>
-        /// <param name="server">The instance of the server that is calling the event.</param>
-        /// <param name="connectionId">The id of the client which was connected.</param>
-        /// <param name="tcpClient">The underlying TCP client for the connection.</param>
-        public delegate void ConnectedEvent(MessageServer server, Guid connectionId, TcpClient tcpClient);
+        /// <param name="context">Information about the connection.</param>
+        public delegate void ConnectedEvent(RmContext context);
 
         /// <summary>
         /// Event fired when a client is disconnected from the server.
@@ -49,9 +51,8 @@ namespace NTDLS.ReliableMessaging
         /// <summary>
         /// Event fired when a client is disconnected from the server.
         /// </summary>
-        /// <param name="server">The instance of the server that is calling the event.</param>
-        /// <param name="connectionId">The id of the client which was disconnected.</param>
-        public delegate void DisconnectedEvent(MessageServer server, Guid connectionId);
+        /// <param name="context">Information about the connection.</param>
+        public delegate void DisconnectedEvent(RmContext context);
 
         /// <summary>
         /// Event fired when a notification is received from a client.
@@ -60,10 +61,9 @@ namespace NTDLS.ReliableMessaging
         /// <summary>
         /// Event fired when a notification is received from a client.
         /// </summary>
-        /// <param name="server">The instance of the server that is calling the event.</param>
-        /// <param name="connectionId">The id of the client which send the notification.</param>
+        /// <param name="context">Information about the connection.</param>
         /// <param name="payload"></param>
-        public delegate void NotificationReceivedEvent(MessageServer server, Guid connectionId, IFramePayloadNotification payload);
+        public delegate void NotificationReceivedEvent(RmContext context, IRmNotification payload);
 
         /// <summary>
         /// Event fired when a query is received from a client.
@@ -72,13 +72,21 @@ namespace NTDLS.ReliableMessaging
         /// <summary>
         /// Event fired when a query is received from a client.
         /// </summary>
-        /// <param name="server">The instance of the server that is calling the event.</param>
-        /// <param name="connectionId">The id of the client which send the query.</param>
+        /// <param name="context">Information about the connection.</param>
         /// <param name="payload"></param>
         /// <returns></returns>
-        public delegate IFramePayloadQueryReply QueryReceivedEvent(MessageServer server, Guid connectionId, IFramePayloadQuery payload);
+        public delegate IRmQueryReply QueryReceivedEvent(RmContext context, IRmPayload payload);
 
         #endregion
+
+        /// <summary>
+        /// Adds a class that contains notification and query handler functions.
+        /// </summary>
+        /// <param name="handlerClass"></param>
+        public void AddHandler(IRmMessageHandler handlerClass)
+        {
+            ReflectionCache.AddInstance(handlerClass);
+        }
 
         /// <summary>
         /// Starts the message server.
@@ -122,7 +130,7 @@ namespace NTDLS.ReliableMessaging
         {
             return _activeConnections.Use((o) =>
             {
-                return o.Where(c => c.Id == connectionId).FirstOrDefault()?.GetClient();
+                return o.Where(c => c.ConnectionId == connectionId).FirstOrDefault()?.GetClient();
             });
         }
 
@@ -134,7 +142,7 @@ namespace NTDLS.ReliableMessaging
         {
             _activeConnections.Use((o) =>
             {
-                o.Where(c => c.Id == connectionId).FirstOrDefault()?.Disconnect(false);
+                o.Where(c => c.ConnectionId == connectionId).FirstOrDefault()?.Disconnect(false);
             });
         }
 
@@ -147,7 +155,7 @@ namespace NTDLS.ReliableMessaging
         {
             _activeConnections.Use((o) =>
             {
-                o.Where(c => c.Id == connectionId).FirstOrDefault()?.Disconnect(waitOnThreadToExit);
+                o.Where(c => c.ConnectionId == connectionId).FirstOrDefault()?.Disconnect(waitOnThreadToExit);
             });
         }
 
@@ -192,9 +200,9 @@ namespace NTDLS.ReliableMessaging
         /// <param name="connectionId">The connection id of the client</param>
         /// <param name="notification">The notification message to send.</param>
         /// <exception cref="Exception"></exception>
-        public void Notify(Guid connectionId, IFramePayloadNotification notification)
+        public void Notify(Guid connectionId, IRmNotification notification)
         {
-            var connection = _activeConnections.Use((o) => o.Where(c => c.Id == connectionId).FirstOrDefault());
+            var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault());
             if (connection == null)
             {
                 throw new Exception($"The connection with id {connectionId} was not found.");
@@ -211,9 +219,9 @@ namespace NTDLS.ReliableMessaging
         /// <param name="query">The query message to send.</param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task<T?> Query<T>(Guid connectionId, IFramePayloadQuery query) where T : IFramePayloadQueryReply
+        public async Task<T?> Query<T>(Guid connectionId, IRmQuery<T> query) where T : IRmQueryReply
         {
-            var connection = _activeConnections.Use((o) => o.Where(c => c.Id == connectionId).FirstOrDefault());
+            var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault());
             if (connection == null)
             {
                 throw new Exception($"The connection with id {connectionId} was not found.");
@@ -230,9 +238,9 @@ namespace NTDLS.ReliableMessaging
         /// <param name="query">The query message to send.</param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task<T?> QueryAsync<T>(Guid connectionId, IFramePayloadQuery query) where T : IFramePayloadQueryReply
+        public async Task<T?> QueryAsync<T>(Guid connectionId, IRmQuery<T> query) where T : IRmQueryReply
         {
-            var connection = _activeConnections.Use((o) => o.Where(c => c.Id == connectionId).FirstOrDefault());
+            var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault());
             if (connection == null)
             {
                 throw new Exception($"The connection with id {connectionId} was not found.");
@@ -250,9 +258,9 @@ namespace NTDLS.ReliableMessaging
         /// <param name="queryTimeout">The number of milliseconds to wait on a reply to the query.</param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task<T?> Query<T>(Guid connectionId, IFramePayloadQuery query, int queryTimeout) where T : IFramePayloadQueryReply
+        public async Task<T?> Query<T>(Guid connectionId, IRmQuery<T> query, int queryTimeout) where T : IRmQueryReply
         {
-            var connection = _activeConnections.Use((o) => o.Where(c => c.Id == connectionId).FirstOrDefault());
+            var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault());
             if (connection == null)
             {
                 throw new Exception($"The connection with id {connectionId} was not found.");
@@ -270,9 +278,9 @@ namespace NTDLS.ReliableMessaging
         /// <param name="queryTimeout">The number of milliseconds to wait on a reply to the query.</param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task<T?> QueryAsync<T>(Guid connectionId, IFramePayloadQuery query, int queryTimeout) where T : IFramePayloadQueryReply
+        public async Task<T?> QueryAsync<T>(Guid connectionId, IRmQuery<T> query, int queryTimeout) where T : IRmQueryReply
         {
-            var connection = _activeConnections.Use((o) => o.Where(c => c.Id == connectionId).FirstOrDefault());
+            var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault());
             if (connection == null)
             {
                 throw new Exception($"The connection with id {connectionId} was not found.");
@@ -281,41 +289,41 @@ namespace NTDLS.ReliableMessaging
             return await connection.SendQueryAsync<T>(query, queryTimeout);
         }
 
-        void IMessageHub.InvokeOnConnected(Guid connectionId, TcpClient tcpClient)
+        void IRmEndpoint.InvokeOnConnected(RmContext context)
         {
-            OnConnected?.Invoke(this, connectionId, tcpClient);
+            OnConnected?.Invoke(context);
         }
 
-        void IMessageHub.InvokeOnException(Guid connectionId, Exception ex, IFramePayload? payload)
+        void IRmEndpoint.InvokeOnException(RmContext context, Exception ex, IRmPayload? payload)
         {
-            OnException?.Invoke(this, connectionId, ex, payload);
+            OnException?.Invoke(context, ex, payload);
         }
 
-        void IMessageHub.InvokeOnDisconnected(Guid connectionId)
+        void IRmEndpoint.InvokeOnDisconnected(RmContext context)
         {
             if (_keepRunning) //Avoid a race condition with the client thread waiting on a lock on _activeConnections that is held by Server.Stop().
             {
-                _activeConnections.Use((o) => o.RemoveAll(o => o.Id == connectionId));
+                _activeConnections.Use((o) => o.RemoveAll(o => o.ConnectionId == context.ConnectionId));
             }
-            OnDisconnected?.Invoke(this, connectionId);
+            OnDisconnected?.Invoke(context);
         }
 
-        void IMessageHub.InvokeOnNotificationReceived(Guid connectionId, IFramePayloadNotification payload)
+        void IRmEndpoint.InvokeOnNotificationReceived(RmContext context, IRmNotification payload)
         {
             if (OnNotificationReceived == null)
             {
                 throw new Exception("The notification hander event was not handled.");
             }
-            OnNotificationReceived.Invoke(this, connectionId, payload);
+            OnNotificationReceived.Invoke(context, payload);
         }
 
-        IFramePayloadQueryReply IMessageHub.InvokeOnQueryReceived(Guid connectionId, IFramePayloadQuery payload)
+        IRmQueryReply IRmEndpoint.InvokeOnQueryReceived(RmContext context, IRmPayload payload)
         {
             if (OnQueryReceived == null)
             {
                 throw new Exception("The query hander event was not handled.");
             }
-            return OnQueryReceived.Invoke(this, connectionId, payload);
+            return OnQueryReceived.Invoke(context, payload);
         }
     }
 }

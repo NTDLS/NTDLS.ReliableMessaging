@@ -7,19 +7,24 @@
     <Authors>NetworkDLS</Authors>
     <Nullable>Enable</Nullable>
     <Company>NetworkDLS</Company>
-    <Description>Simple TCP/IP wrapper that allows for easy one way or two way IPC with notification and query/reply support.</Description>
-    <Copyright>Copyright © 2023 NetworkDLS</Copyright>
+    <Description>Simple, fast and lightweight event or convention-based RPC implementation.</Description>
+    <Copyright>Copyright © 2024 NetworkDLS</Copyright>
     <PackageProjectUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</PackageProjectUrl>
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageReleaseNotes>
-      Removed unused return type from client exception handler.
+      Added additional context to handler functions.
+      Changed handler functions signature.
+      Resolved issue with connection id being send to Connect and Disconnect events.
+      Added additional context connect, disconnect and exception events.
+      Added Disconnection.
+      Added exception handling / throwing.
     </PackageReleaseNotes>
-    <AssemblyVersion>1.3.11</AssemblyVersion>
-    <FileVersion>1.3.11</FileVersion>
-    <VersionPrefix>1.3.11</VersionPrefix>
+    <AssemblyVersion>1.4.0</AssemblyVersion>
+    <FileVersion>1.4.0</FileVersion>
+    <VersionPrefix>1.4.0</VersionPrefix>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <PackageTags>txpip;ipc;stream;messaging;message-framing;</PackageTags>
+    <PackageTags>rpc;tcpip;ipc;stream;messaging;message-framing;</PackageTags>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -49,7 +54,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NTDLS.StreamFraming" Version="1.2.6" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="NTDLS.Semaphore" Version="3.3.0" />
+    <PackageReference Include="protobuf-net" Version="3.2.30" />
   </ItemGroup>
 
 </Project>
