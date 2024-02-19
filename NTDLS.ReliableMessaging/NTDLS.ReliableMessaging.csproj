@@ -13,16 +13,11 @@
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageReleaseNotes>
-      Added additional context to handler functions.
-      Changed handler functions signature.
-      Resolved issue with connection id being send to Connect and Disconnect events.
-      Added additional context connect, disconnect and exception events.
-      Added Disconnection.
-      Added exception handling / throwing.
+      Added payload only delegate variants.
     </PackageReleaseNotes>
-    <AssemblyVersion>1.4.0</AssemblyVersion>
-    <FileVersion>1.4.0</FileVersion>
-    <VersionPrefix>1.4.0</VersionPrefix>
+    <AssemblyVersion>1.4.1</AssemblyVersion>
+    <FileVersion>1.4.1</FileVersion>
+    <VersionPrefix>1.4.1</VersionPrefix>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageTags>rpc;tcpip;ipc;stream;messaging;message-framing;</PackageTags>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>

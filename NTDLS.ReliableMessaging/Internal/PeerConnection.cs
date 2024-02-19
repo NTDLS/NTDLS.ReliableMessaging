@@ -78,7 +78,15 @@ namespace NTDLS.ReliableMessaging.Internal
                 {
                     if (_context.Endpoint.ReflectionCache.GetCachedInstance(cachedMethod, out var cachedInstance))
                     {
-                        cachedMethod.Invoke(cachedInstance, new object[] { _context, payload });
+                        switch (cachedMethod.MethodType)
+                        {
+                            case ReflectionCache.CachedMethodType.PayloadOnly:
+                                cachedMethod.Method.Invoke(cachedInstance, new object[] { payload });
+                                break;
+                            case ReflectionCache.CachedMethodType.PayloadWithContext:
+                                cachedMethod.Method.Invoke(cachedInstance, new object[] { _context, payload });
+                                break;
+                        }
                         return;
                     }
                 }
@@ -100,8 +108,19 @@ namespace NTDLS.ReliableMessaging.Internal
                 {
                     if (_context.Endpoint.ReflectionCache.GetCachedInstance(cachedMethod, out var cachedInstance))
                     {
-                        var result = cachedMethod.Invoke(cachedInstance, new object[] { _context, payload }) as IRmQueryReply;
-                        return result ?? throw new InvalidOperationException();
+                        IRmQueryReply? result = null;
+
+                        switch (cachedMethod.MethodType)
+                        {
+                            case ReflectionCache.CachedMethodType.PayloadOnly:
+                                result = cachedMethod.Method.Invoke(cachedInstance, new object[] { payload }) as IRmQueryReply;
+                                break;
+                            case ReflectionCache.CachedMethodType.PayloadWithContext:
+                                result = cachedMethod.Method.Invoke(cachedInstance, new object[] { _context, payload }) as IRmQueryReply;
+                                break;
+                        }
+
+                        return result ?? throw new Exception("The query must return a valid instance of IRmQueryReply.");
                     }
                 }
 
