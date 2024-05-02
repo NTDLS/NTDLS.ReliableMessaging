@@ -9,7 +9,7 @@ namespace Test.Server
         {
             var server = new RmServer();
 
-            // The class HandlerMethods contains the functions that handle incomming queries and notifications.
+            // The class HandlerMethods contains the functions that handle incoming queries and notifications.
             server.AddHandler(new HandlerMethods());
 
             server.OnException += (RmContext context, Exception ex, IRmPayload? payload) =>

@@ -25,7 +25,7 @@ namespace Test.Client
             //Send a query to the server, specify which type of reply we expect.
             client.Query(new MyQuery("This is the query from the client.")).ContinueWith(x =>
             {
-                //If we recevied a reply, print it to the console.
+                //If we received a reply, print it to the console.
                 if (x.IsCompletedSuccessfully && x.Result != null)
                 {
                     Console.WriteLine($"Client received query reply: '{x.Result.Message}'");

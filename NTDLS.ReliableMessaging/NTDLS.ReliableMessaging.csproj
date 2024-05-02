@@ -13,11 +13,11 @@
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageReleaseNotes>
-      Added payload only delegate variants.
+      Added thread protection to queries awaiting replies.
     </PackageReleaseNotes>
-    <AssemblyVersion>1.4.1</AssemblyVersion>
-    <FileVersion>1.4.1</FileVersion>
-    <VersionPrefix>1.4.1</VersionPrefix>
+    <AssemblyVersion>1.5.0</AssemblyVersion>
+    <FileVersion>1.5.0</FileVersion>
+    <VersionPrefix>1.5.0</VersionPrefix>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageTags>rpc;tcpip;ipc;stream;messaging;message-framing;</PackageTags>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
