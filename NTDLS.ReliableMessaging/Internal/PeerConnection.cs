@@ -62,7 +62,7 @@ namespace NTDLS.ReliableMessaging.Internal
                 }
                 catch (Exception ex)
                 {
-                    _context.Endpoint.InvokeOnException(_context, ex, null);
+                    _context.Endpoint.InvokeOnException(_context, Utility.GetBaseException(ex), null);
                 }
             }
 
@@ -95,7 +95,7 @@ namespace NTDLS.ReliableMessaging.Internal
             }
             catch (Exception ex)
             {
-                _context.Endpoint.InvokeOnException(_context, ex, payload);
+                _context.Endpoint.InvokeOnException(_context, Utility.GetBaseException(ex), payload);
             }
         }
 
@@ -128,8 +128,8 @@ namespace NTDLS.ReliableMessaging.Internal
             }
             catch (Exception ex)
             {
-                _context.Endpoint.InvokeOnException(_context, ex, payload);
-                return new FramePayloadQueryReplyException(ex);
+                _context.Endpoint.InvokeOnException(_context, Utility.GetBaseException(ex), payload);
+                return new FramePayloadQueryReplyException(Utility.GetBaseException(ex));
             }
         }
 

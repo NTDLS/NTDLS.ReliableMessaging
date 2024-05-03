@@ -24,8 +24,17 @@ namespace NTDLS.ReliableMessaging.Internal
                 interfaceType.GetGenericArguments().Any(arg => argumentType.IsAssignableFrom(arg)));
         }
 
+        public static Exception GetBaseException(Exception ex)
+        {
+            if (ex.InnerException != null)
+            {
+                return GetBaseException(ex.InnerException);
+            }
+            return ex;
+        }
+
         /// <summary>
-        /// We didnt need that exception! Did we?... DID WE?!
+        /// We didn't need that exception! Did we?... DID WE?!
         /// </summary>
         public static void TryAndIgnore(TryAndIgnoreProc func)
         {
@@ -33,7 +42,7 @@ namespace NTDLS.ReliableMessaging.Internal
         }
 
         /// <summary>
-        /// We didnt need that exception! Did we?... DID WE?!
+        /// We didn't need that exception! Did we?... DID WE?!
         /// </summary>
         public static T? TryAndIgnore<T>(TryAndIgnoreProc<T> func)
         {
