@@ -96,7 +96,7 @@ namespace NTDLS.ReliableMessaging
         /// Connects to a specified message server by its host name.
         /// </summary>
         /// <param name="hostName">The hostname of the message server.</param>
-        /// <param name="port">The listenr port of the message server.</param>
+        /// <param name="port">The listener port of the message server.</param>
         public void Connect(string hostName, int port)
         {
             if (IsConnected)
@@ -113,7 +113,7 @@ namespace NTDLS.ReliableMessaging
         /// Connects to a specified message server by its IP Address.
         /// </summary>
         /// <param name="ipAddress">The IP address of the message server.</param>
-        /// <param name="port">The listenr port of the message server.</param>
+        /// <param name="port">The listener port of the message server.</param>
         public void Connect(IPAddress ipAddress, int port)
         {
             if (IsConnected)
@@ -226,7 +226,7 @@ namespace NTDLS.ReliableMessaging
         {
             if (OnNotificationReceived == null)
             {
-                throw new Exception("The notification event was not handled and no acceptible handler was able to intercept the notification.");
+                throw new Exception("The notification event was not handled and no acceptable handler was able to intercept the notification.");
             }
             OnNotificationReceived.Invoke(context, payload);
         }
@@ -235,7 +235,7 @@ namespace NTDLS.ReliableMessaging
         {
             if (OnQueryReceived == null)
             {
-                throw new Exception("The query event was not handled and no acceptible handler was able to intercept the query.");
+                throw new Exception("The query event was not handled and no acceptable handler was able to intercept the query.");
             }
             return OnQueryReceived.Invoke(context, payload);
         }
