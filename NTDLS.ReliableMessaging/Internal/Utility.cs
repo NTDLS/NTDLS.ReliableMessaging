@@ -1,8 +1,6 @@
 ﻿using Newtonsoft.Json;
 using ProtoBuf;
-using System.Diagnostics.CodeAnalysis;
 using System.IO.Compression;
-using System.Runtime.CompilerServices;
 
 namespace NTDLS.ReliableMessaging.Internal
 {
@@ -48,45 +46,6 @@ namespace NTDLS.ReliableMessaging.Internal
         {
             try { return func(); } catch { }
             return default;
-        }
-
-        public static void EnsureNotNull<T>([NotNull] T? value, string? message = null, [CallerArgumentExpression(nameof(value))] string strName = "")
-        {
-            if (value == null)
-            {
-                if (message == null)
-                {
-                    throw new Exception($"Value should not be null: '{strName}'.");
-                }
-                else
-                {
-                    throw new Exception(message);
-                }
-            }
-        }
-
-        public static void EnsureNotNullOrEmpty([NotNull] Guid? value, [CallerArgumentExpression(nameof(value))] string strName = "")
-        {
-            if (value == null || value == Guid.Empty)
-            {
-                throw new Exception($"Value should not be null or empty: '{strName}'.");
-            }
-        }
-
-        public static void EnsureNotNullOrEmpty([NotNull] string? value, [CallerArgumentExpression(nameof(value))] string strName = "")
-        {
-            if (string.IsNullOrEmpty(value))
-            {
-                throw new Exception($"Value should not be null or empty: '{strName}'.");
-            }
-        }
-
-        public static void EnsureNotNullOrWhiteSpace([NotNull] string? value, [CallerArgumentExpression(nameof(value))] string strName = "")
-        {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                throw new Exception($"Value should not be null or empty: '{strName}'.");
-            }
         }
 
         public static byte[] SerializeToByteArray(object obj)

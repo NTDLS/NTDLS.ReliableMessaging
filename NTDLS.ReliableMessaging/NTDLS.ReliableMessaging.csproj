@@ -16,9 +16,9 @@
       Resolved issue with reconnecting client.
       Removed nullability from server Query() to match client.
     </PackageReleaseNotes>
-    <AssemblyVersion>1.5.4</AssemblyVersion>
-    <FileVersion>1.5.4</FileVersion>
-    <VersionPrefix>1.5.4</VersionPrefix>
+    <AssemblyVersion>1.5.5</AssemblyVersion>
+    <FileVersion>1.5.5</FileVersion>
+    <VersionPrefix>1.5.5</VersionPrefix>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageTags>rpc;tcpip;ipc;stream;messaging;message-framing;</PackageTags>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>

@@ -163,11 +163,9 @@ namespace NTDLS.ReliableMessaging
         {
             try
             {
-                Utility.EnsureNotNull(_listener);
+                Thread.CurrentThread.Name = $"ListenerThreadProc:{Environment.CurrentManagedThreadId}";
 
-                Thread.CurrentThread.Name = $"ListenerThreadProc:{Thread.CurrentThread.ManagedThreadId}";
-
-                _listener.Start();
+                _listener.EnsureNotNull().Start();
 
                 while (_keepRunning)
                 {
@@ -202,11 +200,8 @@ namespace NTDLS.ReliableMessaging
         /// <exception cref="Exception"></exception>
         public void Notify(Guid connectionId, IRmNotification notification)
         {
-            var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault());
-            if (connection == null)
-            {
-                throw new Exception($"The connection with id {connectionId} was not found.");
-            }
+            var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
+                ?? throw new Exception($"The connection with id {connectionId} was not found.");
 
             connection.SendNotification(notification);
         }
@@ -221,13 +216,10 @@ namespace NTDLS.ReliableMessaging
         /// <exception cref="Exception"></exception>
         public async Task<T> Query<T>(Guid connectionId, IRmQuery<T> query) where T : IRmQueryReply
         {
-            var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault());
-            if (connection == null)
-            {
-                throw new Exception($"The connection with id {connectionId} was not found.");
-            }
+            var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
+                ?? throw new Exception($"The connection with id {connectionId} was not found.");
 
-            return await connection.SendQuery<T>(query);
+            return await connection.SendQuery(query);
         }
 
         /// <summary>
@@ -240,13 +232,10 @@ namespace NTDLS.ReliableMessaging
         /// <exception cref="Exception"></exception>
         public async Task<T> QueryAsync<T>(Guid connectionId, IRmQuery<T> query) where T : IRmQueryReply
         {
-            var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault());
-            if (connection == null)
-            {
-                throw new Exception($"The connection with id {connectionId} was not found.");
-            }
+            var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
+                ?? throw new Exception($"The connection with id {connectionId} was not found.");
 
-            return await connection.SendQueryAsync<T>(query);
+            return await connection.SendQueryAsync(query);
         }
 
         /// <summary>
@@ -260,13 +249,10 @@ namespace NTDLS.ReliableMessaging
         /// <exception cref="Exception"></exception>
         public async Task<T> Query<T>(Guid connectionId, IRmQuery<T> query, int queryTimeout) where T : IRmQueryReply
         {
-            var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault());
-            if (connection == null)
-            {
-                throw new Exception($"The connection with id {connectionId} was not found.");
-            }
+            var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
+                ?? throw new Exception($"The connection with id {connectionId} was not found.");
 
-            return await connection.SendQuery<T>(query, queryTimeout);
+            return await connection.SendQuery(query, queryTimeout);
         }
 
         /// <summary>
@@ -280,13 +266,10 @@ namespace NTDLS.ReliableMessaging
         /// <exception cref="Exception"></exception>
         public async Task<T> QueryAsync<T>(Guid connectionId, IRmQuery<T> query, int queryTimeout) where T : IRmQueryReply
         {
-            var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault());
-            if (connection == null)
-            {
-                throw new Exception($"The connection with id {connectionId} was not found.");
-            }
+            var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
+                ?? throw new Exception($"The connection with id {connectionId} was not found.");
 
-            return await connection.SendQueryAsync<T>(query, queryTimeout);
+            return await connection.SendQueryAsync(query, queryTimeout);
         }
 
         void IRmEndpoint.InvokeOnConnected(RmContext context)

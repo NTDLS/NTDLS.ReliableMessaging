@@ -11,7 +11,6 @@ namespace NTDLS.ReliableMessaging
     {
         private TcpClient? _tcpClient;
         private PeerConnection? _activeConnection;
-        //private bool _keepRunning;
 
         /// <summary>
         /// Cache of class instances and method reflection information for message handlers.
@@ -89,9 +88,7 @@ namespace NTDLS.ReliableMessaging
         /// </summary>
         /// <param name="handlerClass"></param>
         public void AddHandler(IRmMessageHandler handlerClass)
-        {
-            ReflectionCache.AddInstance(handlerClass);
-        }
+            => ReflectionCache.AddInstance(handlerClass);
 
         /// <summary>
         /// Connects to a specified message server by its host name.
@@ -132,27 +129,20 @@ namespace NTDLS.ReliableMessaging
         /// Disconnects the client from the server.
         /// </summary>
         public void Disconnect()
-        {
-            _activeConnection?.Disconnect(true);
-        }
+            => _activeConnection?.Disconnect(true);
 
         /// <summary>
         /// Gets the underlying TcpClient.
         /// </summary>
         public TcpClient? GetClient()
-        {
-            return _activeConnection?.GetClient();
-        }
+            => _activeConnection?.GetClient();
 
         /// <summary>
         /// Dispatches a one way notification to the connected server.
         /// </summary>
         /// <param name="notification">The notification message to send.</param>
         public void Notify(IRmNotification notification)
-        {
-            Utility.EnsureNotNull(_activeConnection);
-            _activeConnection.SendNotification(notification);
-        }
+            => _activeConnection.EnsureNotNull().SendNotification(notification);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply.
@@ -162,10 +152,7 @@ namespace NTDLS.ReliableMessaging
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         public Task<T> Query<T>(IRmQuery<T> query) where T : IRmQueryReply
-        {
-            Utility.EnsureNotNull(_activeConnection);
-            return _activeConnection.SendQuery<T>(query);
-        }
+            => _activeConnection.EnsureNotNull().SendQuery<T>(query);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply.
@@ -175,10 +162,7 @@ namespace NTDLS.ReliableMessaging
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         public async Task<T> QueryAsync<T>(IRmQuery<T> query) where T : IRmQueryReply
-        {
-            Utility.EnsureNotNull(_activeConnection);
-            return await _activeConnection.SendQueryAsync<T>(query);
-        }
+            => await _activeConnection.EnsureNotNull().SendQueryAsync<T>(query);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply.
@@ -189,10 +173,7 @@ namespace NTDLS.ReliableMessaging
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         public Task<T> Query<T>(IRmQuery<T> query, int queryTimeout) where T : IRmQueryReply
-        {
-            Utility.EnsureNotNull(_activeConnection);
-            return _activeConnection.SendQuery<T>(query, queryTimeout);
-        }
+            => _activeConnection.EnsureNotNull().SendQuery<T>(query, queryTimeout);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply.
@@ -203,20 +184,13 @@ namespace NTDLS.ReliableMessaging
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         public async Task<T> QueryAsync<T>(IRmQuery<T> query, int queryTimeout) where T : IRmQueryReply
-        {
-            Utility.EnsureNotNull(_activeConnection);
-            return await _activeConnection.SendQueryAsync<T>(query, queryTimeout);
-        }
+            => await _activeConnection.EnsureNotNull().SendQueryAsync<T>(query, queryTimeout);
 
         void IRmEndpoint.InvokeOnConnected(RmContext context)
-        {
-            OnConnected?.Invoke(context);
-        }
+            => OnConnected?.Invoke(context);
 
         void IRmEndpoint.InvokeOnException(RmContext context, Exception ex, IRmPayload? payload)
-        {
-            OnException?.Invoke(context, ex, payload);
-        }
+            => OnException?.Invoke(context, ex, payload);
 
         void IRmEndpoint.InvokeOnDisconnected(RmContext context)
         {
