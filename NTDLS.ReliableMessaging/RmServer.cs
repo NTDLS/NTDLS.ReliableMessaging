@@ -14,6 +14,7 @@ namespace NTDLS.ReliableMessaging
         private readonly PessimisticCriticalResource<List<PeerConnection>> _activeConnections = new();
         private Thread? _listenerThreadProc;
         private bool _keepRunning;
+        private IRmEncryptionProvider? _encryptionProvider = null;
 
         /// <summary>
         /// Cache of class instances and method reflection information for message handlers.
@@ -86,6 +87,31 @@ namespace NTDLS.ReliableMessaging
         public void AddHandler(IRmMessageHandler handlerClass)
         {
             ReflectionCache.AddInstance(handlerClass);
+        }
+
+        /// <summary>
+        /// Sets the encryption provider that this client should use when sending/receiving data. Can be cleared by passing null or calling ClearEncryptionProvider().
+        /// </summary>
+        /// <param name="provider"></param>
+        public void SetEncryptionProvider(IRmEncryptionProvider? provider)
+        {
+            _activeConnections.Use((o) =>
+            {
+                _encryptionProvider = provider;
+                o.ForEach(c => c.SetEncryptionProvider(provider));
+            });
+        }
+
+        /// <summary>
+        /// Removes the encryption provider set by a previous call to SetEncryptionProvider().
+        /// </summary>
+        public void ClearEncryptionProvider()
+        {
+            _activeConnections.Use((o) =>
+            {
+                _encryptionProvider = null;
+                o.ForEach(c => c.SetEncryptionProvider(null));
+            });
         }
 
         /// <summary>
@@ -175,7 +201,7 @@ namespace NTDLS.ReliableMessaging
                     {
                         if (_keepRunning) //Check again, we may have received a connection while shutting down.
                         {
-                            var activeConnection = new PeerConnection(this, tcpClient);
+                            var activeConnection = new PeerConnection(this, tcpClient, _encryptionProvider);
                             _activeConnections.Use((o) => o.Add(activeConnection));
                             activeConnection.RunAsync();
                         }

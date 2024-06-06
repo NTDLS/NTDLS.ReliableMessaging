@@ -11,6 +11,8 @@ namespace NTDLS.ReliableMessaging
     {
         private TcpClient? _tcpClient;
         private PeerConnection? _activeConnection;
+        private IRmEncryptionProvider? _encryptionProvider = null;
+
 
         /// <summary>
         /// Cache of class instances and method reflection information for message handlers.
@@ -91,6 +93,25 @@ namespace NTDLS.ReliableMessaging
             => ReflectionCache.AddInstance(handlerClass);
 
         /// <summary>
+        /// Sets the encryption provider that this client should use when sending/receiving data. Can be cleared by passing null or calling ClearEncryptionProvider().
+        /// </summary>
+        /// <param name="provider"></param>
+        public void SetEncryptionProvider(IRmEncryptionProvider? provider)
+        {
+            _encryptionProvider = provider;
+            _activeConnection?.SetEncryptionProvider(provider);
+        }
+
+        /// <summary>
+        /// Removes the encryption provider set by a previous call to SetEncryptionProvider().
+        /// </summary>
+        public void ClearEncryptionProvider()
+        {
+            _encryptionProvider = null;
+            _activeConnection?.SetEncryptionProvider(null);
+        }
+
+        /// <summary>
         /// Connects to a specified message server by its host name.
         /// </summary>
         /// <param name="hostName">The hostname of the message server.</param>
@@ -103,7 +124,7 @@ namespace NTDLS.ReliableMessaging
             }
 
             _tcpClient = new TcpClient(hostName, port);
-            _activeConnection = new PeerConnection(this, _tcpClient);
+            _activeConnection = new PeerConnection(this, _tcpClient, _encryptionProvider);
             _activeConnection.RunAsync();
         }
 
@@ -121,7 +142,7 @@ namespace NTDLS.ReliableMessaging
 
             _tcpClient = new TcpClient();
             _tcpClient.Connect(ipAddress, port);
-            _activeConnection = new PeerConnection(this, _tcpClient);
+            _activeConnection = new PeerConnection(this, _tcpClient, _encryptionProvider);
             _activeConnection.RunAsync();
         }
 

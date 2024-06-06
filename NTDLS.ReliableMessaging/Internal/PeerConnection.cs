@@ -9,13 +9,20 @@ namespace NTDLS.ReliableMessaging.Internal
         private readonly FrameBuffer _frameBuffer = new();
         private bool _keepRunning;
         private readonly RmContext _context;
-        public PeerConnection(IRmEndpoint endpoint, TcpClient tcpClient)
+        private IRmEncryptionProvider? _encryptionProvider  = null;
+
+        public PeerConnection(IRmEndpoint endpoint, TcpClient tcpClient, IRmEncryptionProvider? encryptionProvider)
         {
             _context = new RmContext(endpoint, tcpClient, new Thread(DataPumpThreadProc), tcpClient.GetStream());
+            _encryptionProvider = encryptionProvider;
             _keepRunning = true;
         }
 
-        public Guid ConnectionId => _context.ConnectionId;
+        public void SetEncryptionProvider(IRmEncryptionProvider? provider)
+            => _encryptionProvider = provider;
+
+        public Guid ConnectionId
+            => _context.ConnectionId;
 
         public void SendNotification(IRmNotification notification)
             => _context.Stream.WriteNotificationFrame(notification);
@@ -49,7 +56,7 @@ namespace NTDLS.ReliableMessaging.Internal
                 {
                     while (_context.Stream.ReadAndProcessFrames(_frameBuffer,
                         (payload) => OnNotificationReceived(payload),
-                        (payload) => OnQueryReceived(payload)))
+                        (payload) => OnQueryReceived(payload), _encryptionProvider))
                     {
                         //the famous do nothing loop!
                     }

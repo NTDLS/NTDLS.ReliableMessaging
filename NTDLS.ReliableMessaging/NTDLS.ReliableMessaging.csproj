@@ -7,19 +7,18 @@
     <Authors>NetworkDLS</Authors>
     <Nullable>Enable</Nullable>
     <Company>NetworkDLS</Company>
-    <Description>Simple, fast and lightweight event or convention-based RPC implementation.</Description>
+    <Description>Simple, fast, secure and lightweight event or convention-based RPC implementation.</Description>
     <Copyright>Copyright © 2024 NetworkDLS</Copyright>
     <PackageProjectUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</PackageProjectUrl>
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageReleaseNotes>
-      Resolved issue with reconnecting client.
-      Removed nullability from server Query() to match client.
+      Added encryption support.
     </PackageReleaseNotes>
-    <AssemblyVersion>1.5.5</AssemblyVersion>
-    <FileVersion>1.5.5</FileVersion>
-    <VersionPrefix>1.5.5</VersionPrefix>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <AssemblyVersion>1.6.0</AssemblyVersion>
+    <FileVersion>1.6.0</FileVersion>
+    <VersionPrefix>1.6.0</VersionPrefix>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>rpc;tcpip;ipc;stream;messaging;message-framing;</PackageTags>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
