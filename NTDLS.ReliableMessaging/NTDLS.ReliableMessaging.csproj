@@ -13,13 +13,13 @@
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageReleaseNotes>
-      Added encryption support.
+      Resolved issue with senders not utilizing encryption providers
     </PackageReleaseNotes>
-    <AssemblyVersion>1.6.0</AssemblyVersion>
-    <FileVersion>1.6.0</FileVersion>
-    <VersionPrefix>1.6.0</VersionPrefix>
+    <AssemblyVersion>1.6.2</AssemblyVersion>
+    <FileVersion>1.6.2</FileVersion>
+    <VersionPrefix>1.6.2</VersionPrefix>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageTags>rpc;tcpip;ipc;stream;messaging;message-framing;</PackageTags>
+    <PackageTags>rpc;tcpip;ipc;stream;encryption;messaging;message-framing;</PackageTags>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>

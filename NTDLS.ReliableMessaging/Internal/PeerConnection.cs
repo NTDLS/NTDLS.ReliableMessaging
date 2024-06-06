@@ -25,19 +25,19 @@ namespace NTDLS.ReliableMessaging.Internal
             => _context.ConnectionId;
 
         public void SendNotification(IRmNotification notification)
-            => _context.Stream.WriteNotificationFrame(notification);
+            => _context.Stream.WriteNotificationFrame(notification, _encryptionProvider);
 
         public Task<T> SendQueryAsync<T>(IRmQuery<T> query) where T : IRmQueryReply
-            => _context.Stream.WriteQueryFrameAsync(query);
+            => _context.Stream.WriteQueryFrameAsync(query, -1, _encryptionProvider);
 
         public Task<T> SendQuery<T>(IRmQuery<T> query) where T : IRmQueryReply
-            => _context.Stream.WriteQueryFrame(query);
+            => _context.Stream.WriteQueryFrame(query, -1, _encryptionProvider);
 
         public Task<T> SendQueryAsync<T>(IRmQuery<T> query, int queryTimeout) where T : IRmQueryReply
-            => _context.Stream.WriteQueryFrameAsync(query, queryTimeout);
+            => _context.Stream.WriteQueryFrameAsync(query, queryTimeout, _encryptionProvider);
 
         public Task<T> SendQuery<T>(IRmQuery<T> query, int queryTimeout) where T : IRmQueryReply
-            => _context.Stream.WriteQueryFrame(query, queryTimeout);
+            => _context.Stream.WriteQueryFrame(query, queryTimeout, _encryptionProvider);
 
         public void RunAsync() => _context.Thread.Start();
 
