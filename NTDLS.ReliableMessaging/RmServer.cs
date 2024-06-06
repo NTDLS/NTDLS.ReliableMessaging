@@ -219,7 +219,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="query">The query message to send.</param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task<T?> Query<T>(Guid connectionId, IRmQuery<T> query) where T : IRmQueryReply
+        public async Task<T> Query<T>(Guid connectionId, IRmQuery<T> query) where T : IRmQueryReply
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault());
             if (connection == null)
@@ -238,7 +238,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="query">The query message to send.</param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task<T?> QueryAsync<T>(Guid connectionId, IRmQuery<T> query) where T : IRmQueryReply
+        public async Task<T> QueryAsync<T>(Guid connectionId, IRmQuery<T> query) where T : IRmQueryReply
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault());
             if (connection == null)
@@ -258,7 +258,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="queryTimeout">The number of milliseconds to wait on a reply to the query.</param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task<T?> Query<T>(Guid connectionId, IRmQuery<T> query, int queryTimeout) where T : IRmQueryReply
+        public async Task<T> Query<T>(Guid connectionId, IRmQuery<T> query, int queryTimeout) where T : IRmQueryReply
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault());
             if (connection == null)
@@ -278,7 +278,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="queryTimeout">The number of milliseconds to wait on a reply to the query.</param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task<T?> QueryAsync<T>(Guid connectionId, IRmQuery<T> query, int queryTimeout) where T : IRmQueryReply
+        public async Task<T> QueryAsync<T>(Guid connectionId, IRmQuery<T> query, int queryTimeout) where T : IRmQueryReply
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault());
             if (connection == null)
