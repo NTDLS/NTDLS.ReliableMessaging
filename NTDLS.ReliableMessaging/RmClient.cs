@@ -9,7 +9,7 @@ namespace NTDLS.ReliableMessaging
     /// </summary>
     public class RmClient : IRmEndpoint
     {
-        private readonly TcpClient _tcpClient = new();
+        private TcpClient? _tcpClient;
         private PeerConnection? _activeConnection;
         //private bool _keepRunning;
 
@@ -22,7 +22,8 @@ namespace NTDLS.ReliableMessaging
         /// Returns true if the client is connected.
         /// </summary>
         /// <returns></returns>
-        public bool IsConnected => _tcpClient?.Connected ?? false;
+        public bool IsConnected
+            => _tcpClient?.Connected == true;
 
         #region Events.
 
@@ -104,7 +105,7 @@ namespace NTDLS.ReliableMessaging
                 throw new Exception("The client is already connected.");
             }
 
-            _tcpClient.Connect(hostName, port);
+            _tcpClient = new TcpClient(hostName, port);
             _activeConnection = new PeerConnection(this, _tcpClient);
             _activeConnection.RunAsync();
         }
@@ -121,6 +122,7 @@ namespace NTDLS.ReliableMessaging
                 throw new Exception("The client is already connected.");
             }
 
+            _tcpClient = new TcpClient();
             _tcpClient.Connect(ipAddress, port);
             _activeConnection = new PeerConnection(this, _tcpClient);
             _activeConnection.RunAsync();
