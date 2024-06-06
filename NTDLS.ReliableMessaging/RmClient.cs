@@ -11,7 +11,7 @@ namespace NTDLS.ReliableMessaging
     {
         private readonly TcpClient _tcpClient = new();
         private PeerConnection? _activeConnection;
-        private bool _keepRunning;
+        //private bool _keepRunning;
 
         /// <summary>
         /// Cache of class instances and method reflection information for message handlers.
@@ -99,11 +99,10 @@ namespace NTDLS.ReliableMessaging
         /// <param name="port">The listenr port of the message server.</param>
         public void Connect(string hostName, int port)
         {
-            if (_keepRunning)
+            if (IsConnected)
             {
-                return;
+                throw new Exception("The client is already connected.");
             }
-            _keepRunning = true;
 
             _tcpClient.Connect(hostName, port);
             _activeConnection = new PeerConnection(this, _tcpClient);
@@ -117,11 +116,10 @@ namespace NTDLS.ReliableMessaging
         /// <param name="port">The listenr port of the message server.</param>
         public void Connect(IPAddress ipAddress, int port)
         {
-            if (_keepRunning)
+            if (IsConnected)
             {
-                return;
+                throw new Exception("The client is already connected.");
             }
-            _keepRunning = true;
 
             _tcpClient.Connect(ipAddress, port);
             _activeConnection = new PeerConnection(this, _tcpClient);
@@ -133,7 +131,6 @@ namespace NTDLS.ReliableMessaging
         /// </summary>
         public void Disconnect()
         {
-            _keepRunning = false;
             _activeConnection?.Disconnect(true);
         }
 
