@@ -28,19 +28,19 @@ namespace NTDLS.ReliableMessaging.Internal
             => _context.ConnectionId;
 
         public void SendNotification(IRmNotification notification)
-            => _context.Stream.WriteNotificationFrame(notification, _configuration.FrameDelimiter, _encryptionProvider);
+            => _context.Stream.WriteNotificationFrame(notification, _encryptionProvider);
 
         public Task<T> SendQueryAsync<T>(IRmQuery<T> query) where T : IRmQueryReply
-            => _context.Stream.WriteQueryFrameAsync(query, -1, _configuration.FrameDelimiter, _encryptionProvider);
+            => _context.Stream.WriteQueryFrameAsync(query, -1, _encryptionProvider);
 
         public Task<T> SendQuery<T>(IRmQuery<T> query) where T : IRmQueryReply
-            => _context.Stream.WriteQueryFrame(query, -1, _configuration.FrameDelimiter, _encryptionProvider);
+            => _context.Stream.WriteQueryFrame(query, -1, _encryptionProvider);
 
         public Task<T> SendQueryAsync<T>(IRmQuery<T> query, int queryTimeout) where T : IRmQueryReply
-            => _context.Stream.WriteQueryFrameAsync(query, queryTimeout, _configuration.FrameDelimiter, _encryptionProvider);
+            => _context.Stream.WriteQueryFrameAsync(query, queryTimeout, _encryptionProvider);
 
         public Task<T> SendQuery<T>(IRmQuery<T> query, int queryTimeout) where T : IRmQueryReply
-            => _context.Stream.WriteQueryFrame(query, queryTimeout, _configuration.FrameDelimiter, _encryptionProvider);
+            => _context.Stream.WriteQueryFrame(query, queryTimeout, _encryptionProvider);
 
         public void RunAsync() => _context.Thread.Start();
 
@@ -57,7 +57,7 @@ namespace NTDLS.ReliableMessaging.Internal
             {
                 try
                 {
-                    while (_context.Stream.ReadAndProcessFrames(_frameBuffer, _configuration.FrameDelimiter,
+                    while (_context.Stream.ReadAndProcessFrames(_frameBuffer,
                         (payload) => OnNotificationReceived(payload),
                         (payload) => OnQueryReceived(payload), _encryptionProvider))
                     {

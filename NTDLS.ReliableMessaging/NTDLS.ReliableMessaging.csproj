@@ -15,10 +15,11 @@
     <PackageReleaseNotes>
       Added optional advanced configuration for both server and client.
       Resolved issue setting several advanced options.
+      Removed frame delimiter advanced option.
     </PackageReleaseNotes>
-    <AssemblyVersion>1.7.2</AssemblyVersion>
-    <FileVersion>1.7.2</FileVersion>
-    <VersionPrefix>1.7.2</VersionPrefix>
+    <AssemblyVersion>1.7.3</AssemblyVersion>
+    <FileVersion>1.7.3</FileVersion>
+    <VersionPrefix>1.7.3</VersionPrefix>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>rpc;tcpip;ipc;stream;encryption;messaging;message-framing;</PackageTags>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
