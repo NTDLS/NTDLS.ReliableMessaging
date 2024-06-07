@@ -6,15 +6,18 @@ namespace NTDLS.ReliableMessaging.Internal
 {
     internal class PeerConnection
     {
-        private readonly FrameBuffer _frameBuffer = new();
+        private readonly FrameBuffer _frameBuffer;
         private bool _keepRunning;
         private readonly RmContext _context;
-        private IRmEncryptionProvider? _encryptionProvider  = null;
+        private IRmEncryptionProvider? _encryptionProvider = null;
+        private readonly RmConfiguration _configuration;
 
-        public PeerConnection(IRmEndpoint endpoint, TcpClient tcpClient, IRmEncryptionProvider? encryptionProvider)
+        public PeerConnection(IRmEndpoint endpoint, TcpClient tcpClient, RmConfiguration configuration, IRmEncryptionProvider? encryptionProvider)
         {
             _context = new RmContext(endpoint, tcpClient, new Thread(DataPumpThreadProc), tcpClient.GetStream());
             _encryptionProvider = encryptionProvider;
+            _configuration = configuration;
+            _frameBuffer = new FrameBuffer(_configuration.InitialReceiveBufferSize, _configuration.MaxReceiveBufferSize, _configuration.ReceiveBufferGrowthRate);
             _keepRunning = true;
         }
 
@@ -25,19 +28,19 @@ namespace NTDLS.ReliableMessaging.Internal
             => _context.ConnectionId;
 
         public void SendNotification(IRmNotification notification)
-            => _context.Stream.WriteNotificationFrame(notification, _encryptionProvider);
+            => _context.Stream.WriteNotificationFrame(notification, _configuration.FrameDelimiter, _encryptionProvider);
 
         public Task<T> SendQueryAsync<T>(IRmQuery<T> query) where T : IRmQueryReply
-            => _context.Stream.WriteQueryFrameAsync(query, -1, _encryptionProvider);
+            => _context.Stream.WriteQueryFrameAsync(query, -1, _configuration.FrameDelimiter, _encryptionProvider);
 
         public Task<T> SendQuery<T>(IRmQuery<T> query) where T : IRmQueryReply
-            => _context.Stream.WriteQueryFrame(query, -1, _encryptionProvider);
+            => _context.Stream.WriteQueryFrame(query, -1, _configuration.FrameDelimiter, _encryptionProvider);
 
         public Task<T> SendQueryAsync<T>(IRmQuery<T> query, int queryTimeout) where T : IRmQueryReply
-            => _context.Stream.WriteQueryFrameAsync(query, queryTimeout, _encryptionProvider);
+            => _context.Stream.WriteQueryFrameAsync(query, queryTimeout, _configuration.FrameDelimiter, _encryptionProvider);
 
         public Task<T> SendQuery<T>(IRmQuery<T> query, int queryTimeout) where T : IRmQueryReply
-            => _context.Stream.WriteQueryFrame(query, queryTimeout, _encryptionProvider);
+            => _context.Stream.WriteQueryFrame(query, queryTimeout, _configuration.FrameDelimiter, _encryptionProvider);
 
         public void RunAsync() => _context.Thread.Start();
 
@@ -54,7 +57,7 @@ namespace NTDLS.ReliableMessaging.Internal
             {
                 try
                 {
-                    while (_context.Stream.ReadAndProcessFrames(_frameBuffer,
+                    while (_context.Stream.ReadAndProcessFrames(_frameBuffer, _configuration.FrameDelimiter,
                         (payload) => OnNotificationReceived(payload),
                         (payload) => OnQueryReceived(payload), _encryptionProvider))
                     {

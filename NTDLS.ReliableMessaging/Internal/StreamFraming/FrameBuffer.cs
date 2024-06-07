@@ -1,4 +1,6 @@
-﻿namespace NTDLS.ReliableMessaging.Internal.StreamFraming
+﻿using static NTDLS.ReliableMessaging.Internal.StreamFraming.Defaults;
+
+namespace NTDLS.ReliableMessaging.Internal.StreamFraming
 {
     /// <summary>
     /// Auto-resizing frame buffer for stream receiving and stream frame reassembly.
@@ -8,17 +10,17 @@
         /// <summary>
         /// The initial size of the receive buffer. If the buffer ever gets full while receiving data it will be automatically resized up to MaxReceiveBufferSize.
         /// </summary>
-        public int InitialReceiveBufferSize { get; private set; } = 16 * 1024;
+        public int InitialReceiveBufferSize { get; private set; } = NtFrameDefaults.INITIAL_BUFFER_SIZE;
 
         /// <summary>
         ///The maximum size of the receive buffer. If the buffer ever gets full while receiving data it will be automatically resized up to MaxReceiveBufferSize.
         /// </summary>
-        public int MaxReceiveBufferSize { get; set; } = 1024 * 1024;
+        public int MaxReceiveBufferSize { get; set; } = NtFrameDefaults.MAX_BUFFER_SIZE;
 
         /// <summary>
         ///The growth rate of the auto-resizing for the receive buffer.
         /// </summary>
-        public double ReceiveBufferGrowthRate { get; set; } = 0.2;
+        public double ReceiveBufferGrowthRate { get; set; } = NtFrameDefaults.BUFFER_GROWTH_RATE;
 
         /// <summary>
         /// The number of bytes in the current receive buffer.

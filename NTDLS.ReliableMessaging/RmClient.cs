@@ -12,7 +12,21 @@ namespace NTDLS.ReliableMessaging
         private TcpClient? _tcpClient;
         private PeerConnection? _activeConnection;
         private IRmEncryptionProvider? _encryptionProvider = null;
+        private readonly RmConfiguration _configuration;
 
+        /// <summary>
+        /// Creates a new instance of RmClient with the default configuration.
+        /// </summary>
+        public RmClient()
+        {
+            _configuration = new();
+        }
+
+        /// Creates a new instance of RmClient with the given configuration.
+        public RmClient(RmConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
 
         /// <summary>
         /// Cache of class instances and method reflection information for message handlers.
@@ -124,7 +138,7 @@ namespace NTDLS.ReliableMessaging
             }
 
             _tcpClient = new TcpClient(hostName, port);
-            _activeConnection = new PeerConnection(this, _tcpClient, _encryptionProvider);
+            _activeConnection = new PeerConnection(this, _tcpClient, _configuration, _encryptionProvider);
             _activeConnection.RunAsync();
         }
 
@@ -142,7 +156,7 @@ namespace NTDLS.ReliableMessaging
 
             _tcpClient = new TcpClient();
             _tcpClient.Connect(ipAddress, port);
-            _activeConnection = new PeerConnection(this, _tcpClient, _encryptionProvider);
+            _activeConnection = new PeerConnection(this, _tcpClient, _configuration, _encryptionProvider);
             _activeConnection.RunAsync();
         }
 

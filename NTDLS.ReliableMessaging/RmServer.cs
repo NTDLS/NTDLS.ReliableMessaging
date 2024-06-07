@@ -15,11 +15,28 @@ namespace NTDLS.ReliableMessaging
         private Thread? _listenerThreadProc;
         private bool _keepRunning;
         private IRmEncryptionProvider? _encryptionProvider = null;
+        private readonly RmConfiguration _configuration;
 
         /// <summary>
         /// Cache of class instances and method reflection information for message handlers.
         /// </summary>
         public ReflectionCache ReflectionCache { get; private set; } = new();
+
+        /// <summary>
+        /// Creates a new instance of RmServer with the default configuration.
+        /// </summary>
+        public RmServer()
+        {
+            _configuration = new();
+        }
+
+        /// <summary>
+        /// Creates a new instance of RmServer with the given configuration.
+        /// </summary>
+        public RmServer(RmConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
 
         #region Events.
 
@@ -201,7 +218,7 @@ namespace NTDLS.ReliableMessaging
                     {
                         if (_keepRunning) //Check again, we may have received a connection while shutting down.
                         {
-                            var activeConnection = new PeerConnection(this, tcpClient, _encryptionProvider);
+                            var activeConnection = new PeerConnection(this, tcpClient, _configuration, _encryptionProvider);
                             _activeConnections.Use((o) => o.Add(activeConnection));
                             activeConnection.RunAsync();
                         }
