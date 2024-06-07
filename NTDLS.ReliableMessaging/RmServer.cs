@@ -141,6 +141,9 @@ namespace NTDLS.ReliableMessaging
                 return;
             }
             _listener = new TcpListener(IPAddress.Any, listenPort);
+
+            _listener.Start();
+
             _keepRunning = true;
             _listenerThreadProc = new Thread(ListenerThreadProc);
             _listenerThreadProc.Start();
@@ -208,11 +211,9 @@ namespace NTDLS.ReliableMessaging
             {
                 Thread.CurrentThread.Name = $"ListenerThreadProc:{Environment.CurrentManagedThreadId}";
 
-                _listener.EnsureNotNull().Start();
-
                 while (_keepRunning)
                 {
-                    var tcpClient = _listener.AcceptTcpClient(); //Wait for an inbound connection.
+                    var tcpClient = _listener.EnsureNotNull().AcceptTcpClient(); //Wait for an inbound connection.
 
                     if (tcpClient.Connected)
                     {
@@ -230,8 +231,13 @@ namespace NTDLS.ReliableMessaging
                 if (ex.SocketErrorCode != SocketError.Interrupted
                     && ex.SocketErrorCode != SocketError.Shutdown)
                 {
+                    //TODO: Give user a way to see these exceptions without terminating the program.
                     throw;
                 }
+            }
+            catch (Exception ex)
+            {
+                //TODO: Give user a way to see these exceptions without terminating the program.
             }
         }
 

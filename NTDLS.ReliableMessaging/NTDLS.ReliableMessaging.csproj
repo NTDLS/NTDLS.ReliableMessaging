@@ -16,9 +16,9 @@
       Added optional advanced configuration for both server and client.
       Resolved issue setting several advanced options.
     </PackageReleaseNotes>
-    <AssemblyVersion>1.7.1</AssemblyVersion>
-    <FileVersion>1.7.1</FileVersion>
-    <VersionPrefix>1.7.1</VersionPrefix>
+    <AssemblyVersion>1.7.2</AssemblyVersion>
+    <FileVersion>1.7.2</FileVersion>
+    <VersionPrefix>1.7.2</VersionPrefix>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>rpc;tcpip;ipc;stream;encryption;messaging;message-framing;</PackageTags>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
