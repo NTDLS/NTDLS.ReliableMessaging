@@ -10,12 +10,12 @@ namespace NTDLS.ReliableMessaging
         /// <summary>
         /// The frame header delimiter. Used to literally seperate and detect the beginning of each packet.
         /// </summary>
-        public int FrameDelimiter = NtFrameDefaults.FRAME_DELIMITER;
+        public int FrameDelimiter { get; set; } = NtFrameDefaults.FRAME_DELIMITER;
 
         /// <summary>
         /// The initial size in bytes of the receive buffer. If the buffer ever gets full while receiving data it will be automatically resized up to MaxReceiveBufferSize.
         /// </summary>
-        public int InitialReceiveBufferSize { get; private set; } = NtFrameDefaults.INITIAL_BUFFER_SIZE;
+        public int InitialReceiveBufferSize { get; set; } = NtFrameDefaults.INITIAL_BUFFER_SIZE;
 
         /// <summary>
         ///The maximum size in bytes of the receive buffer. If the buffer ever gets full while receiving data it will be automatically resized up to MaxReceiveBufferSize.

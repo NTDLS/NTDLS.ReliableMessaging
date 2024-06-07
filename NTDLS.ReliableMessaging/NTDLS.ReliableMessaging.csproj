@@ -14,10 +14,11 @@
     <RepositoryType>Git</RepositoryType>
     <PackageReleaseNotes>
       Added optional advanced configuration for both server and client.
+      Resolved issue setting several advanced options.
     </PackageReleaseNotes>
-    <AssemblyVersion>1.7.0</AssemblyVersion>
-    <FileVersion>1.7.0</FileVersion>
-    <VersionPrefix>1.7.0</VersionPrefix>
+    <AssemblyVersion>1.7.1</AssemblyVersion>
+    <FileVersion>1.7.1</FileVersion>
+    <VersionPrefix>1.7.1</VersionPrefix>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>rpc;tcpip;ipc;stream;encryption;messaging;message-framing;</PackageTags>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
