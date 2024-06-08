@@ -63,7 +63,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
 
                 if (getEncryptionProviderCallback != null)
                 {
-                    //We use a callabck because frameBuffer.ReadStream() blocks and we may have assigned an encryption provider after we called ReadAndProcessFrames().
+                    //We use a callback because frameBuffer.ReadStream() blocks and we may have assigned an encryption provider after we called ReadAndProcessFrames().
                     encryptionProvider = getEncryptionProviderCallback();
                 }
 
