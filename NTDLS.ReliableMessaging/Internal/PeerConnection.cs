@@ -153,7 +153,7 @@ namespace NTDLS.ReliableMessaging.Internal
                 try { _context.TcpClient.Close(); } catch { }
                 try { _context.TcpClient.Dispose(); } catch { }
 
-                if (waitOnThread)
+                if (waitOnThread && Environment.CurrentManagedThreadId != _context.Thread.ManagedThreadId)
                 {
                     _context.Thread.Join();
                 }
