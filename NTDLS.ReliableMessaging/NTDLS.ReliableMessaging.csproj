@@ -13,12 +13,11 @@
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageReleaseNotes>
-      Delayed encryption provider acquisition.
-      Handled remainder of server threaded exceptions.
-    </PackageReleaseNotes>
-    <AssemblyVersion>1.7.5</AssemblyVersion>
-    <FileVersion>1.7.5</FileVersion>
-    <VersionPrefix>1.7.5</VersionPrefix>
+		Fixed query reply encryption.
+	</PackageReleaseNotes>
+    <AssemblyVersion>1.7.6</AssemblyVersion>
+    <FileVersion>1.7.6</FileVersion>
+    <VersionPrefix>1.7.6</VersionPrefix>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>rpc;tcpip;ipc;stream;encryption;messaging;message-framing;</PackageTags>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
