@@ -47,12 +47,12 @@ namespace NTDLS.ReliableMessaging
         /// </summary>
         public event ExceptionEvent? OnException;
         /// <summary>
-        /// Event fired when a client connects to the server.
+        /// Event fired when an exception occurs.
         /// </summary>
-        /// <param name="context">Information about the connection.</param>
+        /// <param name="context">Information about the connection, if any.</param>
         /// <param name="ex">The exception that was thrown.</param>
-        /// <param name="payload">The payload which was involved in the exception.</param>
-        public delegate void ExceptionEvent(RmContext context, Exception ex, IRmPayload? payload);
+        /// <param name="payload">The payload which was involved in the exception, if any.</param>
+        public delegate void ExceptionEvent(RmContext? context, Exception ex, IRmPayload? payload);
 
         /// <summary>
         /// Event fired when a client connects to the server.

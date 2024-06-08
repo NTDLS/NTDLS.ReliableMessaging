@@ -47,10 +47,10 @@ namespace NTDLS.ReliableMessaging
         /// <summary>
         /// Event fired when a client connects to the server.
         /// </summary>
-        /// <param name="context">Information about the connection.</param>
+        /// <param name="context">Information about the connection, if any.</param>
         /// <param name="ex">The exception that was thrown.</param>
-        /// <param name="payload">The payload which was involved in the exception.</param>
-        public delegate void ExceptionEvent(RmContext context, Exception ex, IRmPayload? payload);
+        /// <param name="payload">The payload which was involved in the exception, if any.</param>
+        public delegate void ExceptionEvent(RmContext? context, Exception ex, IRmPayload? payload);
 
         /// <summary>
         /// Event fired when a client connects to the server.
@@ -207,12 +207,12 @@ namespace NTDLS.ReliableMessaging
 
         void ListenerThreadProc()
         {
-            try
+            while (_keepRunning)
             {
-                Thread.CurrentThread.Name = $"ListenerThreadProc:{Environment.CurrentManagedThreadId}";
-
-                while (_keepRunning)
+                try
                 {
+                    Thread.CurrentThread.Name = $"ListenerThreadProc:{Environment.CurrentManagedThreadId}";
+
                     var tcpClient = _listener.EnsureNotNull().AcceptTcpClient(); //Wait for an inbound connection.
 
                     if (tcpClient.Connected)
@@ -224,20 +224,27 @@ namespace NTDLS.ReliableMessaging
                             activeConnection.RunAsync();
                         }
                     }
+
+                    Thread.Sleep(1);
                 }
-            }
-            catch (SocketException ex)
-            {
-                if (ex.SocketErrorCode != SocketError.Interrupted
-                    && ex.SocketErrorCode != SocketError.Shutdown)
+                catch (SocketException ex)
                 {
-                    //TODO: Give user a way to see these exceptions without terminating the program.
-                    throw;
+                    if (ex.SocketErrorCode == SocketError.Interrupted
+                        || ex.SocketErrorCode == SocketError.Shutdown)
+                    {
+                        //These are expected exceptions.
+                    }
+                    else
+                    {
+                        OnException?.Invoke(null, ex, null);
+                        Thread.Sleep(10);
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                //TODO: Give user a way to see these exceptions without terminating the program.
+                catch (Exception ex)
+                {
+                    OnException?.Invoke(null, ex, null);
+                    Thread.Sleep(10);
+                }
             }
         }
 
