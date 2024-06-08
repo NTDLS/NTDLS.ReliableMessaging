@@ -59,7 +59,8 @@ namespace NTDLS.ReliableMessaging.Internal
                 {
                     while (_context.Stream.ReadAndProcessFrames(_frameBuffer,
                         (payload) => OnNotificationReceived(payload),
-                        (payload) => OnQueryReceived(payload), _encryptionProvider))
+                        (payload) => OnQueryReceived(payload),
+                        () => _encryptionProvider))
                     {
                         //the famous do nothing loop!
                     }

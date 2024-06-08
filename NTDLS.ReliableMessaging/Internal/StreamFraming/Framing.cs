@@ -26,6 +26,12 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <returns>The reply payload to return to the originator.</returns>
         public delegate IRmQueryReply ProcessFrameQueryCallback(IRmPayload payload);
 
+        /// <summary>
+        /// Callback to get the callback that is called to allow for manipulation of bytes after they are received.
+        /// </summary>
+        /// <returns></returns>
+        public delegate IRmEncryptionProvider? GetEncryptionProviderCallback();
+
         private static readonly PessimisticCriticalResource<Dictionary<string, MethodInfo>> _reflectionCache = new();
         private static readonly PessimisticCriticalResource<List<QueryAwaitingReply>> _queriesAwaitingReplies = new();
 
@@ -39,12 +45,12 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <param name="frameBuffer">The frame buffer that will be used to receive bytes from the stream.</param>
         /// <param name="processNotificationCallback">Optional callback to call when a notification frame is received.</param>
         /// <param name="processFrameQueryCallback">Optional callback to call when a query frame is received.</param>
-        /// <param name="encryptionProvider">An optional callback that is called to allow for manipulation of bytes after they are received.</param>
+        /// <param name="getEncryptionProviderCallback">An optional callback to get the callback that is called to allow for manipulation of bytes after they are received.</param>
         /// <returns>Returns true if the stream is healthy, returns false if disconnected.</returns>
         /// <exception cref="Exception"></exception>
         public static bool ReadAndProcessFrames(this Stream stream, FrameBuffer frameBuffer,
             ProcessFrameNotificationCallback? processNotificationCallback = null, ProcessFrameQueryCallback? processFrameQueryCallback = null,
-            IRmEncryptionProvider? encryptionProvider = null)
+            GetEncryptionProviderCallback? getEncryptionProviderCallback = null)
         {
             if (stream == null)
             {
@@ -53,6 +59,14 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
 
             if (frameBuffer.ReadStream(stream))
             {
+                IRmEncryptionProvider? encryptionProvider  = null;
+
+                if (getEncryptionProviderCallback != null)
+                {
+                    //We use a callabck because frameBuffer.ReadStream() blocks and we may have assigned an encryption provider after we called ReadAndProcessFrames().
+                    encryptionProvider = getEncryptionProviderCallback();
+                }
+
                 stream.ProcessFrameBuffer(frameBuffer, processNotificationCallback, processFrameQueryCallback, encryptionProvider);
                 return true;
             }
