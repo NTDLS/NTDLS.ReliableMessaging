@@ -59,7 +59,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
 
             if (frameBuffer.ReadStream(stream))
             {
-                IRmEncryptionProvider? encryptionProvider  = null;
+                IRmEncryptionProvider? encryptionProvider = null;
 
                 if (getEncryptionProviderCallback != null)
                 {
