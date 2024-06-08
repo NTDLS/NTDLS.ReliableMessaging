@@ -16,7 +16,7 @@ namespace Test.Client
             client.Notify(new MyNotification("This is message 002 from the client."));
             client.Notify(new MyNotification("This is message 003 from the client."));
 
-            client.OnException += (RmContext context, Exception ex, IRmPayload? payload) =>
+            client.OnException += (RmContext? context, Exception ex, IRmPayload? payload) =>
             {
                 // Handle the OnException event, otherwise the client will ignore any exceptions.
                 Console.WriteLine($"RPC Client exception: {ex.Message}");

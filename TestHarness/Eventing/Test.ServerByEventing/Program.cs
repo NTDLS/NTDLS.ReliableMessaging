@@ -34,7 +34,7 @@ namespace Test.Server
             }
         }
 
-        private static void Server_OnNotificationReceived(RmContext context, IRmNotification payload)
+        private static void Server_OnNotificationReceived(RmContext? context, IRmNotification payload)
         {
             if (payload is MyNotification myNotification)
             {
@@ -46,7 +46,7 @@ namespace Test.Server
             }
         }
 
-        private static void Server_OnException(RmContext context, Exception ex, IRmPayload? payload)
+        private static void Server_OnException(RmContext? context, Exception ex, IRmPayload? payload)
         {
             Console.WriteLine($"RPC Client exception: {ex.Message}");
         }
