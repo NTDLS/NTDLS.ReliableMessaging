@@ -14,7 +14,7 @@ namespace NTDLS.ReliableMessaging
         private readonly PessimisticCriticalResource<List<PeerConnection>> _activeConnections = new();
         private Thread? _listenerThreadProc;
         private bool _keepRunning;
-        private IRmEncryptionProvider? _encryptionProvider = null;
+        private IRmCryptographyProvider? _cryptographyProvider = null;
         private readonly RmConfiguration _configuration;
 
         /// <summary>
@@ -107,27 +107,27 @@ namespace NTDLS.ReliableMessaging
         }
 
         /// <summary>
-        /// Sets the encryption provider that this client should use when sending/receiving data. Can be cleared by passing null or calling ClearEncryptionProvider().
+        /// Sets the encryption provider that this client should use when sending/receiving data. Can be cleared by passing null or calling ClearCryptographyProvider().
         /// </summary>
         /// <param name="provider"></param>
-        public void SetEncryptionProvider(IRmEncryptionProvider? provider)
+        public void SetCryptographyProvider(IRmCryptographyProvider? provider)
         {
             _activeConnections.Use((o) =>
             {
-                _encryptionProvider = provider;
-                o.ForEach(c => c.SetEncryptionProvider(provider));
+                _cryptographyProvider = provider;
+                o.ForEach(c => c.Context.SetCryptographyProvider(provider));
             });
         }
 
         /// <summary>
-        /// Removes the encryption provider set by a previous call to SetEncryptionProvider().
+        /// Removes the encryption provider set by a previous call to SetCryptographyProvider().
         /// </summary>
-        public void ClearEncryptionProvider()
+        public void ClearCryptographyProvider()
         {
             _activeConnections.Use((o) =>
             {
-                _encryptionProvider = null;
-                o.ForEach(c => c.SetEncryptionProvider(null));
+                _cryptographyProvider = null;
+                o.ForEach(c => c.Context.SetCryptographyProvider(null));
             });
         }
 
@@ -169,14 +169,14 @@ namespace NTDLS.ReliableMessaging
         }
 
         /// <summary>
-        /// Gets the underlying TcpClient for the given connection id.
+        /// Gets the connection context.
         /// </summary>
-        /// <param name="connectionId">The connection to get the TcpClient for.</param>
-        public TcpClient? GetClient(Guid connectionId)
+        /// <param name="connectionId">The connection to get the context for.</param>
+        public RmContext? GetContext(Guid connectionId)
         {
             return _activeConnections.Use((o) =>
             {
-                return o.Where(c => c.ConnectionId == connectionId).FirstOrDefault()?.GetClient();
+                return o.Where(c => c.ConnectionId == connectionId).FirstOrDefault()?.Context;
             });
         }
 
@@ -219,7 +219,7 @@ namespace NTDLS.ReliableMessaging
                     {
                         if (_keepRunning) //Check again, we may have received a connection while shutting down.
                         {
-                            var activeConnection = new PeerConnection(this, tcpClient, _configuration, _encryptionProvider);
+                            var activeConnection = new PeerConnection(this, tcpClient, _configuration, _cryptographyProvider);
                             _activeConnections.Use((o) => o.Add(activeConnection));
                             activeConnection.RunAsync();
                         }
@@ -259,7 +259,7 @@ namespace NTDLS.ReliableMessaging
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
                 ?? throw new Exception($"The connection with id {connectionId} was not found.");
 
-            connection.SendNotification(notification);
+            connection.Context.Notify(notification);
         }
 
         /// <summary>
@@ -275,7 +275,7 @@ namespace NTDLS.ReliableMessaging
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
                 ?? throw new Exception($"The connection with id {connectionId} was not found.");
 
-            return await connection.SendQuery(query);
+            return await connection.Context.Query(query);
         }
 
         /// <summary>
@@ -291,7 +291,7 @@ namespace NTDLS.ReliableMessaging
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
                 ?? throw new Exception($"The connection with id {connectionId} was not found.");
 
-            return await connection.SendQueryAsync(query);
+            return await connection.Context.QueryAsync(query);
         }
 
         /// <summary>
@@ -308,7 +308,7 @@ namespace NTDLS.ReliableMessaging
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
                 ?? throw new Exception($"The connection with id {connectionId} was not found.");
 
-            return await connection.SendQuery(query, queryTimeout);
+            return await connection.Context.Query(query, queryTimeout);
         }
 
         /// <summary>
@@ -325,7 +325,7 @@ namespace NTDLS.ReliableMessaging
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
                 ?? throw new Exception($"The connection with id {connectionId} was not found.");
 
-            return await connection.SendQueryAsync(query, queryTimeout);
+            return await connection.Context.QueryAsync(query, queryTimeout);
         }
 
         void IRmEndpoint.InvokeOnConnected(RmContext context)

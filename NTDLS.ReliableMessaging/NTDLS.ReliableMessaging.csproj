@@ -13,11 +13,11 @@
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageReleaseNotes>
-		Fixed query reply encryption.
-	</PackageReleaseNotes>
-    <AssemblyVersion>1.7.6</AssemblyVersion>
-    <FileVersion>1.7.6</FileVersion>
-    <VersionPrefix>1.7.6</VersionPrefix>
+		  Reorganized a lot of code to allow for more access to peer interactions and cryptography.
+	  </PackageReleaseNotes>
+    <AssemblyVersion>1.8.0</AssemblyVersion>
+    <FileVersion>1.8.0</FileVersion>
+    <VersionPrefix>1.8.0</VersionPrefix>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>rpc;tcpip;ipc;stream;encryption;messaging;message-framing;</PackageTags>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>

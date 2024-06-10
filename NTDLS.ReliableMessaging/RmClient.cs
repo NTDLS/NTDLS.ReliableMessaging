@@ -11,7 +11,7 @@ namespace NTDLS.ReliableMessaging
     {
         private TcpClient? _tcpClient;
         private PeerConnection? _activeConnection;
-        private IRmEncryptionProvider? _encryptionProvider = null;
+        private IRmCryptographyProvider? _cryptographyProvider = null;
         private readonly RmConfiguration _configuration;
 
         /// <summary>
@@ -107,22 +107,22 @@ namespace NTDLS.ReliableMessaging
             => ReflectionCache.AddInstance(handlerClass);
 
         /// <summary>
-        /// Sets the encryption provider that this client should use when sending/receiving data. Can be cleared by passing null or calling ClearEncryptionProvider().
+        /// Sets the encryption provider that this client should use when sending/receiving data. Can be cleared by passing null or calling ClearCryptographyProvider().
         /// </summary>
         /// <param name="provider"></param>
-        public void SetEncryptionProvider(IRmEncryptionProvider? provider)
+        public void SetCryptographyProvider(IRmCryptographyProvider? provider)
         {
-            _encryptionProvider = provider;
-            _activeConnection?.SetEncryptionProvider(provider);
+            _cryptographyProvider = provider;
+            _activeConnection?.Context.SetCryptographyProvider(provider);
         }
 
         /// <summary>
-        /// Removes the encryption provider set by a previous call to SetEncryptionProvider().
+        /// Removes the encryption provider set by a previous call to SetCryptographyProvider().
         /// </summary>
-        public void ClearEncryptionProvider()
+        public void ClearCryptographyProvider()
         {
-            _encryptionProvider = null;
-            _activeConnection?.SetEncryptionProvider(null);
+            _cryptographyProvider = null;
+            _activeConnection?.Context.SetCryptographyProvider(null);
         }
 
         /// <summary>
@@ -138,7 +138,7 @@ namespace NTDLS.ReliableMessaging
             }
 
             _tcpClient = new TcpClient(hostName, port);
-            _activeConnection = new PeerConnection(this, _tcpClient, _configuration, _encryptionProvider);
+            _activeConnection = new PeerConnection(this, _tcpClient, _configuration, _cryptographyProvider);
             _activeConnection.RunAsync();
         }
 
@@ -156,7 +156,7 @@ namespace NTDLS.ReliableMessaging
 
             _tcpClient = new TcpClient();
             _tcpClient.Connect(ipAddress, port);
-            _activeConnection = new PeerConnection(this, _tcpClient, _configuration, _encryptionProvider);
+            _activeConnection = new PeerConnection(this, _tcpClient, _configuration, _cryptographyProvider);
             _activeConnection.RunAsync();
         }
 
@@ -167,37 +167,35 @@ namespace NTDLS.ReliableMessaging
             => _activeConnection?.Disconnect(true);
 
         /// <summary>
-        /// Gets the underlying TcpClient.
+        /// Gets the connection context.
         /// </summary>
-        public TcpClient? GetClient()
-            => _activeConnection?.GetClient();
+        public RmContext? GetClient()
+            => _activeConnection?.Context;
 
         /// <summary>
         /// Dispatches a one way notification to the connected server.
         /// </summary>
         /// <param name="notification">The notification message to send.</param>
         public void Notify(IRmNotification notification)
-            => _activeConnection.EnsureNotNull().SendNotification(notification);
+            => _activeConnection.EnsureNotNull().Context.Notify(notification);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply.
         /// </summary>
         /// <typeparam name="T">The type of reply that is expected.</typeparam>
         /// <param name="query">The query message to send.</param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
+        /// <returns>Returns the result of the query.</returns>
         public Task<T> Query<T>(IRmQuery<T> query) where T : IRmQueryReply
-            => _activeConnection.EnsureNotNull().SendQuery<T>(query);
+            => _activeConnection.EnsureNotNull().Context.Query<T>(query);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply.
         /// </summary>
         /// <typeparam name="T">The type of reply that is expected.</typeparam>
         /// <param name="query">The query message to send.</param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
+        /// <returns>Returns the result of the query.</returns>
         public async Task<T> QueryAsync<T>(IRmQuery<T> query) where T : IRmQueryReply
-            => await _activeConnection.EnsureNotNull().SendQueryAsync<T>(query);
+            => await _activeConnection.EnsureNotNull().Context.QueryAsync<T>(query);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply.
@@ -205,10 +203,9 @@ namespace NTDLS.ReliableMessaging
         /// <typeparam name="T">The type of reply that is expected.</typeparam>
         /// <param name="query">The query message to send.</param>
         /// <param name="queryTimeout">The number of milliseconds to wait on a reply to the query.</param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
+        /// <returns>Returns the result of the query.</returns>
         public Task<T> Query<T>(IRmQuery<T> query, int queryTimeout) where T : IRmQueryReply
-            => _activeConnection.EnsureNotNull().SendQuery<T>(query, queryTimeout);
+            => _activeConnection.EnsureNotNull().Context.Query<T>(query, queryTimeout);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply.
@@ -216,10 +213,9 @@ namespace NTDLS.ReliableMessaging
         /// <typeparam name="T">The type of reply that is expected.</typeparam>
         /// <param name="query">The query message to send.</param>
         /// <param name="queryTimeout">The number of milliseconds to wait on a reply to the query.</param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
+        /// <returns>Returns the result of the query.</returns>
         public async Task<T> QueryAsync<T>(IRmQuery<T> query, int queryTimeout) where T : IRmQueryReply
-            => await _activeConnection.EnsureNotNull().SendQueryAsync<T>(query, queryTimeout);
+            => await _activeConnection.EnsureNotNull().Context.QueryAsync<T>(query, queryTimeout);
 
         void IRmEndpoint.InvokeOnConnected(RmContext context)
             => OnConnected?.Invoke(context);
