@@ -10,7 +10,7 @@
         /// </summary>
         /// <param name="context">Contains information about the endpoint and the connection.</param>
         /// <param name="payload">Contains the raw unencrypted data.</param>
-        /// <returns>Return the alerted altered bytes.</returns>
+        /// <returns>Return the altered bytes.</returns>
         public byte[] Encrypt(RmContext context, byte[] payload);
 
         /// <summary>
@@ -18,7 +18,7 @@
         /// </summary>
         /// <param name="context">Contains information about the endpoint and the connection.</param>
         /// <param name="encryptedPayload">Contains the encrypted data.</param>
-        /// <returns>Return the alerted altered bytes.</returns>
+        /// <returns>Return the altered bytes.</returns>
         public byte[] Decrypt(RmContext context, byte[] encryptedPayload);
     }
 }
