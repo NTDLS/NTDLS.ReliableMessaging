@@ -56,3 +56,11 @@ TestHarness/Eventing/Test.ServerByEventing/bin/
 TestHarness/Test.Library/bin/
 
 TestHarness/Test.Library/obj/
+
+TestHarness/CustomProviders/Test.ClientCustomProviders/bin/
+
+TestHarness/CustomProviders/Test.ClientCustomProviders/obj/
+
+TestHarness/CustomProviders/Test.ServerCustomProviders/bin/
+
+TestHarness/CustomProviders/Test.ServerCustomProviders/obj/

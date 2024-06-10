@@ -17,8 +17,8 @@
         /// Encrypt the frame payload after it is received.
         /// </summary>
         /// <param name="context">Contains information about the endpoint and the connection.</param>
-        /// <param name="encryptedPayload">Contains the compressed data.</param>
+        /// <param name="compressedPayload">Contains the compressed data.</param>
         /// <returns>Return the altered bytes.</returns>
-        public byte[] DeCompress(RmContext context, byte[] encryptedPayload);
+        public byte[] DeCompress(RmContext context, byte[] compressedPayload);
     }
 }

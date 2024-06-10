@@ -56,11 +56,20 @@ namespace NTDLS.ReliableMessaging.Internal
             return stream.ToArray();
         }
 
-        public static string JsonSerialize<T>(T obj)
+        public static string RmSerializeFramePayloadToText<T>(T obj)
             => JsonConvert.SerializeObject(obj, _jsonSettings);
 
-        public static T? JsonDeserializeToObject<T>(string json)
-            => JsonConvert.DeserializeObject<T>(json, _jsonSettings);
+        public static T? RmDeserializeFramePayloadToObject<T>(IRmSerializationProvider? serializationProvider, string json)
+        {
+            if (serializationProvider != null) //Using custom serialization.
+            {
+                return serializationProvider.DeserializeToObject<T>(json);
+            }
+            else //Using built-in default serialization.
+            {
+                return JsonConvert.DeserializeObject<T>(json, _jsonSettings);
+            }
+        }
 
         public static T DeserializeToObject<T>(byte[] arrBytes)
         {

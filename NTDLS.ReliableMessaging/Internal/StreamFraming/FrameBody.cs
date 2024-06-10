@@ -37,11 +37,18 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <summary>
         /// Instanciates a frame payload with a serialized payload.
         /// </summary>
-        /// <param name="framePayload"></param>
-        public FrameBody(IRmPayload framePayload)
+        public FrameBody(IRmSerializationProvider? serializationProvider, IRmPayload framePayload)
         {
             ObjectType = framePayload.GetType()?.AssemblyQualifiedName ?? string.Empty;
-            Bytes = Encoding.UTF8.GetBytes(Utility.JsonSerialize(framePayload));
+
+            if (serializationProvider == null) //Using custom serialization?
+            {
+                Bytes = Encoding.UTF8.GetBytes(Utility.RmSerializeFramePayloadToText(framePayload));
+            }
+            else //Using default serialization?
+            {
+                Bytes = Encoding.UTF8.GetBytes(serializationProvider.SerializeToText(framePayload));
+            }
         }
 
         /// <summary>
@@ -53,7 +60,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         {
             ExpectedReplyType = expectedReplyType?.AssemblyQualifiedName ?? string.Empty;
             ObjectType = framePayload.GetType()?.AssemblyQualifiedName ?? string.Empty;
-            Bytes = Encoding.UTF8.GetBytes(Utility.JsonSerialize(framePayload));
+            Bytes = Encoding.UTF8.GetBytes(Utility.RmSerializeFramePayloadToText(framePayload));
         }
 
         /// <summary>

@@ -12,9 +12,13 @@ namespace NTDLS.ReliableMessaging.Internal
         public RmContext Context { get; private set; }
         private readonly RmConfiguration _configuration;
 
-        public PeerConnection(IRmEndpoint endpoint, TcpClient tcpClient, RmConfiguration configuration, IRmCryptographyProvider? cryptographyProvider)
+        public PeerConnection(IRmEndpoint endpoint, TcpClient tcpClient, RmConfiguration configuration,
+            IRmSerializationProvider? serializationProvider, IRmCompressionProvider? compressionProvider, IRmCryptographyProvider? cryptographyProvider)
         {
-            Context = new RmContext(endpoint, tcpClient, cryptographyProvider, new Thread(DataPumpThreadProc), tcpClient.GetStream());
+            Context = new RmContext(endpoint, tcpClient, 
+                serializationProvider, compressionProvider, cryptographyProvider, 
+                new Thread(DataPumpThreadProc), tcpClient.GetStream());
+
             _configuration = configuration;
             _frameBuffer = new FrameBuffer(_configuration.InitialReceiveBufferSize, _configuration.MaxReceiveBufferSize, _configuration.ReceiveBufferGrowthRate);
             _keepRunning = true;
@@ -32,7 +36,7 @@ namespace NTDLS.ReliableMessaging.Internal
         internal void DataPumpThreadProc()
         {
 #if DEBUG
-            Thread.CurrentThread.Name = $"ReliableMessaging:PeerConnection:{_context.ConnectionId}";
+            Thread.CurrentThread.Name = $"ReliableMessaging:PeerConnection:{Context.ConnectionId}";
 #endif
             Context.Endpoint.InvokeOnConnected(Context);
 
@@ -43,6 +47,7 @@ namespace NTDLS.ReliableMessaging.Internal
                     while (Context.Stream.ReadAndProcessFrames(Context, _frameBuffer,
                         (payload) => OnNotificationReceived(payload),
                         (payload) => OnQueryReceived(payload),
+                        Context.GetSerializationProvider,/*This is a delegate function call so that we can get the provider at the latest possible moment.*/
                         Context.GetCompressionProvider,/*This is a delegate function call so that we can get the provider at the latest possible moment.*/
                         Context.GetCryptographyProvider/*This is a delegate function call so that we can get the provider at the latest possible moment.*/))
                     {

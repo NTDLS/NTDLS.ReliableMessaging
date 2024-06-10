@@ -14,6 +14,8 @@ namespace NTDLS.ReliableMessaging
         private readonly PessimisticCriticalResource<List<PeerConnection>> _activeConnections = new();
         private Thread? _listenerThreadProc;
         private bool _keepRunning;
+        private IRmSerializationProvider? _serializationProvider = null;
+        private IRmCompressionProvider? _compressionProvider = null;
         private IRmCryptographyProvider? _cryptographyProvider = null;
         private readonly RmConfiguration _configuration;
 
@@ -106,6 +108,66 @@ namespace NTDLS.ReliableMessaging
             ReflectionCache.AddInstance(handlerClass);
         }
 
+        #region IRmSerializationProvider.
+
+        /// <summary>
+        /// Sets the custom serialization provider. Can be cleared by passing null or calling ClearCryptographyProvider().
+        /// </summary>
+        /// <param name="provider"></param>
+        public void SetSerializationProvider(IRmSerializationProvider? provider)
+        {
+            _activeConnections.Use((o) =>
+            {
+                _serializationProvider = provider;
+                o.ForEach(c => c.Context.SetSerializationProvider(provider));
+            });
+        }
+
+        /// <summary>
+        /// Removes the custom serialization provider set by a previous call to SetSerializationProvider().
+        /// </summary>
+        public void ClearSerializationProvider()
+        {
+            _activeConnections.Use((o) =>
+            {
+                _serializationProvider = null;
+                o.ForEach(c => c.Context.SetSerializationProvider(null));
+            });
+        }
+
+        #endregion
+
+        #region IRmCompressionProvider.
+
+        /// <summary>
+        /// Sets the compression provider that this client should use when sending/receiving data. Can be cleared by passing null or calling ClearCompressionProvider().
+        /// </summary>
+        /// <param name="provider"></param>
+        public void SetCompressionProvider(IRmCompressionProvider? provider)
+        {
+            _activeConnections.Use((o) =>
+            {
+                _compressionProvider = provider;
+                o.ForEach(c => c.Context.SetCompressionProvider(provider));
+            });
+        }
+
+        /// <summary>
+        /// Removes the compression provider set by a previous call to SetCryptographyProvider().
+        /// </summary>
+        public void ClearCompressionProvider()
+        {
+            _activeConnections.Use((o) =>
+            {
+                _compressionProvider = null;
+                o.ForEach(c => c.Context.SetCompressionProvider(null));
+            });
+        }
+
+        #endregion
+
+        #region IRmCryptographyProvider.
+
         /// <summary>
         /// Sets the encryption provider that this client should use when sending/receiving data. Can be cleared by passing null or calling ClearCryptographyProvider().
         /// </summary>
@@ -130,6 +192,8 @@ namespace NTDLS.ReliableMessaging
                 o.ForEach(c => c.Context.SetCryptographyProvider(null));
             });
         }
+
+        #endregion
 
         /// <summary>
         /// Starts the message server.
@@ -219,7 +283,7 @@ namespace NTDLS.ReliableMessaging
                     {
                         if (_keepRunning) //Check again, we may have received a connection while shutting down.
                         {
-                            var activeConnection = new PeerConnection(this, tcpClient, _configuration, _cryptographyProvider);
+                            var activeConnection = new PeerConnection(this, tcpClient, _configuration, _serializationProvider, _compressionProvider, _cryptographyProvider);
                             _activeConnections.Use((o) => o.Add(activeConnection));
                             activeConnection.RunAsync();
                         }
