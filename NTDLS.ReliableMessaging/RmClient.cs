@@ -11,9 +11,6 @@ namespace NTDLS.ReliableMessaging
     {
         private TcpClient? _tcpClient;
         private PeerConnection? _activeConnection;
-        private IRmSerializationProvider? _serializationProvider = null;
-        private IRmCompressionProvider? _compressionProvider = null;
-        private IRmCryptographyProvider? _cryptographyProvider = null;
         private readonly RmConfiguration _configuration;
 
         /// <summary>
@@ -24,7 +21,8 @@ namespace NTDLS.ReliableMessaging
         /// <summary>
         /// A user settable object that can be accessed via the Context.Endpoint.Parameter Especially useful for convention based calls.
         /// </summary>
-        public object? Parameter { get; set; }
+        public object? Parameter { get => _configuration.Parameter; set => _configuration.Parameter = value; }
+
         /// <summary>
         /// Returns true if the client is connected.
         /// </summary>
@@ -105,27 +103,6 @@ namespace NTDLS.ReliableMessaging
         }
 
         /// <summary>
-        /// Creates a new instance of RmClient with the default configuration.
-        /// </summary>
-        /// <param name="parameter">A user settable object that can be accessed via the Context.Endpoint.Parameter Especially useful for convention based calls.</param>
-        public RmClient(object? parameter)
-        {
-            _configuration = new();
-            Parameter = parameter;
-        }
-
-        /// <summary>
-        /// Creates a new instance of RmClient with the given configuration.
-        /// </summary>
-        /// <param name="configuration">Custom client configuration.</param>
-        /// <param name="parameter">A user settable object that can be accessed via the Context.Endpoint.Parameter Especially useful for convention based calls.</param>
-        public RmClient(RmConfiguration configuration, object? parameter)
-        {
-            _configuration = configuration;
-            Parameter = parameter;
-        }
-
-        /// <summary>
         /// Adds a class that contains notification and query handler functions.
         /// </summary>
         /// <param name="handlerClass"></param>
@@ -140,7 +117,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="provider"></param>
         public void SetSerializationProvider(IRmSerializationProvider? provider)
         {
-            _serializationProvider = provider;
+            _configuration.SerializationProvider = provider;
             _activeConnection?.Context.SetSerializationProvider(provider);
         }
 
@@ -149,7 +126,7 @@ namespace NTDLS.ReliableMessaging
         /// </summary>
         public void ClearSerializationProvider()
         {
-            _serializationProvider = null;
+            _configuration.SerializationProvider = null;
             _activeConnection?.Context.SetSerializationProvider(null);
         }
 
@@ -163,7 +140,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="provider"></param>
         public void SetCompressionProvider(IRmCompressionProvider? provider)
         {
-            _compressionProvider = provider;
+            _configuration.CompressionProvider = provider;
             _activeConnection?.Context.SetCompressionProvider(provider);
         }
 
@@ -172,7 +149,7 @@ namespace NTDLS.ReliableMessaging
         /// </summary>
         public void ClearCompressionProvider()
         {
-            _compressionProvider = null;
+            _configuration.CompressionProvider = null;
             _activeConnection?.Context.SetCryptographyProvider(null);
         }
 
@@ -186,7 +163,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="provider"></param>
         public void SetCryptographyProvider(IRmCryptographyProvider? provider)
         {
-            _cryptographyProvider = provider;
+            _configuration.CryptographyProvider = provider;
             _activeConnection?.Context.SetCryptographyProvider(provider);
         }
 
@@ -195,7 +172,7 @@ namespace NTDLS.ReliableMessaging
         /// </summary>
         public void ClearCryptographyProvider()
         {
-            _cryptographyProvider = null;
+            _configuration.CryptographyProvider = null;
             _activeConnection?.Context.SetCryptographyProvider(null);
         }
 
@@ -214,7 +191,8 @@ namespace NTDLS.ReliableMessaging
             }
 
             _tcpClient = new TcpClient(hostName, port);
-            _activeConnection = new PeerConnection(this, _tcpClient, _configuration, _serializationProvider, _compressionProvider, _cryptographyProvider);
+            _activeConnection = new PeerConnection(this, _tcpClient, _configuration,
+                _configuration.SerializationProvider, _configuration.CompressionProvider, _configuration.CryptographyProvider);
             _activeConnection.RunAsync();
         }
 
@@ -232,7 +210,8 @@ namespace NTDLS.ReliableMessaging
 
             _tcpClient = new TcpClient();
             _tcpClient.Connect(ipAddress, port);
-            _activeConnection = new PeerConnection(this, _tcpClient, _configuration, _serializationProvider, _compressionProvider, _cryptographyProvider);
+            _activeConnection = new PeerConnection(this, _tcpClient, _configuration,
+                                _configuration.SerializationProvider, _configuration.CompressionProvider, _configuration.CryptographyProvider);
             _activeConnection.RunAsync();
         }
 

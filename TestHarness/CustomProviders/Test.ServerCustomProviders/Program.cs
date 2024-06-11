@@ -44,10 +44,11 @@ namespace Test.Server
 
         static void Main()
         {
-            var server = new RmServer();
-
-            server.SetSerializationProvider(new CustomSerializationProvider());
-            server.SetCompressionProvider(new CustomCompressionProvider());
+            var server = new RmServer(new RmConfiguration()
+            {
+                SerializationProvider = new CustomSerializationProvider(),
+                CompressionProvider = new CustomCompressionProvider(),
+            });
 
             server.OnNotificationReceived += Server_OnNotificationReceived;
             server.OnQueryReceived += Server_OnQueryReceived;

@@ -14,15 +14,12 @@ namespace NTDLS.ReliableMessaging
         private readonly PessimisticCriticalResource<List<PeerConnection>> _activeConnections = new();
         private Thread? _listenerThreadProc;
         private bool _keepRunning;
-        private IRmSerializationProvider? _serializationProvider = null;
-        private IRmCompressionProvider? _compressionProvider = null;
-        private IRmCryptographyProvider? _cryptographyProvider = null;
         private readonly RmConfiguration _configuration;
 
         /// <summary>
         /// A user settable object that can be accessed via the Context.Endpoint.Parameter Especially useful for convention based calls.
         /// </summary>
-        public object? Parameter { get; set; }
+        public object? Parameter { get => _configuration.Parameter; set => _configuration.Parameter = value; }
 
         /// <summary>
         /// Cache of class instances and method reflection information for message handlers.
@@ -35,27 +32,6 @@ namespace NTDLS.ReliableMessaging
         public RmServer()
         {
             _configuration = new();
-        }
-
-        /// <summary>
-        /// Creates a new instance of RmServer with the given configuration.
-        /// </summary>
-        /// <param name="configuration">Custom server configuration.</param>
-        /// <param name="parameter">A user settable object that can be accessed via the Context.Endpoint.Parameter Especially useful for convention based calls.</param>
-        public RmServer(RmConfiguration configuration, object? parameter)
-        {
-            _configuration = configuration;
-            Parameter = parameter;
-        }
-
-        /// <summary>
-        /// Creates a new instance of RmServer with the default configuration.
-        /// </summary>
-        /// <param name="parameter">A user settable object that can be accessed via the Context.Endpoint.Parameter Especially useful for convention based calls.</param>
-        public RmServer(object? parameter)
-        {
-            _configuration = new();
-            Parameter = parameter;
         }
 
         /// <summary>
@@ -144,7 +120,7 @@ namespace NTDLS.ReliableMessaging
         {
             _activeConnections.Use((o) =>
             {
-                _serializationProvider = provider;
+                _configuration.SerializationProvider = provider;
                 o.ForEach(c => c.Context.SetSerializationProvider(provider));
             });
         }
@@ -156,7 +132,7 @@ namespace NTDLS.ReliableMessaging
         {
             _activeConnections.Use((o) =>
             {
-                _serializationProvider = null;
+                _configuration.SerializationProvider = null;
                 o.ForEach(c => c.Context.SetSerializationProvider(null));
             });
         }
@@ -173,7 +149,7 @@ namespace NTDLS.ReliableMessaging
         {
             _activeConnections.Use((o) =>
             {
-                _compressionProvider = provider;
+                _configuration.CompressionProvider = provider;
                 o.ForEach(c => c.Context.SetCompressionProvider(provider));
             });
         }
@@ -185,7 +161,7 @@ namespace NTDLS.ReliableMessaging
         {
             _activeConnections.Use((o) =>
             {
-                _compressionProvider = null;
+                _configuration.CompressionProvider = null;
                 o.ForEach(c => c.Context.SetCompressionProvider(null));
             });
         }
@@ -202,7 +178,7 @@ namespace NTDLS.ReliableMessaging
         {
             _activeConnections.Use((o) =>
             {
-                _cryptographyProvider = provider;
+                _configuration.CryptographyProvider = provider;
                 o.ForEach(c => c.Context.SetCryptographyProvider(provider));
             });
         }
@@ -214,7 +190,7 @@ namespace NTDLS.ReliableMessaging
         {
             _activeConnections.Use((o) =>
             {
-                _cryptographyProvider = null;
+                _configuration.CryptographyProvider = null;
                 o.ForEach(c => c.Context.SetCryptographyProvider(null));
             });
         }
@@ -309,7 +285,8 @@ namespace NTDLS.ReliableMessaging
                     {
                         if (_keepRunning) //Check again, we may have received a connection while shutting down.
                         {
-                            var activeConnection = new PeerConnection(this, tcpClient, _configuration, _serializationProvider, _compressionProvider, _cryptographyProvider);
+                            var activeConnection = new PeerConnection(this, tcpClient, _configuration,
+                                _configuration.SerializationProvider, _configuration.CompressionProvider, _configuration.CryptographyProvider);
                             _activeConnections.Use((o) => o.Add(activeConnection));
                             activeConnection.RunAsync();
                         }

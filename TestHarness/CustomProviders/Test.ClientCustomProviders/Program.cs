@@ -45,10 +45,11 @@ namespace Test.Client
         static void Main()
         {
             //Start a client and connect to the server.
-            var client = new RmClient();
-
-            client.SetSerializationProvider(new CustomSerializationProvider());
-            client.SetCompressionProvider(new CustomCompressionProvider());
+            var client = new RmClient(new RmConfiguration()
+            {
+                SerializationProvider = new CustomSerializationProvider(),
+                CompressionProvider = new CustomCompressionProvider(),
+            });
 
             client.Connect("localhost", 45784);
 
