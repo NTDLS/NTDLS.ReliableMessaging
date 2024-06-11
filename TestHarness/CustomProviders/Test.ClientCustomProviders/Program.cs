@@ -1,7 +1,6 @@
 ﻿using Newtonsoft.Json;
 using NTDLS.ReliableMessaging;
 using TestHarness.Payloads;
-using ZstdNet;
 
 namespace Test.Client
 {
@@ -25,30 +24,12 @@ namespace Test.Client
             }
         }
 
-        class CustomCompressionProvider : IRmCompressionProvider
-        {
-            public byte[] Compress(RmContext context, byte[] payload)
-            {
-                if (payload == null) return Array.Empty<byte>();
-                using var compressor = new Compressor(new CompressionOptions(CompressionOptions.MaxCompressionLevel));
-                return compressor.Wrap(payload);
-            }
-
-            public byte[] DeCompress(RmContext context, byte[] compressedPayload)
-            {
-                if (compressedPayload == null) return Array.Empty<byte>();
-                using var decompressor = new Decompressor();
-                return decompressor.Unwrap(compressedPayload);
-            }
-        }
-
         static void Main()
         {
             //Start a client and connect to the server.
             var client = new RmClient(new RmConfiguration()
             {
-                SerializationProvider = new CustomSerializationProvider(),
-                CompressionProvider = new CustomCompressionProvider(),
+                SerializationProvider = new CustomSerializationProvider()
             });
 
             client.Connect("localhost", 45784);
