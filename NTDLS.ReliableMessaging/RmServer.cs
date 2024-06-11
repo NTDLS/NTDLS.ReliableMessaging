@@ -20,6 +20,11 @@ namespace NTDLS.ReliableMessaging
         private readonly RmConfiguration _configuration;
 
         /// <summary>
+        /// A user settable object that can be accessed via the Context.Endpoint.Parameter Especially useful for convention based calls.
+        /// </summary>
+        public object? Parameter { get; set; }
+
+        /// <summary>
         /// Cache of class instances and method reflection information for message handlers.
         /// </summary>
         public ReflectionCache ReflectionCache { get; private set; } = new();
@@ -30,6 +35,27 @@ namespace NTDLS.ReliableMessaging
         public RmServer()
         {
             _configuration = new();
+        }
+
+        /// <summary>
+        /// Creates a new instance of RmServer with the given configuration.
+        /// </summary>
+        /// <param name="configuration">Custom server configuration.</param>
+        /// <param name="parameter">A user settable object that can be accessed via the Context.Endpoint.Parameter Especially useful for convention based calls.</param>
+        public RmServer(RmConfiguration configuration, object? parameter)
+        {
+            _configuration = configuration;
+            Parameter = parameter;
+        }
+
+        /// <summary>
+        /// Creates a new instance of RmServer with the default configuration.
+        /// </summary>
+        /// <param name="parameter">A user settable object that can be accessed via the Context.Endpoint.Parameter Especially useful for convention based calls.</param>
+        public RmServer(object? parameter)
+        {
+            _configuration = new();
+            Parameter = parameter;
         }
 
         /// <summary>

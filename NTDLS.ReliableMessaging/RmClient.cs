@@ -17,30 +17,19 @@ namespace NTDLS.ReliableMessaging
         private readonly RmConfiguration _configuration;
 
         /// <summary>
-        /// Creates a new instance of RmClient with the default configuration.
-        /// </summary>
-        public RmClient()
-        {
-            _configuration = new();
-        }
-
-        /// Creates a new instance of RmClient with the given configuration.
-        public RmClient(RmConfiguration configuration)
-        {
-            _configuration = configuration;
-        }
-
-        /// <summary>
         /// Cache of class instances and method reflection information for message handlers.
         /// </summary>
         public ReflectionCache ReflectionCache { get; private set; } = new();
 
         /// <summary>
+        /// A user settable object that can be accessed via the Context.Endpoint.Parameter Especially useful for convention based calls.
+        /// </summary>
+        public object? Parameter { get; set; }
+        /// <summary>
         /// Returns true if the client is connected.
         /// </summary>
         /// <returns></returns>
-        public bool IsConnected
-            => _tcpClient?.Connected == true;
+        public bool IsConnected => _tcpClient?.Connected == true;
 
         #region Events.
 
@@ -100,6 +89,41 @@ namespace NTDLS.ReliableMessaging
         public delegate IRmQueryReply QueryReceivedEvent(RmContext context, IRmPayload payload);
 
         #endregion
+
+        /// <summary>
+        /// Creates a new instance of RmClient with the default configuration.
+        /// </summary>
+        public RmClient()
+        {
+            _configuration = new();
+        }
+
+        /// Creates a new instance of RmClient with the given configuration.
+        public RmClient(RmConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+
+        /// <summary>
+        /// Creates a new instance of RmClient with the default configuration.
+        /// </summary>
+        /// <param name="parameter">A user settable object that can be accessed via the Context.Endpoint.Parameter Especially useful for convention based calls.</param>
+        public RmClient(object? parameter)
+        {
+            _configuration = new();
+            Parameter = parameter;
+        }
+
+        /// <summary>
+        /// Creates a new instance of RmClient with the given configuration.
+        /// </summary>
+        /// <param name="configuration">Custom client configuration.</param>
+        /// <param name="parameter">A user settable object that can be accessed via the Context.Endpoint.Parameter Especially useful for convention based calls.</param>
+        public RmClient(RmConfiguration configuration, object? parameter)
+        {
+            _configuration = configuration;
+            Parameter = parameter;
+        }
 
         /// <summary>
         /// Adds a class that contains notification and query handler functions.

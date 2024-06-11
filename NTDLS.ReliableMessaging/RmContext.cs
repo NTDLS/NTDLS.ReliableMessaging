@@ -16,11 +16,6 @@ namespace NTDLS.ReliableMessaging
         #region Public Properties.
 
         /// <summary>
-        /// A user settable object that can be accessed via the context. Especially useful for convention based calls.
-        /// </summary>
-        public object Parameter { get; set; }
-
-        /// <summary>
         /// This is the RPC server or client instance.
         /// </summary>
         public IRmEndpoint Endpoint { get; private set; }

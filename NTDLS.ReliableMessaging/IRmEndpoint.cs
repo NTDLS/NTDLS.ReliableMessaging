@@ -8,6 +8,11 @@ namespace NTDLS.ReliableMessaging
     public interface IRmEndpoint
     {
         /// <summary>
+        /// A user settable object that can be accessed via the Context.Endpoint.Parameter Especially useful for convention based calls.
+        /// </summary>
+        public object? Parameter { get; set; }
+
+        /// <summary>
         /// Adds a class that contains notification and query handler functions.
         /// </summary>
         /// <param name="handlerClass"></param>
