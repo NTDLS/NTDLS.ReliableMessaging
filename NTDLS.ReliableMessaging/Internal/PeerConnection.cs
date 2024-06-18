@@ -15,8 +15,8 @@ namespace NTDLS.ReliableMessaging.Internal
         public PeerConnection(IRmEndpoint endpoint, TcpClient tcpClient, RmConfiguration configuration,
             IRmSerializationProvider? serializationProvider, IRmCompressionProvider? compressionProvider, IRmCryptographyProvider? cryptographyProvider)
         {
-            Context = new RmContext(endpoint, tcpClient, 
-                serializationProvider, compressionProvider, cryptographyProvider, 
+            Context = new RmContext(endpoint, tcpClient,
+                serializationProvider, compressionProvider, cryptographyProvider,
                 new Thread(DataPumpThreadProc), tcpClient.GetStream());
 
             _configuration = configuration;

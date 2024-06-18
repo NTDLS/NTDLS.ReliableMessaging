@@ -431,7 +431,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 else if (framePayload is IRmQueryReply reply)
                 {
                     // A reply to a query was received, we need to find the waiting query - set the reply payload data and trigger the wait event.
-                    var waitingQuery = _queriesAwaitingReplies.Use(o => o.Where(o => o.FrameBodyId == frameBody.Id).Single());
+                    var waitingQuery = _queriesAwaitingReplies.Use(o => o.Single(o => o.FrameBodyId == frameBody.Id));
                     waitingQuery.ReplyPayload = reply;
                     waitingQuery.WaitEvent.Set();
                 }
