@@ -44,7 +44,8 @@ namespace NTDLS.ReliableMessaging.Internal
             {
                 try
                 {
-                    while (Context.Stream.ReadAndProcessFrames(Context, _frameBuffer,
+                    while (Context.Stream.ReadAndProcessFrames(
+                        Context, Context.Endpoint.InvokeOnException, _frameBuffer,
                         (payload) => OnNotificationReceived(payload),
                         (payload) => OnQueryReceived(payload),
                         Context.GetSerializationProvider,/*This is a delegate function call so that we can get the provider at the latest possible moment.*/

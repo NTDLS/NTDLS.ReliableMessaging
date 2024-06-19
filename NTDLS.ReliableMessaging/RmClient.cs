@@ -275,7 +275,7 @@ namespace NTDLS.ReliableMessaging
         void IRmEndpoint.InvokeOnConnected(RmContext context)
             => OnConnected?.Invoke(context);
 
-        void IRmEndpoint.InvokeOnException(RmContext context, Exception ex, IRmPayload? payload)
+        void IRmEndpoint.InvokeOnException(RmContext? context, Exception ex, IRmPayload? payload)
             => OnException?.Invoke(context, ex, payload);
 
         void IRmEndpoint.InvokeOnDisconnected(RmContext context)

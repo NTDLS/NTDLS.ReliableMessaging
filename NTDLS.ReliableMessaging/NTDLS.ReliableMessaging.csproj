@@ -13,11 +13,11 @@
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageReleaseNotes>
-      Moved custom providers and parameters to configuration.
+      Added additional exception handling and resumption of frame ingestion.
     </PackageReleaseNotes>
-    <AssemblyVersion>1.8.2</AssemblyVersion>
-    <FileVersion>1.8.2</FileVersion>
-    <VersionPrefix>1.8.2</VersionPrefix>
+    <AssemblyVersion>1.8.3</AssemblyVersion>
+    <FileVersion>1.8.3</FileVersion>
+    <VersionPrefix>1.8.3</VersionPrefix>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>rpc;tcpip;ipc;stream;encryption;messaging;message-framing;</PackageTags>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>

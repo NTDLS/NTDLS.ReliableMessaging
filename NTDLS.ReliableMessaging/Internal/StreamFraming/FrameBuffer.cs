@@ -80,7 +80,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         }
 
         /// <summary>
-        /// Instanciates a new frame buffer with a pre-defined size.
+        /// Instantiates a new frame buffer with a pre-defined size.
         /// </summary>
         /// <param name="initialReceiveBufferSize"></param>
         /// <param name="maxReceiveBufferSize"></param>

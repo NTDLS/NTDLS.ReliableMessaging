@@ -18,7 +18,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="handlerClass"></param>
         public void AddHandler(IRmMessageHandler handlerClass);
         internal ReflectionCache ReflectionCache { get; }
-        internal void InvokeOnException(RmContext context, Exception ex, IRmPayload? payload);
+        internal void InvokeOnException(RmContext? context, Exception ex, IRmPayload? payload);
         internal void InvokeOnConnected(RmContext context);
         internal void InvokeOnDisconnected(RmContext context);
         internal void InvokeOnNotificationReceived(RmContext context, IRmNotification payload);

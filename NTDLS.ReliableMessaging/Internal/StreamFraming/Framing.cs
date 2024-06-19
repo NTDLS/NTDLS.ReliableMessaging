@@ -57,6 +57,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <param name="stream">The open stream that should be read from</param>
         /// <param name="frameBuffer">The frame buffer that will be used to receive bytes from the stream.</param>
         /// <param name="context">Contains information about the endpoint and the connection.</param>
+        /// <param name="onException">Delegate to call on exception.</param>
         /// <param name="processNotificationCallback">Optional callback to call when a notification frame is received.</param>
         /// <param name="processFrameQueryCallback">Optional callback to call when a query frame is received.</param>
         /// <param name="getSerializationProviderCallback">An optional callback to get the callback that is called to allow for custom serialization.</param>
@@ -64,7 +65,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <param name="getEncryptionProviderCallback">An optional callback to get the callback that is called to allow for manipulation of bytes after they are received.</param>
         /// <returns>Returns true if the stream is healthy, returns false if disconnected.</returns>
         /// <exception cref="Exception"></exception>
-        public static bool ReadAndProcessFrames(this Stream stream, RmContext context, FrameBuffer frameBuffer,
+        public static bool ReadAndProcessFrames(this Stream stream, RmContext context, RmEvents.ExceptionEvent? onException, FrameBuffer frameBuffer,
             ProcessFrameNotificationCallback? processNotificationCallback, ProcessFrameQueryCallback? processFrameQueryCallback,
             GetSerializationProviderCallback? getSerializationProviderCallback, GetCompressionProviderCallback? getCompressionProviderCallback,
             GetEncryptionProviderCallback? getEncryptionProviderCallback)
@@ -98,7 +99,8 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                     cryptographyProvider = getEncryptionProviderCallback();
                 }
 
-                stream.ProcessFrameBuffer(context, frameBuffer, processNotificationCallback, processFrameQueryCallback, serializationProvider, compressionProvider, cryptographyProvider);
+                stream.ProcessFrameBuffer(context, onException, frameBuffer, processNotificationCallback,
+                    processFrameQueryCallback, serializationProvider, compressionProvider, cryptographyProvider);
                 return true;
             }
 
@@ -349,7 +351,8 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             frameBuffer.FrameBuilderLength = 0;
         }
 
-        private static void ProcessFrameBuffer(this Stream stream, RmContext context, FrameBuffer frameBuffer,
+        private static void ProcessFrameBuffer(this Stream stream, RmContext context,
+            RmEvents.ExceptionEvent? onException, FrameBuffer frameBuffer,
             ProcessFrameNotificationCallback? processNotificationCallback,
             ProcessFrameQueryCallback? processFrameQueryCallback,
             IRmSerializationProvider? serializationProvider,
@@ -365,8 +368,12 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
 
             frameBuffer.FrameBuilderLength += frameBuffer.ReceiveBufferUsed;
 
+            IRmPayload? framePayload;
+
             while (frameBuffer.FrameBuilderLength > NtFrameDefaults.FRAME_HEADER_SIZE) //[FrameSize] and [CRC16]
             {
+                framePayload = null;
+
                 var frameDelimiterBytes = new byte[4];
                 var frameSizeBytes = new byte[4];
                 var expectedCRC16Bytes = new byte[2];
@@ -379,82 +386,87 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 var grossFrameSize = BitConverter.ToInt32(frameSizeBytes, 0);
                 var expectedCRC16 = BitConverter.ToUInt16(expectedCRC16Bytes, 0);
 
-                if (frameDelimiter != NtFrameDefaults.FRAME_DELIMITER || grossFrameSize < 0)
+                try
                 {
-                    //Possible corrupt frame.
+                    if (frameDelimiter != NtFrameDefaults.FRAME_DELIMITER || grossFrameSize < 0)
+                    {
+                        throw new Exception("ProcessFrameBuffer: Frame was corrupted.");
+                    }
+
+                    if (frameBuffer.FrameBuilderLength < grossFrameSize)
+                    {
+                        //We have data in the buffer, but it's not enough to make up
+                        //  the entire message so we will break and wait on more data.
+                        break;
+                    }
+
+                    if (CRC16.ComputeChecksum(frameBuffer.FrameBuilder, NtFrameDefaults.FRAME_HEADER_SIZE, grossFrameSize - NtFrameDefaults.FRAME_HEADER_SIZE) != expectedCRC16)
+                    {
+                        throw new Exception("ProcessFrameBuffer: Frame was corrupted (size discrepancy).");
+                    }
+
+                    var netFrameSize = grossFrameSize - NtFrameDefaults.FRAME_HEADER_SIZE;
+                    var compressedFrameBodyBytes = new byte[netFrameSize];
+                    Buffer.BlockCopy(frameBuffer.FrameBuilder, NtFrameDefaults.FRAME_HEADER_SIZE, compressedFrameBodyBytes, 0, netFrameSize);
+
+                    if (cryptographyProvider != null)
+                    {
+                        compressedFrameBodyBytes = cryptographyProvider.Decrypt(context, compressedFrameBodyBytes);
+                    }
+
+                    var FrameBodyBytes = compressionProvider?.DeCompress(context, compressedFrameBodyBytes) ?? Utility.Decompress(compressedFrameBodyBytes);
+                    var frameBody = Utility.DeserializeToObject<FrameBody>(FrameBodyBytes);
+
+                    //Zero out the consumed portion of the frame buffer - more for fun than anything else.
+                    Array.Clear(frameBuffer.FrameBuilder, 0, grossFrameSize);
+
+                    Buffer.BlockCopy(frameBuffer.FrameBuilder, grossFrameSize, frameBuffer.FrameBuilder, 0, frameBuffer.FrameBuilderLength - grossFrameSize);
+                    frameBuffer.FrameBuilderLength -= grossFrameSize;
+
+                    framePayload = ExtractFramePayload(serializationProvider, frameBody);
+
+                    if (framePayload is FramePayloadBytes frameNotificationBytes)
+                    {
+                        if (processNotificationCallback == null)
+                        {
+                            throw new Exception("ProcessFrameBuffer: A notification handler was not supplied.");
+                        }
+                        processNotificationCallback(frameNotificationBytes);
+                    }
+                    else if (framePayload is IRmQueryReply reply)
+                    {
+                        // A reply to a query was received, we need to find the waiting query - set the reply payload data and trigger the wait event.
+                        var waitingQuery = _queriesAwaitingReplies.Use(o => o.Single(o => o.FrameBodyId == frameBody.Id));
+                        waitingQuery.ReplyPayload = reply;
+                        waitingQuery.WaitEvent.Set();
+                    }
+                    else if (framePayload is IRmNotification notification)
+                    {
+                        if (processNotificationCallback == null)
+                        {
+                            throw new Exception("ProcessFrameBuffer: A notification handler was not supplied.");
+                        }
+                        processNotificationCallback(notification);
+                    }
+                    else if (Utility.ImplementsGenericInterfaceWithArgument(framePayload.GetType(), typeof(IRmQuery<>), typeof(IRmQueryReply)))
+                    {
+                        if (processFrameQueryCallback == null)
+                        {
+                            throw new Exception("ProcessFrameBuffer: A query handler was not supplied.");
+                        }
+                        var replyPayload = processFrameQueryCallback(framePayload);
+                        stream.WriteReplyFrame(context, frameBody, replyPayload, serializationProvider, compressionProvider, cryptographyProvider);
+                    }
+                    else
+                    {
+                        throw new Exception("ProcessFrameBuffer: Encountered undefined frame payload type.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    onException?.Invoke(context, Utility.GetBaseException(ex), framePayload);
                     SkipFrame(ref frameBuffer);
                     continue;
-                }
-
-                if (frameBuffer.FrameBuilderLength < grossFrameSize)
-                {
-                    //We have data in the buffer, but it's not enough to make up
-                    //  the entire message so we will break and wait on more data.
-                    break;
-                }
-
-                if (CRC16.ComputeChecksum(frameBuffer.FrameBuilder, NtFrameDefaults.FRAME_HEADER_SIZE, grossFrameSize - NtFrameDefaults.FRAME_HEADER_SIZE) != expectedCRC16)
-                {
-                    //Corrupt frame.
-                    SkipFrame(ref frameBuffer);
-                    continue;
-                }
-
-                var netFrameSize = grossFrameSize - NtFrameDefaults.FRAME_HEADER_SIZE;
-                var compressedFrameBodyBytes = new byte[netFrameSize];
-                Buffer.BlockCopy(frameBuffer.FrameBuilder, NtFrameDefaults.FRAME_HEADER_SIZE, compressedFrameBodyBytes, 0, netFrameSize);
-
-                if (cryptographyProvider != null)
-                {
-                    compressedFrameBodyBytes = cryptographyProvider.Decrypt(context, compressedFrameBodyBytes);
-                }
-
-                var FrameBodyBytes = compressionProvider?.DeCompress(context, compressedFrameBodyBytes) ?? Utility.Decompress(compressedFrameBodyBytes);
-                var frameBody = Utility.DeserializeToObject<FrameBody>(FrameBodyBytes);
-
-                //Zero out the consumed portion of the frame buffer - more for fun than anything else.
-                Array.Clear(frameBuffer.FrameBuilder, 0, grossFrameSize);
-
-                Buffer.BlockCopy(frameBuffer.FrameBuilder, grossFrameSize, frameBuffer.FrameBuilder, 0, frameBuffer.FrameBuilderLength - grossFrameSize);
-                frameBuffer.FrameBuilderLength -= grossFrameSize;
-
-                var framePayload = ExtractFramePayload(serializationProvider, frameBody);
-
-                if (framePayload is FramePayloadBytes frameNotificationBytes)
-                {
-                    if (processNotificationCallback == null)
-                    {
-                        throw new Exception("ProcessFrameBuffer: A notification handler was not supplied.");
-                    }
-                    processNotificationCallback(frameNotificationBytes);
-                }
-                else if (framePayload is IRmQueryReply reply)
-                {
-                    // A reply to a query was received, we need to find the waiting query - set the reply payload data and trigger the wait event.
-                    var waitingQuery = _queriesAwaitingReplies.Use(o => o.Single(o => o.FrameBodyId == frameBody.Id));
-                    waitingQuery.ReplyPayload = reply;
-                    waitingQuery.WaitEvent.Set();
-                }
-                else if (framePayload is IRmNotification notification)
-                {
-                    if (processNotificationCallback == null)
-                    {
-                        throw new Exception("ProcessFrameBuffer: A notification handler was not supplied.");
-                    }
-                    processNotificationCallback(notification);
-                }
-                else if (Utility.ImplementsGenericInterfaceWithArgument(framePayload.GetType(), typeof(IRmQuery<>), typeof(IRmQueryReply)))
-                {
-                    if (processFrameQueryCallback == null)
-                    {
-                        throw new Exception("ProcessFrameBuffer: A query handler was not supplied.");
-                    }
-                    var replyPayload = processFrameQueryCallback(framePayload);
-                    stream.WriteReplyFrame(context, frameBody, replyPayload, serializationProvider, compressionProvider, cryptographyProvider);
-                }
-                else
-                {
-                    throw new Exception("ProcessFrameBuffer: Encountered undefined frame payload type.");
                 }
             }
         }
