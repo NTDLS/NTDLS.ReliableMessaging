@@ -235,29 +235,29 @@ namespace NTDLS.ReliableMessaging
             => _activeConnection.EnsureNotNull().Context.Notify(notification);
 
         /// <summary>
-        /// Sends a query to the specified client and expects a reply.
+        /// Sends a query to the specified client and expects a reply, using the default timeout.
         /// </summary>
         /// <typeparam name="T">The type of reply that is expected.</typeparam>
         /// <param name="query">The query message to send.</param>
         /// <returns>Returns the result of the query.</returns>
         public Task<T> Query<T>(IRmQuery<T> query) where T : IRmQueryReply
-            => _activeConnection.EnsureNotNull().Context.Query<T>(query);
+            => _activeConnection.EnsureNotNull().Context.Query<T>(query, _configuration.QueryResponseTimeoutMs);
 
         /// <summary>
-        /// Sends a query to the specified client and expects a reply.
+        /// Sends a query to the specified client and expects a reply, using the default timeout.
         /// </summary>
         /// <typeparam name="T">The type of reply that is expected.</typeparam>
         /// <param name="query">The query message to send.</param>
         /// <returns>Returns the result of the query.</returns>
         public async Task<T> QueryAsync<T>(IRmQuery<T> query) where T : IRmQueryReply
-            => await _activeConnection.EnsureNotNull().Context.QueryAsync<T>(query);
+            => await _activeConnection.EnsureNotNull().Context.QueryAsync<T>(query, _configuration.QueryResponseTimeoutMs);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply.
         /// </summary>
         /// <typeparam name="T">The type of reply that is expected.</typeparam>
         /// <param name="query">The query message to send.</param>
-        /// <param name="queryTimeout">The number of milliseconds to wait on a reply to the query.</param>
+        /// <param name="queryTimeout">The number of milliseconds to wait on a reply to the query (-1 = infinite).</param>
         /// <returns>Returns the result of the query.</returns>
         public Task<T> Query<T>(IRmQuery<T> query, int queryTimeout) where T : IRmQueryReply
             => _activeConnection.EnsureNotNull().Context.Query<T>(query, queryTimeout);
@@ -267,7 +267,7 @@ namespace NTDLS.ReliableMessaging
         /// </summary>
         /// <typeparam name="T">The type of reply that is expected.</typeparam>
         /// <param name="query">The query message to send.</param>
-        /// <param name="queryTimeout">The number of milliseconds to wait on a reply to the query.</param>
+        /// <param name="queryTimeout">The number of milliseconds to wait on a reply to the query (-1 = infinite).</param>
         /// <returns>Returns the result of the query.</returns>
         public async Task<T> QueryAsync<T>(IRmQuery<T> query, int queryTimeout) where T : IRmQueryReply
             => await _activeConnection.EnsureNotNull().Context.QueryAsync<T>(query, queryTimeout);

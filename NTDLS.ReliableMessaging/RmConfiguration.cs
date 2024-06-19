@@ -8,6 +8,10 @@ namespace NTDLS.ReliableMessaging
     public class RmConfiguration
     {
         /// <summary>
+        /// The default number of miliseconds to wait for a query to reply before throwing a timeout exception. -1 = infinite.
+        /// </summary>
+        public int QueryResponseTimeoutMs { get; set; } = 30 * 1000;
+        /// <summary>
         /// The initial size in bytes of the receive buffer. If the buffer ever gets full while receiving data it will be automatically resized up to MaxReceiveBufferSize.
         /// </summary>
         public int InitialReceiveBufferSize { get; set; } = NtFrameDefaults.INITIAL_BUFFER_SIZE;

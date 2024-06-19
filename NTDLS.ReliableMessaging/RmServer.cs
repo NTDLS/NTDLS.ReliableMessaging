@@ -323,7 +323,7 @@ namespace NTDLS.ReliableMessaging
         }
 
         /// <summary>
-        /// Sends a query to the specified client and expects a reply.
+        /// Sends a query to the specified client and expects a reply, using the default timeout.
         /// </summary>
         /// <typeparam name="T">The type of reply that is expected.</typeparam>
         /// <param name="connectionId">The connection id of the client</param>
@@ -335,11 +335,11 @@ namespace NTDLS.ReliableMessaging
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
                 ?? throw new Exception($"The connection with id {connectionId} was not found.");
 
-            return await connection.Context.Query(query);
+            return await connection.Context.Query(query, _configuration.QueryResponseTimeoutMs);
         }
 
         /// <summary>
-        /// Sends a query to the specified client and expects a reply.
+        /// Sends a query to the specified client and expects a reply, using the default timeout.
         /// </summary>
         /// <typeparam name="T">The type of reply that is expected.</typeparam>
         /// <param name="connectionId">The connection id of the client</param>
@@ -351,7 +351,7 @@ namespace NTDLS.ReliableMessaging
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
                 ?? throw new Exception($"The connection with id {connectionId} was not found.");
 
-            return await connection.Context.QueryAsync(query);
+            return await connection.Context.QueryAsync(query, _configuration.QueryResponseTimeoutMs);
         }
 
         /// <summary>
@@ -360,7 +360,7 @@ namespace NTDLS.ReliableMessaging
         /// <typeparam name="T">The type of reply that is expected.</typeparam>
         /// <param name="connectionId">The connection id of the client</param>
         /// <param name="query">The query message to send.</param>
-        /// <param name="queryTimeout">The number of milliseconds to wait on a reply to the query.</param>
+        /// <param name="queryTimeout">The number of milliseconds to wait on a reply to the query (-1 = infinite).</param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         public async Task<T> Query<T>(Guid connectionId, IRmQuery<T> query, int queryTimeout) where T : IRmQueryReply
@@ -377,7 +377,7 @@ namespace NTDLS.ReliableMessaging
         /// <typeparam name="T">The type of reply that is expected.</typeparam>
         /// <param name="connectionId">The connection id of the client</param>
         /// <param name="query">The query message to send.</param>
-        /// <param name="queryTimeout">The number of milliseconds to wait on a reply to the query.</param>
+        /// <param name="queryTimeout">The number of milliseconds to wait on a reply to the query (-1 = infinite).</param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         public async Task<T> QueryAsync<T>(Guid connectionId, IRmQuery<T> query, int queryTimeout) where T : IRmQueryReply

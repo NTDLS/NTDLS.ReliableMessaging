@@ -150,24 +150,6 @@ namespace NTDLS.ReliableMessaging
         /// </summary>
         /// <typeparam name="T">The type of reply that is expected.</typeparam>
         /// <param name="query">The query message to send.</param>
-        /// <returns>Returns the result of the query.</returns>
-        public Task<T> QueryAsync<T>(IRmQuery<T> query) where T : IRmQueryReply
-            => Stream.WriteQueryFrameAsync(this, query, -1, _serializationProvider, _compressionProvider, _cryptographyProvider);
-
-        /// <summary>
-        /// Sends a query to the specified client and expects a reply.
-        /// </summary>
-        /// <typeparam name="T">The type of reply that is expected.</typeparam>
-        /// <param name="query">The query message to send.</param>
-        /// <returns>Returns the result of the query.</returns>
-        public Task<T> Query<T>(IRmQuery<T> query) where T : IRmQueryReply
-            => Stream.WriteQueryFrame(this, query, -1, _serializationProvider, _compressionProvider, _cryptographyProvider);
-
-        /// <summary>
-        /// Sends a query to the specified client and expects a reply.
-        /// </summary>
-        /// <typeparam name="T">The type of reply that is expected.</typeparam>
-        /// <param name="query">The query message to send.</param>
         /// <param name="queryTimeout">The number of milliseconds to wait on a reply to the query.</param>
         /// <returns>Returns the result of the query.</returns>
         public Task<T> QueryAsync<T>(IRmQuery<T> query, int queryTimeout) where T : IRmQueryReply
