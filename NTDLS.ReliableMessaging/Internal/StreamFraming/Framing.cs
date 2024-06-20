@@ -1,4 +1,5 @@
-﻿using NTDLS.ReliableMessaging.Internal.Payloads;
+﻿using NTDLS.Helpers;
+using NTDLS.ReliableMessaging.Internal.Payloads;
 using NTDLS.Semaphore;
 using System.Reflection;
 using System.Text;
@@ -129,7 +130,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 throw new Exception("SendStreamFramePayload stream can not be null.");
             }
 
-            var FrameBody = new FrameBody(framePayload, typeof(T));
+            var FrameBody = new FrameBody(serializationProvider, framePayload, typeof(T));
 
             var queryAwaitingReply = new QueryAwaitingReply(FrameBody.Id);
 
@@ -160,9 +161,9 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                     throw ex.Exception;
                 }
 
-                if (queryAwaitingReply.ReplyPayload is T)
+                if (queryAwaitingReply.ReplyPayload is T t)
                 {
-                    return (T)queryAwaitingReply.ReplyPayload;
+                    return t;
                 }
 
                 throw new Exception($"The query expected a reply of type '{typeof(T).Name}'.");
@@ -191,7 +192,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 throw new Exception("SendStreamFramePayload stream can not be null.");
             }
 
-            var FrameBody = new FrameBody(framePayload, typeof(T));
+            var FrameBody = new FrameBody(serializationProvider, framePayload, typeof(T));
 
             var queryAwaitingReply = new QueryAwaitingReply(FrameBody.Id);
 
@@ -220,9 +221,9 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 throw ex.Exception;
             }
 
-            if (queryAwaitingReply.ReplyPayload is T)
+            if (queryAwaitingReply.ReplyPayload is T t)
             {
-                return Task.FromResult((T)queryAwaitingReply.ReplyPayload);
+                return Task.FromResult(t);
             }
 
             throw new Exception($"The query expected a reply of type '{typeof(T).Name}'.");
@@ -464,7 +465,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 }
                 catch (Exception ex)
                 {
-                    onException?.Invoke(context, Utility.GetBaseException(ex), framePayload);
+                    onException?.Invoke(context, Exceptions.GetRootException(ex), framePayload);
                     SkipFrame(ref frameBuffer);
                     continue;
                 }

@@ -11,7 +11,7 @@
         public Exception Exception { get; set; }
 
         /// <summary>
-        /// Instanciates an empty instance of the QueryException.
+        /// Instantiates an empty instance of the QueryException.
         /// </summary>
         public FramePayloadQueryReplyException()
         {
@@ -19,7 +19,7 @@
         }
 
         /// <summary>
-        /// Instanciates an instance of the QueryException.
+        /// Instantiates an instance of the QueryException.
         /// </summary>
         /// <param name="ex"></param>
         public FramePayloadQueryReplyException(Exception ex)

@@ -96,7 +96,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         }
 
         /// <summary>
-        /// Instanciates a new frame buffer with a default initial size of 16KB, a max size of 1MB and a growth rate of 0.1 (10%).
+        /// Instantiates a new frame buffer with a default initial size of 16KB, a max size of 1MB and a growth rate of 0.1 (10%).
         /// </summary>
         public FrameBuffer()
         {

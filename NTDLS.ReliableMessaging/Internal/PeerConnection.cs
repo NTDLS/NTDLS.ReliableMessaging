@@ -1,4 +1,5 @@
-﻿using NTDLS.ReliableMessaging.Internal.Payloads;
+﻿using NTDLS.Helpers;
+using NTDLS.ReliableMessaging.Internal.Payloads;
 using NTDLS.ReliableMessaging.Internal.StreamFraming;
 using System.Net.Sockets;
 using static NTDLS.ReliableMessaging.Internal.StreamFraming.Framing;
@@ -63,7 +64,7 @@ namespace NTDLS.ReliableMessaging.Internal
                 }
                 catch (Exception ex)
                 {
-                    Context.Endpoint.InvokeOnException(Context, Utility.GetBaseException(ex), null);
+                    Context.Endpoint.InvokeOnException(Context, Exceptions.GetRootException(ex), null);
                 }
             }
 
@@ -96,7 +97,7 @@ namespace NTDLS.ReliableMessaging.Internal
             }
             catch (Exception ex)
             {
-                Context.Endpoint.InvokeOnException(Context, Utility.GetBaseException(ex), payload);
+                Context.Endpoint.InvokeOnException(Context, Exceptions.GetRootException(ex), payload);
             }
         }
 
@@ -129,8 +130,8 @@ namespace NTDLS.ReliableMessaging.Internal
             }
             catch (Exception ex)
             {
-                Context.Endpoint.InvokeOnException(Context, Utility.GetBaseException(ex), payload);
-                return new FramePayloadQueryReplyException(Utility.GetBaseException(ex));
+                Context.Endpoint.InvokeOnException(Context, Exceptions.GetRootException(ex), payload);
+                return new FramePayloadQueryReplyException(Exceptions.GetRootException(ex));
             }
         }
 

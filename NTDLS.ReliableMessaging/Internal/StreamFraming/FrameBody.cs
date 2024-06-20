@@ -4,7 +4,7 @@ using System.Text;
 namespace NTDLS.ReliableMessaging.Internal.StreamFraming
 {
     /// <summary>
-    /// Comprises the bosy of the frame. Contains the payload and all information needed to deserialize it.
+    /// Comprises the body of the frame. Contains the payload and all information needed to deserialize it.
     /// </summary>
     [Serializable]
     [ProtoContract]
@@ -29,13 +29,13 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         public string? ExpectedReplyType { get; set; }
 
         /// <summary>
-        /// Sometimes we just need to send a byte array without all the overhead of json, thats when we use BytesPayload.
+        /// Sometimes we just need to send a byte array without all the overhead of json, that's when we use BytesPayload.
         /// </summary>
         [ProtoMember(4)]
         public byte[] Bytes { get; set; } = Array.Empty<byte>();
 
         /// <summary>
-        /// Instanciates a frame payload with a serialized payload.
+        /// Instantiates a frame payload with a serialized payload.
         /// </summary>
         public FrameBody(IRmSerializationProvider? serializationProvider, IRmPayload framePayload)
         {
@@ -52,19 +52,25 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         }
 
         /// <summary>
-        /// Instanciates a frame payload with a serialized payload and expected reply type (for queries).
+        /// Instantiates a frame payload with a serialized payload and expected reply type (for queries).
         /// </summary>
-        /// <param name="framePayload"></param>
-        /// <param name="expectedReplyType"></param>
-        public FrameBody(IRmPayload framePayload, Type expectedReplyType)
+        public FrameBody(IRmSerializationProvider? serializationProvider, IRmPayload framePayload, Type expectedReplyType)
         {
             ExpectedReplyType = expectedReplyType?.AssemblyQualifiedName ?? string.Empty;
             ObjectType = framePayload.GetType()?.AssemblyQualifiedName ?? string.Empty;
-            Bytes = Encoding.UTF8.GetBytes(Utility.RmSerializeFramePayloadToText(framePayload));
+
+            if (serializationProvider == null) //Using custom serialization?
+            {
+                Bytes = Encoding.UTF8.GetBytes(Utility.RmSerializeFramePayloadToText(framePayload));
+            }
+            else //Using default serialization?
+            {
+                Bytes = Encoding.UTF8.GetBytes(serializationProvider.SerializeToText(framePayload));
+            }
         }
 
         /// <summary>
-        /// Instanciates a frame payload using a raw byte array.
+        /// Instantiates a frame payload using a raw byte array.
         /// </summary>
         /// <param name="bytesPayload"></param>
         public FrameBody(byte[] bytesPayload)
@@ -74,7 +80,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         }
 
         /// <summary>
-        /// Instanciates a frame payload.
+        /// Instantiates a frame payload.
         /// </summary>
         public FrameBody()
         {

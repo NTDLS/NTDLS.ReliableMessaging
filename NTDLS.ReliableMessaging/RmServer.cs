@@ -1,4 +1,5 @@
-﻿using NTDLS.ReliableMessaging.Internal;
+﻿using NTDLS.Helpers;
+using NTDLS.ReliableMessaging.Internal;
 using NTDLS.Semaphore;
 using System.Net;
 using System.Net.Sockets;
@@ -218,7 +219,7 @@ namespace NTDLS.ReliableMessaging
                 return;
             }
             _keepRunning = false;
-            Utility.TryAndIgnore(() => _listener?.Stop());
+            Exceptions.Ignore(() => _listener?.Stop());
             _listenerThreadProc?.Join();
             _activeConnections.Use((o) =>
             {

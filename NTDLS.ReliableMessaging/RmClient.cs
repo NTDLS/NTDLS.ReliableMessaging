@@ -1,4 +1,5 @@
-﻿using NTDLS.ReliableMessaging.Internal;
+﻿using NTDLS.Helpers;
+using NTDLS.ReliableMessaging.Internal;
 using System.Net;
 using System.Net.Sockets;
 

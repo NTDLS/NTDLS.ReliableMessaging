@@ -12,7 +12,7 @@
         public byte[] Bytes { get; set; }
 
         /// <summary>
-        /// Instanciates a new frame payload from a byte array.
+        /// Instantiates a new frame payload from a byte array.
         /// </summary>
         /// <param name="bytes"></param>
         public FramePayloadBytes(byte[] bytes)

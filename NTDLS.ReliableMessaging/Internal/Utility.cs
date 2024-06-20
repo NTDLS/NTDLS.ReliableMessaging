@@ -11,41 +11,12 @@ namespace NTDLS.ReliableMessaging.Internal
             TypeNameHandling = TypeNameHandling.All
         };
 
-        public delegate void TryAndIgnoreProc();
-        public delegate T TryAndIgnoreProc<T>();
-
         public static bool ImplementsGenericInterfaceWithArgument(Type type, Type genericInterface, Type argumentType)
         {
             return type.GetInterfaces().Any(interfaceType =>
                 interfaceType.IsGenericType &&
                 interfaceType.GetGenericTypeDefinition() == genericInterface &&
                 interfaceType.GetGenericArguments().Any(arg => argumentType.IsAssignableFrom(arg)));
-        }
-
-        public static Exception GetBaseException(Exception ex)
-        {
-            if (ex.InnerException != null)
-            {
-                return GetBaseException(ex.InnerException);
-            }
-            return ex;
-        }
-
-        /// <summary>
-        /// We didn't need that exception! Did we?... DID WE?!
-        /// </summary>
-        public static void TryAndIgnore(TryAndIgnoreProc func)
-        {
-            try { func(); } catch { }
-        }
-
-        /// <summary>
-        /// We didn't need that exception! Did we?... DID WE?!
-        /// </summary>
-        public static T? TryAndIgnore<T>(TryAndIgnoreProc<T> func)
-        {
-            try { return func(); } catch { }
-            return default;
         }
 
         public static byte[] SerializeToByteArray(object obj)
