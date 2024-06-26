@@ -223,6 +223,12 @@ namespace NTDLS.ReliableMessaging
             => _activeConnection?.Disconnect(true);
 
         /// <summary>
+        /// Disconnects the client from the server.
+        /// </summary>
+        public void Disconnect(bool wait)
+            => _activeConnection?.Disconnect(wait);
+
+        /// <summary>
         /// Gets the connection context.
         /// </summary>
         public RmContext? GetClient()
