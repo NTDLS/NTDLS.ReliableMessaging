@@ -1,12 +1,12 @@
 ﻿namespace NTDLS.ReliableMessaging.Internal.Payloads
 {
     /// <summary>
-    /// Used when an exception occurs durring a query.
+    /// Used when an exception occurs during a query.
     /// </summary>
-    internal class FramePayloadQueryReplyException : IRmQueryReply
+    public class FramePayloadQueryReplyException : IRmQueryReply
     {
         /// <summary>
-        /// The exception that occured while executing the query.
+        /// The exception that occurred while executing the query.
         /// </summary>
         public Exception Exception { get; set; }
 

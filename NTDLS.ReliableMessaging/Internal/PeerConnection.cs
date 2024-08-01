@@ -130,8 +130,10 @@ namespace NTDLS.ReliableMessaging.Internal
             }
             catch (Exception ex)
             {
-                Context.Endpoint.InvokeOnException(Context, Exceptions.GetRootException(ex), payload);
-                return new FramePayloadQueryReplyException(Exceptions.GetRootException(ex));
+                var rootException = Exceptions.GetRootException(ex);
+
+                Context.Endpoint.InvokeOnException(Context, rootException, payload);
+                return new FramePayloadQueryReplyException(new Exception(rootException.Message, ex));
             }
         }
 
