@@ -64,7 +64,7 @@ namespace NTDLS.ReliableMessaging.Internal
                 }
                 catch (Exception ex)
                 {
-                    Context.Endpoint.InvokeOnException(Context, Exceptions.GetRootException(ex), null);
+                    Context.Endpoint.InvokeOnException(Context, ex.GetRoot() ?? ex, null);
                 }
             }
 
@@ -97,7 +97,7 @@ namespace NTDLS.ReliableMessaging.Internal
             }
             catch (Exception ex)
             {
-                Context.Endpoint.InvokeOnException(Context, Exceptions.GetRootException(ex), payload);
+                Context.Endpoint.InvokeOnException(Context, ex.GetRoot() ?? ex, payload);
             }
         }
 

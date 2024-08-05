@@ -15,7 +15,7 @@
     <PackageReleaseNotes>
       Various changes to async tasks and changed the way exceptions are communicated back to the query caller.
     </PackageReleaseNotes>
-    <Version>1.9.0</Version>
+    <Version>1.9.1</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>rpc;tcpip;ipc;stream;encryption;messaging;message-framing;</PackageTags>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -46,7 +46,7 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="NTDLS.Helpers" Version="1.2.5" />
+    <PackageReference Include="NTDLS.Helpers" Version="1.2.6" />
     <PackageReference Include="NTDLS.Semaphore" Version="3.3.2" />
     <PackageReference Include="protobuf-net" Version="3.2.30" />
   </ItemGroup>

@@ -485,7 +485,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 }
                 catch (Exception ex)
                 {
-                    onException?.Invoke(context, Exceptions.GetRootException(ex), framePayload);
+                    onException?.Invoke(context, ex.GetRoot() ?? ex, framePayload);
                     SkipFrame(ref frameBuffer);
                     continue;
                 }
