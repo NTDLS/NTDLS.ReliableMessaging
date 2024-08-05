@@ -33,7 +33,9 @@ namespace NTDLS.ReliableMessaging
         #region Events.
 
         /// <summary>
-        /// Event fired when an exception occurs.
+        /// Event fired when an exception occurs. Note that when exceptions are thrown by the
+        /// recipient of a query, then the exception is passed back to the caller and the
+        /// exception can be handled via the Task object.
         /// </summary>
         public event ExceptionEvent? OnException;
         /// <summary>
@@ -188,7 +190,7 @@ namespace NTDLS.ReliableMessaging
         {
             if (IsConnected)
             {
-                throw new Exception("The client is already connected.");
+                throw new Exception("Client is already connected.");
             }
 
             _tcpClient = new TcpClient(hostName, port);
@@ -206,7 +208,7 @@ namespace NTDLS.ReliableMessaging
         {
             if (IsConnected)
             {
-                throw new Exception("The client is already connected.");
+                throw new Exception("Client is already connected.");
             }
 
             _tcpClient = new TcpClient();
@@ -295,7 +297,7 @@ namespace NTDLS.ReliableMessaging
         {
             if (OnNotificationReceived == null)
             {
-                throw new Exception("The notification event was not handled and no acceptable handler was able to intercept the notification.");
+                throw new Exception("Notification event was not handled and no acceptable handler was able to intercept the notification.");
             }
             OnNotificationReceived.Invoke(context, payload);
         }
@@ -304,7 +306,7 @@ namespace NTDLS.ReliableMessaging
         {
             if (OnQueryReceived == null)
             {
-                throw new Exception("The query event was not handled and no acceptable handler was able to intercept the query.");
+                throw new Exception("Query event was not handled and no acceptable handler was able to intercept the query.");
             }
             return OnQueryReceived.Invoke(context, payload);
         }

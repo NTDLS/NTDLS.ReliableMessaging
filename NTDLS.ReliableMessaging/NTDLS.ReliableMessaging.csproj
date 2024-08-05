@@ -13,9 +13,9 @@
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageReleaseNotes>
-      Dependency updates.
+      Various changes to async tasks and changed the way exceptions are communicated back to the query caller.
     </PackageReleaseNotes>
-    <Version>1.8.8</Version>
+    <Version>1.9.0</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>rpc;tcpip;ipc;stream;encryption;messaging;message-framing;</PackageTags>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>

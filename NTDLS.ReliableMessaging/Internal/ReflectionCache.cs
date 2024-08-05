@@ -39,7 +39,7 @@ namespace NTDLS.ReliableMessaging.Internal
             public CachedMethodType MethodType { get; private set; }
 
             /// <summary>
-            /// Creates a new instace of the CachedMethod class.
+            /// Creates a new instance of the CachedMethod class.
             /// </summary>
             /// <param name="methodType"></param>
             /// <param name="method"></param>
@@ -57,7 +57,7 @@ namespace NTDLS.ReliableMessaging.Internal
         {
             _instanceCache.Add(handlerClass.GetType(), handlerClass);
 
-            CacheConventionBasedEventingMethods(handlerClass);
+            CacheConventionBasedEveningMethods(handlerClass);
         }
 
         internal bool GetCachedMethod(Type type, [NotNullWhen(true)] out CachedMethod? cachedMethod)
@@ -102,7 +102,7 @@ namespace NTDLS.ReliableMessaging.Internal
             return true;
         }
 
-        internal void CacheConventionBasedEventingMethods(IRmMessageHandler handlerClass)
+        internal void CacheConventionBasedEveningMethods(IRmMessageHandler handlerClass)
         {
             foreach (var method in handlerClass.GetType().GetMethods())
             {

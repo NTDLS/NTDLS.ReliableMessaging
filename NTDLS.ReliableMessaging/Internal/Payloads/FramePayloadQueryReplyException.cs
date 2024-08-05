@@ -8,14 +8,17 @@
         /// <summary>
         /// The exception that occurred while executing the query.
         /// </summary>
-        public Exception Exception { get; set; }
+        public string Message { get; set; } = string.Empty;
+
+        /// The exception source that occurred while executing the query.
+        public string? Source { get; set; }
+
 
         /// <summary>
         /// Instantiates an empty instance of the QueryException.
         /// </summary>
         public FramePayloadQueryReplyException()
         {
-            Exception = new Exception("Unhandled exception");
         }
 
         /// <summary>
@@ -24,7 +27,20 @@
         /// <param name="ex"></param>
         public FramePayloadQueryReplyException(Exception ex)
         {
-            Exception = ex;
+            Message = ex.Message;
+            Source = ex.Source;
+        }
+
+        /// <summary>
+        /// Returns an exception with the original exception message.
+        /// </summary>
+        /// <returns></returns>
+        public Exception GetException()
+        {
+            return new Exception(Message)
+            {
+                Source = Source,
+            };
         }
     }
 }

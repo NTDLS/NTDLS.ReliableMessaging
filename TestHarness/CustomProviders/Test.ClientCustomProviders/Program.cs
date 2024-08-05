@@ -40,8 +40,7 @@ namespace Test.Client
 
             client.OnException += (RmContext? context, Exception ex, IRmPayload? payload) =>
             {
-                // Handle the OnException event, otherwise the client will ignore any exceptions.
-                Console.WriteLine($"RPC Client exception: {ex.Message}");
+                Console.WriteLine($"RPC client exception: {ex.Message}");
             };
 
             //Send a query to the server, specify which type of reply we expect.
@@ -51,6 +50,10 @@ namespace Test.Client
                 if (x.IsCompletedSuccessfully && x.Result != null)
                 {
                     Console.WriteLine($"Client received query reply: '{x.Result.Message}'");
+                }
+                else
+                {
+                    Console.WriteLine($"Exception: '{x.Exception?.GetBaseException()?.Message}'");
                 }
             });
 

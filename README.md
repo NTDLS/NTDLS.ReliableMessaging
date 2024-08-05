@@ -54,6 +54,10 @@ static void Main()
         {
             Console.WriteLine($"Client received query reply: '{x.Result.Message}'");
         }
+        else
+        {
+            Console.WriteLine($"Exception: '{x.Exception?.GetBaseException()?.Message}'");
+        }
     });
 
     Console.WriteLine("Press [enter] to shutdown.");
@@ -110,7 +114,7 @@ private static IRmQueryReply Server_OnQueryReceived(RmContext context, IRmPayloa
     }
     else
     {
-        throw new Exception("The payload type was not handled.");
+        throw new Exception("Payload type was not handled.");
     }
 }
 
@@ -122,7 +126,7 @@ private static void Server_OnNotificationReceived(RmContext context, IRmNotifica
     }
     else
     {
-        throw new Exception("The payload type was not handled.");
+        throw new Exception("Payload type was not handled.");
     }
 }
 ```

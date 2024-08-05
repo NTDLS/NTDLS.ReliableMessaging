@@ -52,7 +52,8 @@ namespace NTDLS.ReliableMessaging.Internal
 
         public static byte[] Compress(byte[]? bytes)
         {
-            if (bytes == null) return Array.Empty<byte>();
+            if (bytes == null)
+                return Array.Empty<byte>();
 
             using var msi = new MemoryStream(bytes);
             using var mso = new MemoryStream();

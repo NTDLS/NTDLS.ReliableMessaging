@@ -318,7 +318,7 @@ namespace NTDLS.ReliableMessaging
         public void Notify(Guid connectionId, IRmNotification notification)
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
-                ?? throw new Exception($"The connection with id {connectionId} was not found.");
+                ?? throw new Exception($"Connection with id {connectionId} was not found.");
 
             connection.Context.Notify(notification);
         }
@@ -334,7 +334,7 @@ namespace NTDLS.ReliableMessaging
         public async Task<T> Query<T>(Guid connectionId, IRmQuery<T> query) where T : IRmQueryReply
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
-                ?? throw new Exception($"The connection with id {connectionId} was not found.");
+                ?? throw new Exception($"Connection with id {connectionId} was not found.");
 
             return await connection.Context.Query(query, _configuration.QueryResponseTimeoutMs);
         }
@@ -350,7 +350,7 @@ namespace NTDLS.ReliableMessaging
         public async Task<T> QueryAsync<T>(Guid connectionId, IRmQuery<T> query) where T : IRmQueryReply
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
-                ?? throw new Exception($"The connection with id {connectionId} was not found.");
+                ?? throw new Exception($"Connection with id {connectionId} was not found.");
 
             return await connection.Context.QueryAsync(query, _configuration.QueryResponseTimeoutMs);
         }
@@ -367,7 +367,7 @@ namespace NTDLS.ReliableMessaging
         public async Task<T> Query<T>(Guid connectionId, IRmQuery<T> query, int queryTimeout) where T : IRmQueryReply
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
-                ?? throw new Exception($"The connection with id {connectionId} was not found.");
+                ?? throw new Exception($"Connection with id {connectionId} was not found.");
 
             return await connection.Context.Query(query, queryTimeout);
         }
@@ -384,7 +384,7 @@ namespace NTDLS.ReliableMessaging
         public async Task<T> QueryAsync<T>(Guid connectionId, IRmQuery<T> query, int queryTimeout) where T : IRmQueryReply
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
-                ?? throw new Exception($"The connection with id {connectionId} was not found.");
+                ?? throw new Exception($"Connection with id {connectionId} was not found.");
 
             return await connection.Context.QueryAsync(query, queryTimeout);
         }
@@ -412,7 +412,7 @@ namespace NTDLS.ReliableMessaging
         {
             if (OnNotificationReceived == null)
             {
-                throw new Exception("The notification hander event was not handled.");
+                throw new Exception("Notification hander event was not handled.");
             }
             OnNotificationReceived.Invoke(context, payload);
         }
@@ -421,7 +421,7 @@ namespace NTDLS.ReliableMessaging
         {
             if (OnQueryReceived == null)
             {
-                throw new Exception("The query hander event was not handled.");
+                throw new Exception("Query hander event was not handled.");
             }
             return OnQueryReceived.Invoke(context, payload);
         }

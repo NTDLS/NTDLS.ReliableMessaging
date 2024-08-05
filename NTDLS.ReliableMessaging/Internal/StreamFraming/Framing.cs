@@ -45,10 +45,8 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <returns></returns>
         public delegate IRmSerializationProvider? GetSerializationProviderCallback();
 
-
         private static readonly PessimisticCriticalResource<Dictionary<string, MethodInfo>> _reflectionCache = new();
         private static readonly PessimisticCriticalResource<List<QueryAwaitingReply>> _queriesAwaitingReplies = new();
-
 
         #region Extension methods.
 
@@ -73,7 +71,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         {
             if (stream == null)
             {
-                throw new Exception("ReceiveAndProcessStreamFrames: stream can not be null.");
+                throw new ArgumentNullException(nameof(stream), "Stream can not be null.");
             }
 
             if (frameBuffer.ReadStream(stream))
@@ -125,40 +123,41 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             IRmQuery<T> framePayload, int queryTimeout, IRmSerializationProvider? serializationProvider,
             IRmCompressionProvider? compressionProvider, IRmCryptographyProvider? cryptographyProvider) where T : IRmQueryReply
         {
-            if (stream == null)
+            QueryAwaitingReply? queryAwaitingReply = null;
+
+            try
             {
-                throw new Exception("SendStreamFramePayload stream can not be null.");
-            }
-
-            var FrameBody = new FrameBody(serializationProvider, framePayload, typeof(T));
-
-            var queryAwaitingReply = new QueryAwaitingReply(FrameBody.Id);
-
-            _queriesAwaitingReplies.Use(o => o.Add(queryAwaitingReply));
-
-            return await Task.Run(() =>
-            {
-                var frameBytes = AssembleFrame(context, FrameBody, compressionProvider, cryptographyProvider);
-                stream.Write(frameBytes, 0, frameBytes.Length);
-
-                //Wait for a reply. When a reply is received, it will be routed to the correct query via ApplyQueryReply().
-                //ApplyQueryReply() will apply the payload data to queryAwaitingReply and trigger the wait event.
-                if (queryAwaitingReply.WaitEvent.WaitOne(queryTimeout) == false)
+                if (stream == null)
                 {
-                    _queriesAwaitingReplies.Use(o => o.Remove(queryAwaitingReply));
-                    throw new Exception("Query timeout expired while waiting on reply.");
+                    throw new ArgumentNullException(nameof(stream), "Stream can not be null.");
                 }
+
+                var frameBody = new FrameBody(serializationProvider, framePayload, typeof(T));
+                queryAwaitingReply = new QueryAwaitingReply(frameBody.Id);
+
+                _queriesAwaitingReplies.Use(o => o.Add(queryAwaitingReply));
+
+                var frameBytes = AssembleFrame(context, frameBody, compressionProvider, cryptographyProvider);
+                await stream.WriteAsync(frameBytes);
+
+                await Task.Run(() => // Wait for a reply asynchronously
+                {
+                    if (!queryAwaitingReply.WaitEvent.WaitOne(queryTimeout))
+                    {
+                        throw new Exception("Query timeout expired while waiting on reply.");
+                    }
+                });
 
                 _queriesAwaitingReplies.Use(o => o.Remove(queryAwaitingReply));
 
                 if (queryAwaitingReply.ReplyPayload == null)
                 {
-                    throw new Exception("The reply payload can not be null.");
+                    throw new ArgumentNullException("Reply payload can not be null.");
                 }
 
                 if (queryAwaitingReply.ReplyPayload is FramePayloadQueryReplyException ex)
                 {
-                    throw ex.Exception;
+                    throw ex.GetException();
                 }
 
                 if (queryAwaitingReply.ReplyPayload is T t)
@@ -166,8 +165,16 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                     return t;
                 }
 
-                throw new Exception($"The query expected a reply of type '{typeof(T).Name}'.");
-            });
+                throw new Exception($"Query expected a reply of type '{typeof(T).Name}', received '{queryAwaitingReply.ReplyPayload.GetType().Name}'.");
+            }
+            catch (Exception ex)
+            {
+                if (queryAwaitingReply != null)
+                {
+                    _queriesAwaitingReplies.Use(o => o.Remove(queryAwaitingReply));
+                }
+                return await Task.FromException<T>(ex);
+            }
         }
 
         /// <summary>
@@ -187,46 +194,59 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             IRmQuery<T> framePayload, int queryTimeout, IRmSerializationProvider? serializationProvider,
             IRmCompressionProvider? compressionProvider, IRmCryptographyProvider? cryptographyProvider) where T : IRmQueryReply
         {
-            if (stream == null)
+            QueryAwaitingReply? queryAwaitingReply = null;
+
+            try
             {
-                throw new Exception("SendStreamFramePayload stream can not be null.");
-            }
+                if (stream == null)
+                {
+                    throw new ArgumentNullException(nameof(stream), "Stream can not be null.");
+                }
 
-            var FrameBody = new FrameBody(serializationProvider, framePayload, typeof(T));
+                var frameBody = new FrameBody(serializationProvider, framePayload, typeof(T));
+                queryAwaitingReply = new QueryAwaitingReply(frameBody.Id);
 
-            var queryAwaitingReply = new QueryAwaitingReply(FrameBody.Id);
+                _queriesAwaitingReplies.Use(o => o.Add(queryAwaitingReply));
 
-            _queriesAwaitingReplies.Use(o => o.Add(queryAwaitingReply));
+                var frameBytes = AssembleFrame(context, frameBody, compressionProvider, cryptographyProvider);
+                stream.Write(frameBytes);
 
-            var frameBytes = AssembleFrame(context, FrameBody, compressionProvider, cryptographyProvider);
-            stream.Write(frameBytes, 0, frameBytes.Length);
+                //Wait for a reply. When a reply is received, it will be routed to the correct query via ApplyQueryReply().
+                //ApplyQueryReply() will apply the payload data to queryAwaitingReply and trigger the wait event.
+                if (queryAwaitingReply.WaitEvent.WaitOne(queryTimeout) == false)
+                {
+                    _queriesAwaitingReplies.Use(o => o.Remove(queryAwaitingReply));
+                    throw new Exception("Query timeout expired while waiting on reply.");
+                }
 
-            //Wait for a reply. When a reply is received, it will be routed to the correct query via ApplyQueryReply().
-            //ApplyQueryReply() will apply the payload data to queryAwaitingReply and trigger the wait event.
-            if (queryAwaitingReply.WaitEvent.WaitOne(queryTimeout) == false)
-            {
                 _queriesAwaitingReplies.Use(o => o.Remove(queryAwaitingReply));
-                throw new Exception("Query timeout expired while waiting on reply.");
+
+                if (queryAwaitingReply.ReplyPayload == null)
+                {
+                    throw new Exception("Reply payload can not be null.");
+                }
+
+                if (queryAwaitingReply.ReplyPayload is FramePayloadQueryReplyException ex)
+                {
+                    throw ex.GetException();
+                }
+
+                if (queryAwaitingReply.ReplyPayload is T t)
+                {
+                    return Task.FromResult(t);
+                }
+
+                throw new Exception($"Query expected a reply of type '{typeof(T).Name}', received '{queryAwaitingReply.ReplyPayload.GetType().Name}'.");
             }
-
-            _queriesAwaitingReplies.Use(o => o.Remove(queryAwaitingReply));
-
-            if (queryAwaitingReply.ReplyPayload == null)
+            catch (Exception ex)
             {
-                throw new Exception("The reply payload can not be null.");
-            }
+                if (queryAwaitingReply != null)
+                {
+                    _queriesAwaitingReplies.Use(o => o.Remove(queryAwaitingReply));
+                }
 
-            if (queryAwaitingReply.ReplyPayload is FramePayloadQueryReplyException ex)
-            {
-                throw ex.Exception;
+                return Task.FromException<T>(ex);
             }
-
-            if (queryAwaitingReply.ReplyPayload is T t)
-            {
-                return Task.FromResult(t);
-            }
-
-            throw new Exception($"The query expected a reply of type '{typeof(T).Name}'.");
         }
 
         /// <summary>
@@ -246,7 +266,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         {
             if (stream == null)
             {
-                throw new Exception("SendStreamFramePayload stream can not be null.");
+                throw new ArgumentNullException(nameof(stream), "Stream can not be null.");
             }
 
             var frameBody = new FrameBody(serializationProvider, framePayload)
@@ -274,7 +294,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         {
             if (stream == null)
             {
-                throw new Exception("SendStreamFramePayload stream can not be null.");
+                throw new ArgumentNullException(nameof(stream), "Stream can not be null.");
             }
 
             var frameBody = new FrameBody(serializationProvider, framePayload);
@@ -297,7 +317,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         {
             if (stream == null)
             {
-                throw new Exception("SendStreamFramePayload stream can not be null.");
+                throw new ArgumentNullException(nameof(stream), "Stream can not be null.");
             }
 
             var frameBody = new FrameBody(framePayload);
@@ -391,7 +411,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 {
                     if (frameDelimiter != NtFrameDefaults.FRAME_DELIMITER || grossFrameSize < 0)
                     {
-                        throw new Exception("ProcessFrameBuffer: Frame was corrupted.");
+                        throw new Exception("Frame was corrupted.");
                     }
 
                     if (frameBuffer.FrameBuilderLength < grossFrameSize)
@@ -403,7 +423,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
 
                     if (CRC16.ComputeChecksum(frameBuffer.FrameBuilder, NtFrameDefaults.FRAME_HEADER_SIZE, grossFrameSize - NtFrameDefaults.FRAME_HEADER_SIZE) != expectedCRC16)
                     {
-                        throw new Exception("ProcessFrameBuffer: Frame was corrupted (size discrepancy).");
+                        throw new Exception("Frame was corrupted (size discrepancy).");
                     }
 
                     var netFrameSize = grossFrameSize - NtFrameDefaults.FRAME_HEADER_SIZE;
@@ -430,7 +450,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                     {
                         if (processNotificationCallback == null)
                         {
-                            throw new Exception("ProcessFrameBuffer: A notification handler was not supplied.");
+                            throw new Exception("Notification handler was not supplied.");
                         }
                         processNotificationCallback(frameNotificationBytes);
                     }
@@ -445,7 +465,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                     {
                         if (processNotificationCallback == null)
                         {
-                            throw new Exception("ProcessFrameBuffer: A notification handler was not supplied.");
+                            throw new Exception("Notification handler was not supplied.");
                         }
                         processNotificationCallback(notification);
                     }
@@ -453,14 +473,14 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                     {
                         if (processFrameQueryCallback == null)
                         {
-                            throw new Exception("ProcessFrameBuffer: A query handler was not supplied.");
+                            throw new Exception("Query handler was not supplied.");
                         }
                         var replyPayload = processFrameQueryCallback(framePayload);
                         stream.WriteReplyFrame(context, frameBody, replyPayload, serializationProvider, compressionProvider, cryptographyProvider);
                     }
                     else
                     {
-                        throw new Exception("ProcessFrameBuffer: Encountered undefined frame payload type.");
+                        throw new Exception($"Undefined frame payload type: '{framePayload.GetType()?.Name}'.");
                     }
                 }
                 catch (Exception ex)
@@ -502,14 +522,14 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             {
                 //Call the generic deserialization:
                 return (IRmPayload?)genericToObjectMethod.Invoke(null, new object?[] { serializationProvider, json })
-                    ?? throw new Exception($"ExtractFramePayload: Payload can not be null.");
+                    ?? throw new Exception($"Extraction payload can not be null.");
             }
 
             var genericType = Type.GetType(frame.ObjectType)
-                ?? throw new Exception($"ExtractFramePayload: Unknown payload type {frame.ObjectType}.");
+                ?? throw new Exception($"Unknown extraction payload type {frame.ObjectType}.");
 
             var toObjectMethod = typeof(Utility).GetMethod("RmDeserializeFramePayloadToObject")
-                    ?? throw new Exception($"ExtractFramePayload: Could not find RmDeserializeFramePayloadToObject().");
+                    ?? throw new Exception($"Could not resolve RmDeserializeFramePayloadToObject().");
 
             genericToObjectMethod = toObjectMethod.MakeGenericMethod(genericType);
 
@@ -517,7 +537,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
 
             //Call the generic deserialization:
             return (IRmPayload?)genericToObjectMethod.Invoke(null, new object?[] { serializationProvider, json })
-                ?? throw new Exception($"ExtractFramePayload: Payload can not be null.");
+                ?? throw new Exception($"Extraction payload can not be null.");
         }
     }
 }

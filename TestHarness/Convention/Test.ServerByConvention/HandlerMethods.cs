@@ -1,4 +1,4 @@
-﻿using NTDLS.ReliableMessaging;
+using NTDLS.ReliableMessaging;
 using TestHarness.Payloads;
 
 namespace TestHarness
@@ -13,6 +13,7 @@ namespace TestHarness
         public MyQueryReply MyQueryReceived(RmContext context, MyQuery query)
         {
             Console.WriteLine($"Server received query: '{query.Message}'");
+
             return new MyQueryReply("This is the query reply from the server.");
         }
     }

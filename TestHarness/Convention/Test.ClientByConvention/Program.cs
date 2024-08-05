@@ -18,17 +18,20 @@ namespace Test.Client
 
             client.OnException += (RmContext? context, Exception ex, IRmPayload? payload) =>
             {
-                // Handle the OnException event, otherwise the client will ignore any exceptions.
-                Console.WriteLine($"RPC Client exception: {ex.Message}");
+                Console.WriteLine($"RPC client exception: {ex.Message}");
             };
 
             //Send a query to the server, specify which type of reply we expect.
-            client.Query(new MyQuery("This is the query from the client.")).ContinueWith(x =>
+            client.Query(new MyQuery("This is the query from the client."), -1).ContinueWith(x =>
             {
                 //If we received a reply, print it to the console.
                 if (x.IsCompletedSuccessfully && x.Result != null)
                 {
                     Console.WriteLine($"Client received query reply: '{x.Result.Message}'");
+                }
+                else
+                {
+                    Console.WriteLine($"Exception: '{x.Exception?.GetBaseException()?.Message}'");
                 }
             });
 

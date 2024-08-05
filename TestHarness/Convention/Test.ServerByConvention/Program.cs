@@ -15,7 +15,7 @@ namespace Test.Server
             server.OnException += (RmContext? context, Exception ex, IRmPayload? payload) =>
             {
                 // Handle the OnException event, otherwise the server will ignore any exceptions.
-                Console.WriteLine($"RPC Client exception: {ex.Message}");
+                Console.WriteLine($"RPC client exception: {ex.Message}");
             };
 
             server.Start(45784);

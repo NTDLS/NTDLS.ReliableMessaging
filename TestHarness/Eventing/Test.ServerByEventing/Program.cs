@@ -30,7 +30,7 @@ namespace Test.Server
             }
             else
             {
-                throw new Exception("The payload type was not handled.");
+                throw new Exception("Payload type was not handled.");
             }
         }
 
@@ -42,13 +42,13 @@ namespace Test.Server
             }
             else
             {
-                throw new Exception("The payload type was not handled.");
+                throw new Exception("Payload type was not handled.");
             }
         }
 
         private static void Server_OnException(RmContext? context, Exception ex, IRmPayload? payload)
         {
-            Console.WriteLine($"RPC Client exception: {ex.Message}");
+            Console.WriteLine($"RPC client exception: {ex.Message}");
         }
     }
 }

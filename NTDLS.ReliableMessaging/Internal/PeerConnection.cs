@@ -122,7 +122,7 @@ namespace NTDLS.ReliableMessaging.Internal
                                 break;
                         }
 
-                        return result ?? throw new Exception("The query must return a valid instance of IRmQueryReply.");
+                        return result ?? throw new Exception("Query must return a valid instance of IRmQueryReply.");
                     }
                 }
 
@@ -130,10 +130,10 @@ namespace NTDLS.ReliableMessaging.Internal
             }
             catch (Exception ex)
             {
-                var rootException = Exceptions.GetRootException(ex);
+                var rootException = ex.GetBaseException();
 
                 Context.Endpoint.InvokeOnException(Context, rootException, payload);
-                return new FramePayloadQueryReplyException(new Exception(rootException.Message, ex));
+                return new FramePayloadQueryReplyException(rootException);
             }
         }
 
