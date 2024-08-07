@@ -17,7 +17,7 @@ namespace NTDLS.ReliableMessaging
         /// <summary>
         /// Get or sets the default query timeout.
         /// </summary>
-        public TimeSpan QueryTimeout => _configuration.QueryTimeout;
+        public TimeSpan QueryTimeout { get => _configuration.QueryTimeout; set => _configuration.QueryTimeout = value; }
 
         /// <summary>
         /// Cache of class instances and method reflection information for message handlers.

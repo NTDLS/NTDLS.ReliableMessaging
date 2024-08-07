@@ -20,7 +20,7 @@ namespace NTDLS.ReliableMessaging
         /// <summary>
         /// Get or sets the default query timeout.
         /// </summary>
-        public TimeSpan QueryTimeout => _configuration.QueryTimeout;
+        public TimeSpan QueryTimeout { get => _configuration.QueryTimeout; set => _configuration.QueryTimeout = value; }
 
         /// <summary>
         /// A user settable object that can be accessed via the Context.Endpoint.Parameter Especially useful for convention based calls.

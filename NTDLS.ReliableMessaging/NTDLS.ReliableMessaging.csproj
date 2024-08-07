@@ -15,7 +15,7 @@
     <PackageReleaseNotes>
       Added public QueryTimeout, converted it to a TimeSpan.
     </PackageReleaseNotes>
-    <Version>1.9.2</Version>
+    <Version>1.9.3</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>rpc;tcpip;ipc;stream;encryption;messaging;message-framing;</PackageTags>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
