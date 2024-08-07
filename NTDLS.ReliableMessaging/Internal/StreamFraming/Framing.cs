@@ -120,7 +120,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <returns>Returns the reply payload that is written to the stream from the recipient of the query.</returns>
         /// <exception cref="Exception"></exception>
         public static async Task<T> WriteQueryFrameAsync<T>(this Stream stream, RmContext context,
-            IRmQuery<T> framePayload, int queryTimeout, IRmSerializationProvider? serializationProvider,
+            IRmQuery<T> framePayload, TimeSpan queryTimeout, IRmSerializationProvider? serializationProvider,
             IRmCompressionProvider? compressionProvider, IRmCryptographyProvider? cryptographyProvider) where T : IRmQueryReply
         {
             QueryAwaitingReply? queryAwaitingReply = null;
@@ -152,7 +152,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
 
                 if (queryAwaitingReply.ReplyPayload == null)
                 {
-                    throw new ArgumentNullException("Reply payload can not be null.");
+                    throw new Exception("Reply payload can not be null.");
                 }
 
                 if (queryAwaitingReply.ReplyPayload is FramePayloadQueryReplyException ex)
@@ -191,7 +191,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <returns>Returns the reply payload that is written to the stream from the recipient of the query.</returns>
         /// <exception cref="Exception"></exception>
         public static Task<T> WriteQueryFrame<T>(this Stream stream, RmContext context,
-            IRmQuery<T> framePayload, int queryTimeout, IRmSerializationProvider? serializationProvider,
+            IRmQuery<T> framePayload, TimeSpan queryTimeout, IRmSerializationProvider? serializationProvider,
             IRmCompressionProvider? compressionProvider, IRmCryptographyProvider? cryptographyProvider) where T : IRmQueryReply
         {
             QueryAwaitingReply? queryAwaitingReply = null;

@@ -18,6 +18,11 @@ namespace NTDLS.ReliableMessaging
         private readonly RmConfiguration _configuration;
 
         /// <summary>
+        /// Get or sets the default query timeout.
+        /// </summary>
+        public TimeSpan QueryTimeout => _configuration.QueryTimeout;
+
+        /// <summary>
         /// A user settable object that can be accessed via the Context.Endpoint.Parameter Especially useful for convention based calls.
         /// </summary>
         public object? Parameter { get => _configuration.Parameter; set => _configuration.Parameter = value; }
@@ -336,7 +341,7 @@ namespace NTDLS.ReliableMessaging
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
                 ?? throw new Exception($"Connection with id {connectionId} was not found.");
 
-            return await connection.Context.Query(query, _configuration.QueryResponseTimeoutMs);
+            return await connection.Context.Query(query, _configuration.QueryTimeout);
         }
 
         /// <summary>
@@ -352,7 +357,7 @@ namespace NTDLS.ReliableMessaging
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
                 ?? throw new Exception($"Connection with id {connectionId} was not found.");
 
-            return await connection.Context.QueryAsync(query, _configuration.QueryResponseTimeoutMs);
+            return await connection.Context.QueryAsync(query, _configuration.QueryTimeout);
         }
 
         /// <summary>
@@ -364,7 +369,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="queryTimeout">The number of milliseconds to wait on a reply to the query (-1 = infinite).</param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task<T> Query<T>(Guid connectionId, IRmQuery<T> query, int queryTimeout) where T : IRmQueryReply
+        public async Task<T> Query<T>(Guid connectionId, IRmQuery<T> query, TimeSpan queryTimeout) where T : IRmQueryReply
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
                 ?? throw new Exception($"Connection with id {connectionId} was not found.");
@@ -381,7 +386,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="queryTimeout">The number of milliseconds to wait on a reply to the query (-1 = infinite).</param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task<T> QueryAsync<T>(Guid connectionId, IRmQuery<T> query, int queryTimeout) where T : IRmQueryReply
+        public async Task<T> QueryAsync<T>(Guid connectionId, IRmQuery<T> query, TimeSpan queryTimeout) where T : IRmQueryReply
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
                 ?? throw new Exception($"Connection with id {connectionId} was not found.");

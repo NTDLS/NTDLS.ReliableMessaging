@@ -12,6 +12,7 @@ namespace Test.Client
 
             client.Connect("localhost", 45784);
 
+
             client.Notify(new MyNotification("This is message 001 from the client."));
             client.Notify(new MyNotification("This is message 002 from the client."));
             client.Notify(new MyNotification("This is message 003 from the client."));

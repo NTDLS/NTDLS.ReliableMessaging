@@ -45,9 +45,8 @@ namespace NTDLS.ReliableMessaging
         /// <summary>
         /// Creates a new ReliableMessagingContext instance.
         /// </summary>
-        public RmContext(IRmEndpoint endpoint, TcpClient tcpClient,
-            IRmSerializationProvider? serializationProvider, IRmCompressionProvider? compressionProvider, IRmCryptographyProvider? cryptographyProvider,
-            Thread thread, NetworkStream stream)
+        public RmContext(IRmEndpoint endpoint, TcpClient tcpClient, IRmSerializationProvider? serializationProvider,
+            IRmCompressionProvider? compressionProvider, IRmCryptographyProvider? cryptographyProvider, Thread thread, NetworkStream stream)
         {
             _serializationProvider = serializationProvider;
             _compressionProvider = compressionProvider;
@@ -152,7 +151,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="query">The query message to send.</param>
         /// <param name="queryTimeout">The number of milliseconds to wait on a reply to the query.</param>
         /// <returns>Returns the result of the query.</returns>
-        public Task<T> QueryAsync<T>(IRmQuery<T> query, int queryTimeout) where T : IRmQueryReply
+        public Task<T> QueryAsync<T>(IRmQuery<T> query, TimeSpan queryTimeout) where T : IRmQueryReply
             => Stream.WriteQueryFrameAsync(this, query, queryTimeout, _serializationProvider, _compressionProvider, _cryptographyProvider);
 
         /// <summary>
@@ -162,7 +161,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="query">The query message to send.</param>
         /// <param name="queryTimeout">The number of milliseconds to wait on a reply to the query.</param>
         /// <returns>Returns the result of the query.</returns>
-        public Task<T> Query<T>(IRmQuery<T> query, int queryTimeout) where T : IRmQueryReply
+        public Task<T> Query<T>(IRmQuery<T> query, TimeSpan queryTimeout) where T : IRmQueryReply
             => Stream.WriteQueryFrame(this, query, queryTimeout, _serializationProvider, _compressionProvider, _cryptographyProvider);
 
         #endregion
