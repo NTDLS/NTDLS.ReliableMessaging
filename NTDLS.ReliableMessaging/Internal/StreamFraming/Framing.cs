@@ -46,7 +46,21 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         public delegate IRmSerializationProvider? GetSerializationProviderCallback();
 
         private static readonly PessimisticCriticalResource<Dictionary<string, MethodInfo>> _reflectionCache = new();
-        private static readonly PessimisticCriticalResource<List<QueryAwaitingReply>> _queriesAwaitingReplies = new();
+
+        /// <summary>
+        /// When a connection is dropped, we need to make sure that we cancel any waiting queries.
+        /// </summary>
+        internal static void TerminateWaitingQueries(RmContext context, Guid connectionId)
+        {
+            var waitingQueries = context.QueriesAwaitingReplies.Use(o => o.Where(o => o.ConnectionId == connectionId));
+
+            foreach (var waitingQuery in waitingQueries)
+            {
+                waitingQuery.Exception = new Exception("The connection was terminated.");
+                waitingQuery.ReplyPayload = null;
+                waitingQuery.WaitEvent.Set();
+            }
+        }
 
         #region Extension methods.
 
@@ -100,6 +114,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
 
                 stream.ProcessFrameBuffer(context, onException, frameBuffer, processNotificationCallback,
                     processFrameQueryCallback, serializationProvider, compressionProvider, cryptographyProvider);
+
                 return true;
             }
 
@@ -133,9 +148,9 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 }
 
                 var frameBody = new FrameBody(serializationProvider, framePayload, typeof(T));
-                queryAwaitingReply = new QueryAwaitingReply(frameBody.Id);
+                queryAwaitingReply = new QueryAwaitingReply(frameBody.Id, context.ConnectionId);
 
-                _queriesAwaitingReplies.Use(o => o.Add(queryAwaitingReply));
+                context.QueriesAwaitingReplies.Use(o => o.Add(queryAwaitingReply));
 
                 var frameBytes = AssembleFrame(context, frameBody, compressionProvider, cryptographyProvider);
                 await stream.WriteAsync(frameBytes);
@@ -148,11 +163,16 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                     }
                 });
 
-                _queriesAwaitingReplies.Use(o => o.Remove(queryAwaitingReply));
+                context.QueriesAwaitingReplies.Use(o => o.Remove(queryAwaitingReply));
+
+                if (queryAwaitingReply.Exception != null)
+                {
+                    throw queryAwaitingReply.Exception;
+                }
 
                 if (queryAwaitingReply.ReplyPayload == null)
                 {
-                    throw new Exception("Reply payload can not be null.");
+                    throw new Exception("Reply payload was empty.");
                 }
 
                 if (queryAwaitingReply.ReplyPayload is FramePayloadQueryReplyException ex)
@@ -171,7 +191,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             {
                 if (queryAwaitingReply != null)
                 {
-                    _queriesAwaitingReplies.Use(o => o.Remove(queryAwaitingReply));
+                    context.QueriesAwaitingReplies.Use(o => o.Remove(queryAwaitingReply));
                 }
                 return await Task.FromException<T>(ex);
             }
@@ -204,9 +224,9 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 }
 
                 var frameBody = new FrameBody(serializationProvider, framePayload, typeof(T));
-                queryAwaitingReply = new QueryAwaitingReply(frameBody.Id);
+                queryAwaitingReply = new QueryAwaitingReply(frameBody.Id, context.ConnectionId);
 
-                _queriesAwaitingReplies.Use(o => o.Add(queryAwaitingReply));
+                context.QueriesAwaitingReplies.Use(o => o.Add(queryAwaitingReply));
 
                 var frameBytes = AssembleFrame(context, frameBody, compressionProvider, cryptographyProvider);
                 stream.Write(frameBytes);
@@ -215,15 +235,20 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 //ApplyQueryReply() will apply the payload data to queryAwaitingReply and trigger the wait event.
                 if (queryAwaitingReply.WaitEvent.WaitOne(queryTimeout) == false)
                 {
-                    _queriesAwaitingReplies.Use(o => o.Remove(queryAwaitingReply));
+                    context.QueriesAwaitingReplies.Use(o => o.Remove(queryAwaitingReply));
                     throw new Exception("Query timeout expired while waiting on reply.");
                 }
 
-                _queriesAwaitingReplies.Use(o => o.Remove(queryAwaitingReply));
+                context.QueriesAwaitingReplies.Use(o => o.Remove(queryAwaitingReply));
+
+                if (queryAwaitingReply.Exception != null)
+                {
+                    throw queryAwaitingReply.Exception;
+                }
 
                 if (queryAwaitingReply.ReplyPayload == null)
                 {
-                    throw new Exception("Reply payload can not be null.");
+                    throw new Exception("Reply payload was empty.");
                 }
 
                 if (queryAwaitingReply.ReplyPayload is FramePayloadQueryReplyException ex)
@@ -242,7 +267,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             {
                 if (queryAwaitingReply != null)
                 {
-                    _queriesAwaitingReplies.Use(o => o.Remove(queryAwaitingReply));
+                    context.QueriesAwaitingReplies.Use(o => o.Remove(queryAwaitingReply));
                 }
 
                 return Task.FromException<T>(ex);
@@ -457,7 +482,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                     else if (framePayload is IRmQueryReply reply)
                     {
                         // A reply to a query was received, we need to find the waiting query - set the reply payload data and trigger the wait event.
-                        var waitingQuery = _queriesAwaitingReplies.Use(o => o.Single(o => o.FrameBodyId == frameBody.Id));
+                        var waitingQuery = context.QueriesAwaitingReplies.Use(o => o.Single(o => o.FrameBodyId == frameBody.Id));
                         waitingQuery.ReplyPayload = reply;
                         waitingQuery.WaitEvent.Set();
                     }

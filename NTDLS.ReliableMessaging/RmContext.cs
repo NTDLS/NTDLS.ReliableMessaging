@@ -1,4 +1,5 @@
 ﻿using NTDLS.ReliableMessaging.Internal.StreamFraming;
+using NTDLS.Semaphore;
 using System.Net.Sockets;
 using static NTDLS.ReliableMessaging.Internal.StreamFraming.Framing;
 
@@ -12,6 +13,9 @@ namespace NTDLS.ReliableMessaging
         private IRmSerializationProvider? _serializationProvider = null;
         private IRmCompressionProvider? _compressionProvider = null;
         private IRmCryptographyProvider? _cryptographyProvider = null;
+
+        internal PessimisticCriticalResource<List<QueryAwaitingReply>> QueriesAwaitingReplies { get; set; } = new();
+
 
         #region Public Properties.
 

@@ -1,5 +1,6 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.ReliableMessaging.Internal;
+using NTDLS.ReliableMessaging.Internal.StreamFraming;
 using NTDLS.Semaphore;
 using System.Net;
 using System.Net.Sockets;
@@ -408,8 +409,19 @@ namespace NTDLS.ReliableMessaging
         {
             if (_keepRunning) //Avoid a race condition with the client thread waiting on a lock on _activeConnections that is held by Server.Stop().
             {
-                _activeConnections.Use((o) => o.RemoveAll(o => o.ConnectionId == context.ConnectionId));
+                _activeConnections.Use((o) =>
+                {
+                    foreach (var connection in o)
+                    {
+                        Framing.TerminateWaitingQueries(context, connection.ConnectionId);
+                    }
+
+                    o.RemoveAll(o => o.ConnectionId == context.ConnectionId);
+                });
             }
+
+            Framing.TerminateWaitingQueries(context, context.ConnectionId);
+
             OnDisconnected?.Invoke(context);
         }
 

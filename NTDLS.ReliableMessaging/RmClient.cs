@@ -1,5 +1,6 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.ReliableMessaging.Internal;
+using NTDLS.ReliableMessaging.Internal.StreamFraming;
 using System.Net;
 using System.Net.Sockets;
 
@@ -295,6 +296,9 @@ namespace NTDLS.ReliableMessaging
         void IRmEndpoint.InvokeOnDisconnected(RmContext context)
         {
             _activeConnection = null;
+
+            Framing.TerminateWaitingQueries(context, context.ConnectionId);
+
             OnDisconnected?.Invoke(context);
         }
 
