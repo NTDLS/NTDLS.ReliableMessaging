@@ -13,12 +13,16 @@ namespace NTDLS.ReliableMessaging
     {
         private TcpClient? _tcpClient;
         private PeerConnection? _activeConnection;
-        private readonly RmConfiguration _configuration;
+
+        /// <summary>
+        /// Configuration that was used to initialize the client.
+        /// </summary>
+        public RmConfiguration Configuration { get; }
 
         /// <summary>
         /// Get or sets the default query timeout.
         /// </summary>
-        public TimeSpan QueryTimeout { get => _configuration.QueryTimeout; set => _configuration.QueryTimeout = value; }
+        public TimeSpan QueryTimeout { get => Configuration.QueryTimeout; set => Configuration.QueryTimeout = value; }
 
         /// <summary>
         /// Cache of class instances and method reflection information for message handlers.
@@ -28,7 +32,7 @@ namespace NTDLS.ReliableMessaging
         /// <summary>
         /// A user settable object that can be accessed via the Context.Endpoint.Parameter Especially useful for convention based calls.
         /// </summary>
-        public object? Parameter { get => _configuration.Parameter; set => _configuration.Parameter = value; }
+        public object? Parameter { get => Configuration.Parameter; set => Configuration.Parameter = value; }
 
         /// <summary>
         /// Returns true if the client is connected.
@@ -102,13 +106,13 @@ namespace NTDLS.ReliableMessaging
         /// </summary>
         public RmClient()
         {
-            _configuration = new();
+            Configuration = new();
         }
 
         /// Creates a new instance of RmClient with the given configuration.
         public RmClient(RmConfiguration configuration)
         {
-            _configuration = configuration;
+            Configuration = configuration;
         }
 
         /// <summary>
@@ -126,7 +130,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="provider"></param>
         public void SetSerializationProvider(IRmSerializationProvider? provider)
         {
-            _configuration.SerializationProvider = provider;
+            Configuration.SerializationProvider = provider;
             _activeConnection?.Context.SetSerializationProvider(provider);
         }
 
@@ -135,7 +139,7 @@ namespace NTDLS.ReliableMessaging
         /// </summary>
         public void ClearSerializationProvider()
         {
-            _configuration.SerializationProvider = null;
+            Configuration.SerializationProvider = null;
             _activeConnection?.Context.SetSerializationProvider(null);
         }
 
@@ -149,7 +153,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="provider"></param>
         public void SetCompressionProvider(IRmCompressionProvider? provider)
         {
-            _configuration.CompressionProvider = provider;
+            Configuration.CompressionProvider = provider;
             _activeConnection?.Context.SetCompressionProvider(provider);
         }
 
@@ -158,7 +162,7 @@ namespace NTDLS.ReliableMessaging
         /// </summary>
         public void ClearCompressionProvider()
         {
-            _configuration.CompressionProvider = null;
+            Configuration.CompressionProvider = null;
             _activeConnection?.Context.SetCryptographyProvider(null);
         }
 
@@ -172,7 +176,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="provider"></param>
         public void SetCryptographyProvider(IRmCryptographyProvider? provider)
         {
-            _configuration.CryptographyProvider = provider;
+            Configuration.CryptographyProvider = provider;
             _activeConnection?.Context.SetCryptographyProvider(provider);
         }
 
@@ -181,7 +185,7 @@ namespace NTDLS.ReliableMessaging
         /// </summary>
         public void ClearCryptographyProvider()
         {
-            _configuration.CryptographyProvider = null;
+            Configuration.CryptographyProvider = null;
             _activeConnection?.Context.SetCryptographyProvider(null);
         }
 
@@ -200,8 +204,8 @@ namespace NTDLS.ReliableMessaging
             }
 
             _tcpClient = new TcpClient(hostName, port);
-            _activeConnection = new PeerConnection(this, _tcpClient, _configuration,
-                _configuration.SerializationProvider, _configuration.CompressionProvider, _configuration.CryptographyProvider);
+            _activeConnection = new PeerConnection(this, _tcpClient, Configuration,
+                Configuration.SerializationProvider, Configuration.CompressionProvider, Configuration.CryptographyProvider);
             _activeConnection.RunAsync();
         }
 
@@ -219,8 +223,8 @@ namespace NTDLS.ReliableMessaging
 
             _tcpClient = new TcpClient();
             _tcpClient.Connect(ipAddress, port);
-            _activeConnection = new PeerConnection(this, _tcpClient, _configuration,
-                                _configuration.SerializationProvider, _configuration.CompressionProvider, _configuration.CryptographyProvider);
+            _activeConnection = new PeerConnection(this, _tcpClient, Configuration,
+                                Configuration.SerializationProvider, Configuration.CompressionProvider, Configuration.CryptographyProvider);
             _activeConnection.RunAsync();
         }
 
@@ -256,7 +260,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="query">The query message to send.</param>
         /// <returns>Returns the result of the query.</returns>
         public Task<T> Query<T>(IRmQuery<T> query) where T : IRmQueryReply
-            => _activeConnection.EnsureNotNull().Context.Query<T>(query, _configuration.QueryTimeout);
+            => _activeConnection.EnsureNotNull().Context.Query<T>(query, Configuration.QueryTimeout);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply, using the default timeout.
@@ -265,7 +269,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="query">The query message to send.</param>
         /// <returns>Returns the result of the query.</returns>
         public async Task<T> QueryAsync<T>(IRmQuery<T> query) where T : IRmQueryReply
-            => await _activeConnection.EnsureNotNull().Context.QueryAsync<T>(query, _configuration.QueryTimeout);
+            => await _activeConnection.EnsureNotNull().Context.QueryAsync<T>(query, Configuration.QueryTimeout);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply.

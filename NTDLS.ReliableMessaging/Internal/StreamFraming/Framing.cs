@@ -153,6 +153,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 context.QueriesAwaitingReplies.Use(o => o.Add(queryAwaitingReply));
 
                 var frameBytes = AssembleFrame(context, frameBody, compressionProvider, cryptographyProvider);
+
                 await stream.WriteAsync(frameBytes);
 
                 await Task.Run(() => // Wait for a reply asynchronously
@@ -229,7 +230,11 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 context.QueriesAwaitingReplies.Use(o => o.Add(queryAwaitingReply));
 
                 var frameBytes = AssembleFrame(context, frameBody, compressionProvider, cryptographyProvider);
-                stream.Write(frameBytes);
+
+                lock (stream)
+                {
+                    stream.Write(frameBytes);
+                }
 
                 //Wait for a reply. When a reply is received, it will be routed to the correct query via ApplyQueryReply().
                 //ApplyQueryReply() will apply the payload data to queryAwaitingReply and trigger the wait event.
@@ -300,7 +305,10 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             };
 
             var frameBytes = AssembleFrame(context, frameBody, compressionProvider, cryptographyProvider);
-            stream.Write(frameBytes, 0, frameBytes.Length);
+            lock (stream)
+            {
+                stream.Write(frameBytes, 0, frameBytes.Length);
+            }
         }
 
         /// <summary>
@@ -325,7 +333,10 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             var frameBody = new FrameBody(serializationProvider, framePayload);
 
             var frameBytes = AssembleFrame(context, frameBody, compressionProvider, cryptographyProvider);
-            stream.Write(frameBytes, 0, frameBytes.Length);
+            lock (stream)
+            {
+                stream.Write(frameBytes, 0, frameBytes.Length);
+            }
         }
 
         /// <summary>
@@ -347,7 +358,11 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
 
             var frameBody = new FrameBody(framePayload);
             var frameBytes = AssembleFrame(context, frameBody, compressionProvider, cryptographyProvider);
-            stream.Write(frameBytes, 0, frameBytes.Length);
+
+            lock (stream)
+            {
+                stream.Write(frameBytes, 0, frameBytes.Length);
+            }
         }
 
         #endregion
@@ -500,8 +515,20 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                         {
                             throw new Exception("Query handler was not supplied.");
                         }
-                        var replyPayload = processFrameQueryCallback(framePayload);
-                        stream.WriteReplyFrame(context, frameBody, replyPayload, serializationProvider, compressionProvider, cryptographyProvider);
+
+                        if (context.Endpoint.Configuration.AsynchronousQueryWaiting)
+                        {
+                            new Thread(() =>
+                            {
+                                var replyPayload = processFrameQueryCallback(framePayload);
+                                stream.WriteReplyFrame(context, frameBody, replyPayload, serializationProvider, compressionProvider, cryptographyProvider);
+                            }).Start();
+                        }
+                        else
+                        {
+                            var replyPayload = processFrameQueryCallback(framePayload);
+                            stream.WriteReplyFrame(context, frameBody, replyPayload, serializationProvider, compressionProvider, cryptographyProvider);
+                        }
                     }
                     else
                     {

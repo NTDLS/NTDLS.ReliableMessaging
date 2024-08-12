@@ -16,7 +16,6 @@ namespace NTDLS.ReliableMessaging
 
         internal PessimisticCriticalResource<List<QueryAwaitingReply>> QueriesAwaitingReplies { get; set; } = new();
 
-
         #region Public Properties.
 
         /// <summary>

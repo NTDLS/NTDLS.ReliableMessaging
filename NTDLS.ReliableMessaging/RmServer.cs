@@ -16,17 +16,21 @@ namespace NTDLS.ReliableMessaging
         private readonly PessimisticCriticalResource<List<PeerConnection>> _activeConnections = new();
         private Thread? _listenerThreadProc;
         private bool _keepRunning;
-        private readonly RmConfiguration _configuration;
+
+        /// <summary>
+        /// Configuration that was used to initialize the server.
+        /// </summary>
+        public RmConfiguration Configuration { get; }
 
         /// <summary>
         /// Get or sets the default query timeout.
         /// </summary>
-        public TimeSpan QueryTimeout { get => _configuration.QueryTimeout; set => _configuration.QueryTimeout = value; }
+        public TimeSpan QueryTimeout { get => Configuration.QueryTimeout; set => Configuration.QueryTimeout = value; }
 
         /// <summary>
         /// A user settable object that can be accessed via the Context.Endpoint.Parameter Especially useful for convention based calls.
         /// </summary>
-        public object? Parameter { get => _configuration.Parameter; set => _configuration.Parameter = value; }
+        public object? Parameter { get => Configuration.Parameter; set => Configuration.Parameter = value; }
 
         /// <summary>
         /// Cache of class instances and method reflection information for message handlers.
@@ -38,7 +42,7 @@ namespace NTDLS.ReliableMessaging
         /// </summary>
         public RmServer()
         {
-            _configuration = new();
+            Configuration = new();
         }
 
         /// <summary>
@@ -46,7 +50,7 @@ namespace NTDLS.ReliableMessaging
         /// </summary>
         public RmServer(RmConfiguration configuration)
         {
-            _configuration = configuration;
+            Configuration = configuration;
         }
 
         #region Events.
@@ -120,7 +124,7 @@ namespace NTDLS.ReliableMessaging
         {
             _activeConnections.Use((o) =>
             {
-                _configuration.SerializationProvider = provider;
+                Configuration.SerializationProvider = provider;
                 o.ForEach(c => c.Context.SetSerializationProvider(provider));
             });
         }
@@ -132,7 +136,7 @@ namespace NTDLS.ReliableMessaging
         {
             _activeConnections.Use((o) =>
             {
-                _configuration.SerializationProvider = null;
+                Configuration.SerializationProvider = null;
                 o.ForEach(c => c.Context.SetSerializationProvider(null));
             });
         }
@@ -149,7 +153,7 @@ namespace NTDLS.ReliableMessaging
         {
             _activeConnections.Use((o) =>
             {
-                _configuration.CompressionProvider = provider;
+                Configuration.CompressionProvider = provider;
                 o.ForEach(c => c.Context.SetCompressionProvider(provider));
             });
         }
@@ -161,7 +165,7 @@ namespace NTDLS.ReliableMessaging
         {
             _activeConnections.Use((o) =>
             {
-                _configuration.CompressionProvider = null;
+                Configuration.CompressionProvider = null;
                 o.ForEach(c => c.Context.SetCompressionProvider(null));
             });
         }
@@ -178,7 +182,7 @@ namespace NTDLS.ReliableMessaging
         {
             _activeConnections.Use((o) =>
             {
-                _configuration.CryptographyProvider = provider;
+                Configuration.CryptographyProvider = provider;
                 o.ForEach(c => c.Context.SetCryptographyProvider(provider));
             });
         }
@@ -190,7 +194,7 @@ namespace NTDLS.ReliableMessaging
         {
             _activeConnections.Use((o) =>
             {
-                _configuration.CryptographyProvider = null;
+                Configuration.CryptographyProvider = null;
                 o.ForEach(c => c.Context.SetCryptographyProvider(null));
             });
         }
@@ -285,8 +289,8 @@ namespace NTDLS.ReliableMessaging
                     {
                         if (_keepRunning) //Check again, we may have received a connection while shutting down.
                         {
-                            var activeConnection = new PeerConnection(this, tcpClient, _configuration,
-                                _configuration.SerializationProvider, _configuration.CompressionProvider, _configuration.CryptographyProvider);
+                            var activeConnection = new PeerConnection(this, tcpClient, Configuration,
+                                Configuration.SerializationProvider, Configuration.CompressionProvider, Configuration.CryptographyProvider);
                             _activeConnections.Use((o) => o.Add(activeConnection));
                             activeConnection.RunAsync();
                         }
@@ -342,7 +346,7 @@ namespace NTDLS.ReliableMessaging
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
                 ?? throw new Exception($"Connection with id {connectionId} was not found.");
 
-            return await connection.Context.Query(query, _configuration.QueryTimeout);
+            return await connection.Context.Query(query, Configuration.QueryTimeout);
         }
 
         /// <summary>
@@ -358,7 +362,7 @@ namespace NTDLS.ReliableMessaging
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
                 ?? throw new Exception($"Connection with id {connectionId} was not found.");
 
-            return await connection.Context.QueryAsync(query, _configuration.QueryTimeout);
+            return await connection.Context.QueryAsync(query, Configuration.QueryTimeout);
         }
 
         /// <summary>
