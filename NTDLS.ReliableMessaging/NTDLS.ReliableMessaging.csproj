@@ -14,8 +14,9 @@
     <RepositoryType>Git</RepositoryType>
     <PackageReleaseNotes>
       Handle asynchronous query waiting thread exception.
+      Ditched threads for asynchronous query waiting.
     </PackageReleaseNotes>
-    <Version>1.10.1</Version>
+    <Version>1.10.2</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>rpc;tcpip;ipc;stream;encryption;messaging;message-framing;</PackageTags>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>

@@ -78,7 +78,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <param name="getEncryptionProviderCallback">An optional callback to get the callback that is called to allow for manipulation of bytes after they are received.</param>
         /// <returns>Returns true if the stream is healthy, returns false if disconnected.</returns>
         /// <exception cref="Exception"></exception>
-        public static bool ReadAndProcessFrames(this Stream stream, RmContext context, RmEvents.ExceptionEvent? onException, FrameBuffer frameBuffer,
+        public static async Task<bool> ReadAndProcessFrames(this Stream stream, RmContext context, RmEvents.ExceptionEvent? onException, FrameBuffer frameBuffer,
             ProcessFrameNotificationCallback? processNotificationCallback, ProcessFrameQueryCallback? processFrameQueryCallback,
             GetSerializationProviderCallback? getSerializationProviderCallback, GetCompressionProviderCallback? getCompressionProviderCallback,
             GetEncryptionProviderCallback? getEncryptionProviderCallback)
@@ -112,7 +112,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                     cryptographyProvider = getEncryptionProviderCallback();
                 }
 
-                stream.ProcessFrameBuffer(context, onException, frameBuffer, processNotificationCallback,
+                await stream.ProcessFrameBuffer(context, onException, frameBuffer, processNotificationCallback,
                     processFrameQueryCallback, serializationProvider, compressionProvider, cryptographyProvider);
 
                 return true;
@@ -297,13 +297,13 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <param name="compressionProvider">An optional callback that is called to allow for manipulation of bytes before they are framed.</param>
         /// <param name="cryptographyProvider">An optional callback that is called to allow for manipulation of bytes before they are framed.</param>
         /// <exception cref="Exception"></exception>
-        public static void WriteReplyFrame(this Stream stream, RmContext context, FrameBody queryFrameBody,
+        public static async Task WriteReplyFrameAsync(this Stream stream, RmContext context, FrameBody queryFrameBody,
             IRmQueryReply framePayload, IRmSerializationProvider? serializationProvider,
             IRmCompressionProvider? compressionProvider, IRmCryptographyProvider? cryptographyProvider)
         {
             if (stream == null)
             {
-                throw new ArgumentNullException(nameof(stream), "Stream can not be null.");
+                throw new ArgumentNullException(nameof(stream), "Stream cannot be null.");
             }
 
             var frameBody = new FrameBody(serializationProvider, framePayload)
@@ -312,18 +312,28 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             };
 
             var frameBytes = AssembleFrame(context, frameBody, compressionProvider, cryptographyProvider);
-            lock (stream)
+
+            // Ensure thread-safety with async operations by using a SemaphoreSlim or similar construct if necessary
+            await Task.Run(() =>
             {
-                if (context.TcpClient.Connected)
+                lock (stream)
                 {
-                    if (!stream.CanWrite)
+                    if (context.TcpClient.Connected)
                     {
-                        throw new Exception("Peer is connected but stream is unwritable.");
+                        if (!stream.CanWrite)
+                        {
+                            throw new Exception("Peer is connected but stream is unwritable.");
+                        }
                     }
-                    stream.Write(frameBytes, 0, frameBytes.Length);
                 }
+            });
+
+            if (context.TcpClient.Connected && stream.CanWrite)
+            {
+                await stream.WriteAsync(frameBytes, 0, frameBytes.Length);
             }
         }
+
 
         /// <summary>
         /// Sends a one-time fire-and-forget notification to the stream.
@@ -440,7 +450,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             frameBuffer.FrameBuilderLength = 0;
         }
 
-        private static void ProcessFrameBuffer(this Stream stream, RmContext context,
+        private static async Task ProcessFrameBuffer(this Stream stream, RmContext context,
             RmEvents.ExceptionEvent? onException, FrameBuffer frameBuffer,
             ProcessFrameNotificationCallback? processNotificationCallback,
             ProcessFrameQueryCallback? processFrameQueryCallback,
@@ -546,25 +556,13 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
 
                         if (context.Endpoint.Configuration.AsynchronousQueryWaiting)
                         {
-                            new Thread(() =>
-                            {
-                                IRmQueryReply? replyPayload = null;
-
-                                try
-                                {
-                                    replyPayload = processFrameQueryCallback(framePayload);
-                                    stream.WriteReplyFrame(context, frameBody, replyPayload, serializationProvider, compressionProvider, cryptographyProvider);
-                                }
-                                catch (Exception ex)
-                                {
-                                    context.Endpoint.InvokeOnException(context, ex, replyPayload);
-                                }
-                            }).Start();
+                            var replyPayload = await Task.Run(() => processFrameQueryCallback(framePayload));
+                            await stream.WriteReplyFrameAsync(context, frameBody, replyPayload, serializationProvider, compressionProvider, cryptographyProvider);
                         }
                         else
                         {
                             var replyPayload = processFrameQueryCallback(framePayload);
-                            stream.WriteReplyFrame(context, frameBody, replyPayload, serializationProvider, compressionProvider, cryptographyProvider);
+                            await stream.WriteReplyFrameAsync(context, frameBody, replyPayload, serializationProvider, compressionProvider, cryptographyProvider);
                         }
                     }
                     else

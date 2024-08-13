@@ -14,7 +14,7 @@ namespace TestHarness
         {
             Console.WriteLine($"Server received query: '{query.Message}'");
 
-            return new MyQueryReply("This is the query reply from the server.");
+            return new MyQueryReply("This is query reply from the server.");
         }
     }
 }

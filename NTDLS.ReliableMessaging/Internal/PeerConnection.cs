@@ -34,7 +34,7 @@ namespace NTDLS.ReliableMessaging.Internal
         public TcpClient GetClient()
             => Context.TcpClient;
 
-        internal void DataPumpThreadProc()
+        internal async void DataPumpThreadProc()
         {
 #if DEBUG
             Thread.CurrentThread.Name = $"ReliableMessaging:PeerConnection:{Context.ConnectionId}";
@@ -45,7 +45,7 @@ namespace NTDLS.ReliableMessaging.Internal
             {
                 try
                 {
-                    while (Context.Stream.ReadAndProcessFrames(
+                    while (await Context.Stream.ReadAndProcessFrames(
                         Context, Context.Endpoint.InvokeOnException, _frameBuffer,
                         (payload) => OnNotificationReceived(payload),
                         (payload) => OnQueryReceived(payload),
