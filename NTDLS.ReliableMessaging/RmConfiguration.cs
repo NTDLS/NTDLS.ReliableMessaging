@@ -8,7 +8,7 @@ namespace NTDLS.ReliableMessaging
     public class RmConfiguration
     {
         /// <summary>
-        /// When true, queries replies are waited in seperate threads. Otherwise, queries block other activities.
+        /// When true, query replies are queued in a thread pool. Otherwise, queries block other activities.
         /// </summary>
         public bool AsynchronousQueryWaiting { get; set; } = true;
 
