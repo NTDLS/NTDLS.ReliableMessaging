@@ -233,7 +233,14 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
 
                 lock (stream)
                 {
-                    stream.Write(frameBytes);
+                    if (context.TcpClient.Connected)
+                    {
+                        if (!stream.CanWrite)
+                        {
+                            throw new Exception("Peer is connected but stream is unwritable.");
+                        }
+                        stream.Write(frameBytes);
+                    }
                 }
 
                 //Wait for a reply. When a reply is received, it will be routed to the correct query via ApplyQueryReply().
@@ -307,7 +314,14 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             var frameBytes = AssembleFrame(context, frameBody, compressionProvider, cryptographyProvider);
             lock (stream)
             {
-                stream.Write(frameBytes, 0, frameBytes.Length);
+                if (context.TcpClient.Connected)
+                {
+                    if (!stream.CanWrite)
+                    {
+                        throw new Exception("Peer is connected but stream is unwritable.");
+                    }
+                    stream.Write(frameBytes, 0, frameBytes.Length);
+                }
             }
         }
 
@@ -335,7 +349,14 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             var frameBytes = AssembleFrame(context, frameBody, compressionProvider, cryptographyProvider);
             lock (stream)
             {
-                stream.Write(frameBytes, 0, frameBytes.Length);
+                if (context.TcpClient.Connected)
+                {
+                    if (!stream.CanWrite)
+                    {
+                        throw new Exception("Peer is connected but stream is unwritable.");
+                    }
+                    stream.Write(frameBytes, 0, frameBytes.Length);
+                }
             }
         }
 
@@ -361,7 +382,14 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
 
             lock (stream)
             {
-                stream.Write(frameBytes, 0, frameBytes.Length);
+                if (context.TcpClient.Connected)
+                {
+                    if (!stream.CanWrite)
+                    {
+                        throw new Exception("Peer is connected but stream is unwritable.");
+                    }
+                    stream.Write(frameBytes, 0, frameBytes.Length);
+                }
             }
         }
 
@@ -520,8 +548,17 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                         {
                             new Thread(() =>
                             {
-                                var replyPayload = processFrameQueryCallback(framePayload);
-                                stream.WriteReplyFrame(context, frameBody, replyPayload, serializationProvider, compressionProvider, cryptographyProvider);
+                                IRmQueryReply? replyPayload = null;
+
+                                try
+                                {
+                                    replyPayload = processFrameQueryCallback(framePayload);
+                                    stream.WriteReplyFrame(context, frameBody, replyPayload, serializationProvider, compressionProvider, cryptographyProvider);
+                                }
+                                catch (Exception ex)
+                                {
+                                    context.Endpoint.InvokeOnException(context, ex, replyPayload);
+                                }
                             }).Start();
                         }
                         else
