@@ -13,10 +13,9 @@
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageReleaseNotes>
-      Handle asynchronous query waiting thread exception.
-      Ditched dedicated threads for asynchronous query waiting.
+      Threaded collection modification.
     </PackageReleaseNotes>
-    <Version>1.10.4</Version>
+    <Version>1.10.5</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>rpc;tcpip;ipc;stream;encryption;messaging;message-framing;</PackageTags>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>

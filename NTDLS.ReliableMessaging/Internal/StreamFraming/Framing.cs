@@ -52,14 +52,15 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// </summary>
         internal static void TerminateWaitingQueries(RmContext context, Guid connectionId)
         {
-            var waitingQueries = context.QueriesAwaitingReplies.Use(o => o.Where(o => o.ConnectionId == connectionId));
-
-            foreach (var waitingQuery in waitingQueries)
+            context.QueriesAwaitingReplies.Use(o =>
             {
-                waitingQuery.Exception = new Exception("The connection was terminated.");
-                waitingQuery.ReplyPayload = null;
-                waitingQuery.WaitEvent.Set();
-            }
+                foreach (var waitingQuery in o.Where(o => o.ConnectionId == connectionId))
+                {
+                    waitingQuery.Exception = new Exception("The connection was terminated.");
+                    waitingQuery.ReplyPayload = null;
+                    waitingQuery.WaitEvent.Set();
+                }
+            });
         }
 
         #region Extension methods.
