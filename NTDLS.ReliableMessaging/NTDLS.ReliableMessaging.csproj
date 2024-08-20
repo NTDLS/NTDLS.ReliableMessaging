@@ -13,9 +13,9 @@
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageReleaseNotes>
-      Threaded collection modification.
+      Dependency update.
     </PackageReleaseNotes>
-    <Version>1.10.5</Version>
+    <Version>1.10.6</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>rpc;tcpip;ipc;stream;encryption;messaging;message-framing;</PackageTags>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -46,8 +46,8 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="NTDLS.Helpers" Version="1.2.6" />
-    <PackageReference Include="NTDLS.Semaphore" Version="3.3.2" />
+    <PackageReference Include="NTDLS.Helpers" Version="1.2.8" />
+    <PackageReference Include="NTDLS.Semaphore" Version="3.3.3" />
     <PackageReference Include="protobuf-net" Version="3.2.30" />
   </ItemGroup>
 
