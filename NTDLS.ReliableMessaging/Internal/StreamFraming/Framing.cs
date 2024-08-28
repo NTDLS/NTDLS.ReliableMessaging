@@ -129,7 +129,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <param name="stream">The open stream that will be written to.</param>
         /// <param name="context">Contains information about the endpoint and the connection.</param>
         /// <param name="framePayload">The query payload that will be written to the stream.</param>
-        /// <param name="queryTimeout">The number of milliseconds to wait on a reply to the query.</param>
+        /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
         /// <param name="serializationProvider">An optional callback that is called to allow for custom serialization.</param>
         /// <param name="compressionProvider">An optional callback that is called to allow for manipulation of bytes before they are framed.</param>
         /// <param name="cryptographyProvider">An optional callback that is called to allow for manipulation of bytes before they are framed.</param>
@@ -206,7 +206,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <param name="stream">The open stream that will be written to.</param>
         /// <param name="context">Contains information about the endpoint and the connection.</param>
         /// <param name="framePayload">The query payload that will be written to the stream.</param>
-        /// <param name="queryTimeout">The number of milliseconds to wait on a reply to the query.</param>
+        /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
         /// <param name="serializationProvider">An optional callback that is called to allow for custom serialization.</param>
         /// <param name="compressionProvider">An optional callback that is called to allow for manipulation of bytes before they are framed.</param>
         /// <param name="cryptographyProvider">An optional callback that is called to allow for manipulation of bytes before they are framed.</param>
