@@ -291,6 +291,7 @@ namespace NTDLS.ReliableMessaging
                         {
                             var activeConnection = new PeerConnection(this, tcpClient, Configuration,
                                 Configuration.SerializationProvider, Configuration.CompressionProvider, Configuration.CryptographyProvider);
+
                             _activeConnections.Use((o) => o.Add(activeConnection));
                             activeConnection.RunAsync();
                         }
