@@ -18,6 +18,11 @@ namespace NTDLS.ReliableMessaging
         private bool _keepRunning;
 
         /// <summary>
+        /// Denotes whether the message server is running.
+        /// </summary>
+        public bool IsRunning { get => _keepRunning; }
+
+        /// <summary>
         /// Configuration that was used to initialize the server.
         /// </summary>
         public RmConfiguration Configuration { get; }

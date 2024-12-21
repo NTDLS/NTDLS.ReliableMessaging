@@ -552,9 +552,11 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
 
                         if (context.Endpoint.Configuration.AsynchronousQueryWaiting)
                         {
+                            //Keep a reference to the frame payload that we are going to perform an async wait on.
+                            var asynchronousWaitedFramePayload = framePayload;
                             Task.Run(() =>
                             {
-                                var replyPayload = processFrameQueryCallback(framePayload);
+                                var replyPayload = processFrameQueryCallback(asynchronousWaitedFramePayload);
                                 stream.WriteReplyFrame(context, frameBody, replyPayload, serializationProvider, compressionProvider, cryptographyProvider);
                             });
                         }

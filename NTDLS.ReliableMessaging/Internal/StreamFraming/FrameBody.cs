@@ -41,11 +41,11 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         {
             ObjectType = framePayload.GetType()?.AssemblyQualifiedName ?? string.Empty;
 
-            if (serializationProvider == null) //Using custom serialization?
+            if (serializationProvider == null) //Using default serialization?
             {
                 Bytes = Encoding.UTF8.GetBytes(Utility.RmSerializeFramePayloadToText(framePayload));
             }
-            else //Using default serialization?
+            else //Using custom serialization?
             {
                 Bytes = Encoding.UTF8.GetBytes(serializationProvider.SerializeToText(framePayload));
             }

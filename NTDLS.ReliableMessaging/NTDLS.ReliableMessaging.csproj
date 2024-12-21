@@ -2,20 +2,20 @@
 
   <PropertyGroup>
     <ImplicitUsings>enable</ImplicitUsings>
-    <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
     <Title>NTDLS.ReliableMessaging</Title>
     <Authors>NetworkDLS</Authors>
     <Nullable>Enable</Nullable>
     <Company>NetworkDLS</Company>
     <Description>Simple, fast, secure and lightweight event or convention-based RPC implementation.</Description>
-    <Copyright>Copyright © 2024 NetworkDLS</Copyright>
+    <Copyright>Copyright © 2025 NetworkDLS</Copyright>
     <PackageProjectUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</PackageProjectUrl>
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageReleaseNotes>
-      Dependency updates.
+      Sync/async changes.
     </PackageReleaseNotes>
-    <Version>1.10.18</Version>
+    <Version>1.11.0</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>rpc;tcpip;ipc;stream;encryption;messaging;message-framing;</PackageTags>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
