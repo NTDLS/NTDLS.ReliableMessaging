@@ -18,6 +18,11 @@ namespace NTDLS.ReliableMessaging
         private bool _keepRunning;
 
         /// <summary>
+        /// The port that the message bus is listening on.
+        /// </summary>
+        public int ListenPort { get; private set; }
+
+        /// <summary>
         /// Denotes whether the message server is running.
         /// </summary>
         public bool IsRunning { get => _keepRunning; }
@@ -219,6 +224,7 @@ namespace NTDLS.ReliableMessaging
 
             _listener.Start();
 
+            ListenPort  = listenPort;
             _keepRunning = true;
             _listenerThreadProc = new Thread(ListenerThreadProc);
             _listenerThreadProc.Start();
