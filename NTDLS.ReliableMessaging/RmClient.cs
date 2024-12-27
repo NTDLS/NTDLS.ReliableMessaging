@@ -203,9 +203,12 @@ namespace NTDLS.ReliableMessaging
                 throw new Exception("Client is already connected.");
             }
 
-            _tcpClient = new TcpClient(hostName, port);
-            _activeConnection = new PeerConnection(this, _tcpClient, Configuration,
+            var tcpClient = new TcpClient(hostName, port);
+            _activeConnection = new PeerConnection(this, tcpClient, Configuration,
                 Configuration.SerializationProvider, Configuration.CompressionProvider, Configuration.CryptographyProvider);
+
+            _tcpClient = tcpClient;
+
             _activeConnection.RunAsync();
         }
 
@@ -221,10 +224,13 @@ namespace NTDLS.ReliableMessaging
                 throw new Exception("Client is already connected.");
             }
 
-            _tcpClient = new TcpClient();
-            _tcpClient.Connect(ipAddress, port);
-            _activeConnection = new PeerConnection(this, _tcpClient, Configuration,
+            var tcpClient = new TcpClient();
+            tcpClient.Connect(ipAddress, port);
+            _activeConnection = new PeerConnection(this, tcpClient, Configuration,
                                 Configuration.SerializationProvider, Configuration.CompressionProvider, Configuration.CryptographyProvider);
+
+            _tcpClient = tcpClient;
+
             _activeConnection.RunAsync();
         }
 
