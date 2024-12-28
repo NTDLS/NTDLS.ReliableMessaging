@@ -404,9 +404,9 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         private static byte[] AssembleFrame(RmContext context, FrameBody frameBody,
             IRmCompressionProvider? compressionProvider, IRmCryptographyProvider? cryptographyProvider)
         {
-            var FrameBodyBytes = Utility.SerializeToByteArray(frameBody);
+            var frameBodyBytes = Utility.SerializeToByteArray(frameBody);
 
-            var compressedFrameBodyBytes = compressionProvider?.Compress(context, FrameBodyBytes) ?? Utility.Compress(FrameBodyBytes);
+            var compressedFrameBodyBytes = compressionProvider?.Compress(context, frameBodyBytes) ?? Utility.Compress(frameBodyBytes);
 
             if (cryptographyProvider != null)
             {
