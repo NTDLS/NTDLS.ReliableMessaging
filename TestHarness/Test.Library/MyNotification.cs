@@ -1,6 +1,6 @@
 ﻿using NTDLS.ReliableMessaging;
 
-namespace TestHarness.Payloads
+namespace Test.Library
 {
     public class MyNotification : IRmNotification
     {

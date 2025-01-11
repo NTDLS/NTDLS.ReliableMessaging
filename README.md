@@ -22,7 +22,7 @@ static void Main()
 
     server.AddHandler(new HandlerMethods());
 
-    server.Start(45784);
+    server.Start(31254);
 
     Console.WriteLine("Press [enter] to shutdown.");
     Console.ReadLine();
@@ -40,7 +40,7 @@ static void Main()
     //Start a client and connect to the server.
     var client = new RmClient();
 
-    client.Connect("localhost", 45784);
+    client.Connect("localhost", 31254);
 
     client.Notify(new MyNotification("This is message 001 from the client."));
     client.Notify(new MyNotification("This is message 002 from the client."));
@@ -97,7 +97,7 @@ static void Main()
     server.OnQueryReceived += Server_OnQueryReceived;
     server.OnException += Server_OnException;
 
-    server.Start(45784);
+    server.Start(31254);
 
     Console.WriteLine("Press [enter] to shutdown.");
     Console.ReadLine();

@@ -64,3 +64,5 @@ TestHarness/CustomProviders/Test.ClientCustomProviders/obj/
 TestHarness/CustomProviders/Test.ServerCustomProviders/bin/
 
 TestHarness/CustomProviders/Test.ServerCustomProviders/obj/
+
+*.user

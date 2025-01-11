@@ -1,7 +1,7 @@
 ﻿using NTDLS.ReliableMessaging;
-using TestHarness.Payloads;
+using Test.Library;
 
-namespace Test.Server
+namespace Test.ServerByEventing
 {
     internal class Program
     {
@@ -13,7 +13,7 @@ namespace Test.Server
             server.OnQueryReceived += Server_OnQueryReceived;
             server.OnException += Server_OnException; // Handle the OnException event, otherwise the server will ignore any exceptions.
 
-            server.Start(45784);
+            server.Start(31254);
 
             Console.WriteLine("Press [enter] to shutdown.");
             Console.ReadLine();

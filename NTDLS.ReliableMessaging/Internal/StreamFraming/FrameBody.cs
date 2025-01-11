@@ -43,14 +43,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             var parts = assemblyQualifiedName.Split(','); //We only want the first two parts, not the version and such.
             ObjectType = parts.Length > 1 ? $"{parts[0]},{parts[1].Trim()}" : assemblyQualifiedName;
 
-            if (serializationProvider == null) //Using default serialization?
-            {
-                Bytes = Encoding.UTF8.GetBytes(Utility.RmSerializeFramePayloadToText(framePayload));
-            }
-            else //Using custom serialization?
-            {
-                Bytes = Encoding.UTF8.GetBytes(serializationProvider.SerializeToText(framePayload));
-            }
+            Bytes = Encoding.UTF8.GetBytes(Utility.RmSerializeFramePayloadToText(serializationProvider, framePayload));
         }
 
         /// <summary>
@@ -66,14 +59,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             var otParts = otAssemblyQualifiedName.Split(','); //We only want the first two parts, not the version and such.
             ObjectType = otParts.Length > 1 ? $"{otParts[0]},{otParts[1].Trim()}" : otAssemblyQualifiedName;
 
-            if (serializationProvider == null) //Using custom serialization?
-            {
-                Bytes = Encoding.UTF8.GetBytes(Utility.RmSerializeFramePayloadToText(framePayload));
-            }
-            else //Using default serialization?
-            {
-                Bytes = Encoding.UTF8.GetBytes(serializationProvider.SerializeToText(framePayload));
-            }
+            Bytes = Encoding.UTF8.GetBytes(Utility.RmSerializeFramePayloadToText(serializationProvider, framePayload));
         }
 
         /// <summary>

@@ -224,7 +224,7 @@ namespace NTDLS.ReliableMessaging
 
             _listener.Start();
 
-            ListenPort  = listenPort;
+            ListenPort = listenPort;
             _keepRunning = true;
             _listenerThreadProc = new Thread(ListenerThreadProc);
             _listenerThreadProc.Start();

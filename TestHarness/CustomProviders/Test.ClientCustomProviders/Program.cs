@@ -1,8 +1,8 @@
 ﻿using Newtonsoft.Json;
 using NTDLS.ReliableMessaging;
-using TestHarness.Payloads;
+using Test.Library;
 
-namespace Test.Client
+namespace Test.ClientCustomProviders
 {
     internal class Program
     {
@@ -32,13 +32,13 @@ namespace Test.Client
                 SerializationProvider = new CustomSerializationProvider()
             });
 
-            client.Connect("localhost", 45784);
+            client.Connect("localhost", 31254);
 
             client.Notify(new MyNotification("This is message 001 from the client."));
             client.Notify(new MyNotification("This is message 002 from the client."));
             client.Notify(new MyNotification("This is message 003 from the client."));
 
-            client.OnException += (RmContext? context, Exception ex, IRmPayload? payload) =>
+            client.OnException += (context, ex, payload) =>
             {
                 Console.WriteLine($"RPC client exception: {ex.Message}");
             };

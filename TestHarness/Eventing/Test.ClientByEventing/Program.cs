@@ -1,7 +1,7 @@
 ﻿using NTDLS.ReliableMessaging;
-using TestHarness.Payloads;
+using Test.Library;
 
-namespace Test.Client
+namespace Test.ClientByEventing
 {
     internal class Program
     {
@@ -12,7 +12,7 @@ namespace Test.Client
             //Start a client and connect to the server.
             var client = new RmClient();
 
-            client.Connect("localhost", 45784);
+            client.Connect("localhost", 31254);
 
             Console.WriteLine("Press [enter] to shutdown.");
 
@@ -23,7 +23,7 @@ namespace Test.Client
                 client.Notify(new MyNotification($"This is message {messageNumber++} from the client."));
 
 
-                client.OnException += (RmContext? context, Exception ex, IRmPayload? payload) =>
+                client.OnException += (context, ex, payload) =>
                 {
                     Console.WriteLine($"RPC client exception: {ex.Message}");
                 };

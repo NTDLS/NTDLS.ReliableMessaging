@@ -1,7 +1,7 @@
 using NTDLS.ReliableMessaging;
-using TestHarness.Payloads;
+using Test.Library;
 
-namespace TestHarness
+namespace Test.ServerByConvention
 {
     internal class HandlerMethods : IRmMessageHandler
     {

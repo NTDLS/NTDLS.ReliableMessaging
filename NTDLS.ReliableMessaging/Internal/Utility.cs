@@ -1,16 +1,11 @@
-﻿using Newtonsoft.Json;
-using ProtoBuf;
+﻿using ProtoBuf;
 using System.IO.Compression;
+using System.Text.Json;
 
 namespace NTDLS.ReliableMessaging.Internal
 {
     internal static class Utility
     {
-        private static readonly JsonSerializerSettings _jsonSettings = new()
-        {
-            TypeNameHandling = TypeNameHandling.All
-        };
-
         public static bool ImplementsGenericInterfaceWithArgument(Type type, Type genericInterface, Type argumentType)
         {
             return type.GetInterfaces().Any(interfaceType =>
@@ -27,8 +22,17 @@ namespace NTDLS.ReliableMessaging.Internal
             return stream.ToArray();
         }
 
-        public static string RmSerializeFramePayloadToText<T>(T obj)
-            => JsonConvert.SerializeObject(obj, _jsonSettings);
+        public static string RmSerializeFramePayloadToText<T>(IRmSerializationProvider? serializationProvider, T obj)
+        {
+            if (serializationProvider != null) //Using custom serialization.
+            {
+                return serializationProvider.SerializeToText(obj);
+            }
+            else //Using built-in default serialization.
+            {
+                return JsonSerializer.Serialize((object?)obj);
+            }
+        }
 
         public static T? RmDeserializeFramePayloadToObject<T>(IRmSerializationProvider? serializationProvider, string json)
         {
@@ -38,7 +42,7 @@ namespace NTDLS.ReliableMessaging.Internal
             }
             else //Using built-in default serialization.
             {
-                return JsonConvert.DeserializeObject<T>(json, _jsonSettings);
+                return JsonSerializer.Deserialize<T>(json);
             }
         }
 

@@ -1,7 +1,6 @@
 ﻿using NTDLS.ReliableMessaging;
-using TestHarness;
 
-namespace Test.Server
+namespace Test.ServerByConvention
 {
     internal class Program
     {
@@ -12,13 +11,13 @@ namespace Test.Server
             // The class HandlerMethods contains the functions that handle incoming queries and notifications.
             server.AddHandler(new HandlerMethods());
 
-            server.OnException += (RmContext? context, Exception ex, IRmPayload? payload) =>
+            server.OnException += (context, ex, payload) =>
             {
                 // Handle the OnException event, otherwise the server will ignore any exceptions.
                 Console.WriteLine($"RPC client exception: {ex.Message}");
             };
 
-            server.Start(45784);
+            server.Start(31254);
 
             Console.WriteLine("Press [enter] to shutdown.");
             Console.ReadLine();
