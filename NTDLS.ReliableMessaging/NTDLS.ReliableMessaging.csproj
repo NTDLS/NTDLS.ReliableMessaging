@@ -15,7 +15,7 @@
     <PackageReleaseNotes>
       Dependency updates.
     </PackageReleaseNotes>
-    <Version>1.11.7</Version>
+    <Version>1.12.0</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>rpc;tcpip;ipc;stream;encryption;messaging;message-framing;</PackageTags>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
