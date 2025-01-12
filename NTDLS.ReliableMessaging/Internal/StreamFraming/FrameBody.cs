@@ -39,8 +39,8 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// </summary>
         public FrameBody(IRmSerializationProvider? serializationProvider, IRmPayload framePayload)
         {
-            ObjectType = Utility.GetAssemblyQualifiedType(framePayload);
-            Bytes = Encoding.UTF8.GetBytes(Utility.RmSerializeFramePayloadToText(serializationProvider, framePayload));
+            ObjectType = Reflection.GetAssemblyQualifiedTypeNameWithClosedGenerics(framePayload);
+            Bytes = Encoding.UTF8.GetBytes(Serialization.RmSerializeFramePayloadToText(serializationProvider, framePayload));
         }
 
         /// <summary>
@@ -48,9 +48,9 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// </summary>
         public FrameBody(IRmSerializationProvider? serializationProvider, IRmPayload framePayload, Type expectedReplyType)
         {
-            ExpectedReplyType = Utility.GetAssemblyQualifiedType(expectedReplyType);
-            ObjectType = Utility.GetAssemblyQualifiedType(framePayload);
-            Bytes = Encoding.UTF8.GetBytes(Utility.RmSerializeFramePayloadToText(serializationProvider, framePayload));
+            ExpectedReplyType = Reflection.GetAssemblyQualifiedTypeNameWithClosedGenerics(expectedReplyType);
+            ObjectType = Reflection.GetAssemblyQualifiedTypeNameWithClosedGenerics(framePayload);
+            Bytes = Encoding.UTF8.GetBytes(Serialization.RmSerializeFramePayloadToText(serializationProvider, framePayload));
         }
 
         /// <summary>

@@ -14,11 +14,11 @@ namespace NTDLS.ReliableMessaging.Internal
         public enum CachedMethodType
         {
             /// <summary>
-            /// The method has only a payload parameter.
+            /// The hander function has only a payload parameter.
             /// </summary>
             PayloadOnly,
             /// <summary>
-            /// The method has both a context and a payload parameter.
+            /// The hander function has both a context and a payload parameter.
             /// </summary>
             PayloadWithContext
         }
@@ -50,34 +50,123 @@ namespace NTDLS.ReliableMessaging.Internal
             }
         }
 
-        private readonly Dictionary<Type, CachedMethod> _methodCache = new();
-        private readonly Dictionary<Type, IRmMessageHandler> _instanceCache = new();
+        private readonly Dictionary<string, CachedMethod> _handlerMethods = new();
+        private readonly Dictionary<Type, IRmMessageHandler> _handlerInstances = new();
 
         internal void AddInstance(IRmMessageHandler handlerClass)
         {
-            _instanceCache.Add(handlerClass.GetType(), handlerClass);
+            _handlerInstances.Add(handlerClass.GetType(), handlerClass);
 
-            CacheConventionBasedEveningMethods(handlerClass);
+            LoadConventionBasedHandlerMethods(handlerClass);
         }
 
-        internal bool GetCachedMethod(Type type, [NotNullWhen(true)] out CachedMethod? cachedMethod)
+        /// <summary>
+        /// Calls the appropriate handler function for the given query payload.
+        /// </summary>
+        /// <returns>Returns true if the function was found and executed.</returns>
+        internal bool RouteToQueryHander(RmContext context, IRmPayload payload, out IRmQueryReply? invocationResult)
         {
-            if (_methodCache.TryGetValue(type, out cachedMethod) == false)
+            //First we try to invoke functions that match the signature, if that fails we will fall back to invoking the OnNotificationReceived() event.
+            if (GetCachedMethod(payload, out var cachedMethod))
             {
-                return false;
-                //throw new Exception($"A handler function for type '{type.Name}' was not found in the assembly cache.");
+                if (GetCachedInstance(cachedMethod, out var cachedInstance))
+                {
+                    var method = MakeGenericMethodForPayload(cachedMethod, payload);
+
+                    switch (cachedMethod.MethodType)
+                    {
+                        case CachedMethodType.PayloadOnly:
+                            invocationResult = method.Invoke(cachedInstance, [payload]) as IRmQueryReply;
+                            return true;
+                        case CachedMethodType.PayloadWithContext:
+                            invocationResult = method.Invoke(cachedInstance, [context, payload]) as IRmQueryReply;
+                            return true;
+                    }
+                }
             }
 
-            if (cachedMethod.Method.DeclaringType == null)
-            {
-                return false;
-                //throw new Exception($"A handler function for type '{type.Name}' was found, but it is not in class that can be instantiated.");
-            }
+            invocationResult = null;
 
-            return true;
+            return false;
         }
 
-        internal bool GetCachedInstance(CachedMethod cachedMethod, [NotNullWhen(true)] out IRmMessageHandler? cachedInstance)
+        /// <summary>
+        /// Calls the appropriate handler function for the given notification payload.
+        /// </summary>
+        /// <returns>Returns true if the function was found and executed.</returns>
+        internal bool RouteToNotificationHander(RmContext context, IRmPayload payload)
+        {
+            //First we try to invoke functions that match the signature, if that fails we will fall back to invoking the OnNotificationReceived() event.
+            if (GetCachedMethod(payload, out var cachedMethod))
+            {
+                if (GetCachedInstance(cachedMethod, out var cachedInstance))
+                {
+                    var method = MakeGenericMethodForPayload(cachedMethod, payload);
+
+                    switch (cachedMethod.MethodType)
+                    {
+                        case CachedMethodType.PayloadOnly:
+                            method.Invoke(cachedInstance, [payload]);
+                            return true;
+                        case CachedMethodType.PayloadWithContext:
+                            method.Invoke(cachedInstance, [context, payload]);
+                            return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Creates a cachable and invokable instance of a handler function by matching generic argument types.
+        /// </summary>
+        private static MethodInfo MakeGenericMethodForPayload(CachedMethod cachedMethod, IRmPayload payload)
+        {
+            var payloadType = payload.GetType();
+
+            if (Caching.CacheTryGet<MethodInfo>(payloadType, out var cached) && cached != null)
+            {
+                return cached;
+            }
+
+            if (payloadType.IsGenericType)
+            {
+                // Get the generic type definition and its assembly name
+                var typeDefinitionName = payloadType.GetGenericTypeDefinition().FullName
+                     ?? throw new Exception("The generic type name is not available.");
+
+                var assemblyName = payloadType.Assembly.FullName
+                     ?? throw new Exception("The generic assembly type name is not available.");
+
+                // Recursively get the AssemblyQualifiedName of generic arguments
+                var genericTypeArguments = payloadType.GetGenericArguments()
+                    .Select(t => Type.GetType(t.AssemblyQualifiedName ?? Reflection.GetAssemblyQualifiedTypeName(t))
+                     ?? throw new Exception($"The generic assembly type [{t.AssemblyQualifiedName}] could not be instanciated.")
+                    ).ToArray();
+
+                if (genericTypeArguments == null)
+                {
+                    throw new Exception("The generic assembly type could not be instanciated.");
+                }
+
+                var genericMethod = cachedMethod.Method.MakeGenericMethod(genericTypeArguments)
+                    ?? throw new Exception("The generic assembly type could not be instanciated.");
+
+                Caching.CacheSetOneMinute(payloadType, genericMethod);
+
+                return genericMethod;
+            }
+            else
+            {
+                return cachedMethod.Method;
+            }
+        }
+
+        /// <summary>
+        /// Gets the handler class instance from the pre-loaded handler instance cache.
+        /// </summary>
+        private bool GetCachedInstance(CachedMethod cachedMethod, [NotNullWhen(true)] out IRmMessageHandler? cachedInstance)
         {
             if (cachedMethod.Method.DeclaringType == null)
             {
@@ -86,7 +175,7 @@ namespace NTDLS.ReliableMessaging.Internal
                 //throw new Exception($"The handler function '{cachedMethod.Name}' does not have a container class.");
             }
 
-            if (_instanceCache.TryGetValue(cachedMethod.Method.DeclaringType, out cachedInstance))
+            if (_handlerInstances.TryGetValue(cachedMethod.Method.DeclaringType, out cachedInstance))
             {
                 return true;
             }
@@ -97,21 +186,41 @@ namespace NTDLS.ReliableMessaging.Internal
                 return false;
                 //throw new Exception($"Failed to instantiate container class '{cachedMethod.DeclaringType.Name}' for handler function '{cachedMethod.Name}'.");
             }
-            _instanceCache.Add(cachedMethod.Method.DeclaringType, cachedInstance);
+            _handlerInstances.Add(cachedMethod.Method.DeclaringType, cachedInstance);
 
             return true;
         }
 
-        internal void CacheConventionBasedEveningMethods(IRmMessageHandler handlerClass)
+        /// <summary>
+        /// Gets the handler function from the pre-loaded handler function cache.
+        /// </summary>
+        private bool GetCachedMethod(IRmPayload payload, [NotNullWhen(true)] out CachedMethod? cachedMethod)
+        {
+            var typeName = Reflection.GetAssemblyQualifiedTypeName(payload);
+
+            if (_handlerMethods.TryGetValue(typeName, out cachedMethod) == false)
+            {
+                return false;
+            }
+
+            if (cachedMethod.Method.DeclaringType == null)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Loads the handler functions from the given handler class.
+        /// </summary>
+        private void LoadConventionBasedHandlerMethods(IRmMessageHandler handlerClass)
         {
             foreach (var method in handlerClass.GetType().GetMethods())
             {
                 var parameters = method.GetParameters();
                 if (parameters.Length == 1)
                 {
-                    //Notification prototype: void HandleMyNotification(MyNotification notification)
-                    //Query prototype:        IReliableMessagingQueryReply HandleMyQuery(MyQuery query)
-
                     if (typeof(IRmPayload).IsAssignableFrom(parameters[0].ParameterType) == false)
                     {
                         continue;
@@ -121,7 +230,7 @@ namespace NTDLS.ReliableMessaging.Internal
                     if (payloadParameter != null)
                     {
                         //If the payload parameter is a IReliableMessagingQuery, then ensure that the return type is a IReliableMessagingQueryReply.
-                        if (Utility.ImplementsGenericInterfaceWithArgument(payloadParameter.ParameterType, typeof(IRmQuery<>), typeof(IRmQueryReply)))
+                        if (Reflection.ImplementsGenericInterfaceWithArgument(payloadParameter.ParameterType, typeof(IRmQuery<>), typeof(IRmQueryReply)))
                         {
                             if (typeof(IRmQueryReply).IsAssignableFrom(method.ReturnType) == false)
                             {
@@ -129,7 +238,8 @@ namespace NTDLS.ReliableMessaging.Internal
                             }
                         }
 
-                        _methodCache.Add(payloadParameter.ParameterType, new CachedMethod(CachedMethodType.PayloadOnly, method));
+                        var payloadParameterType = Reflection.GetAssemblyQualifiedTypeName(payloadParameter.ParameterType);
+                        _handlerMethods.Add(payloadParameterType, new CachedMethod(CachedMethodType.PayloadOnly, method));
                     }
                 }
                 else if (parameters.Length == 2)
@@ -151,7 +261,7 @@ namespace NTDLS.ReliableMessaging.Internal
                     if (payloadParameter != null)
                     {
                         //If the payload parameter is a IReliableMessagingQuery, then ensure that the return type is a IReliableMessagingQueryReply.
-                        if (Utility.ImplementsGenericInterfaceWithArgument(payloadParameter.ParameterType, typeof(IRmQuery<>), typeof(IRmQueryReply)))
+                        if (Reflection.ImplementsGenericInterfaceWithArgument(payloadParameter.ParameterType, typeof(IRmQuery<>), typeof(IRmQueryReply)))
                         {
                             if (typeof(IRmQueryReply).IsAssignableFrom(method.ReturnType) == false)
                             {
@@ -159,7 +269,8 @@ namespace NTDLS.ReliableMessaging.Internal
                             }
                         }
 
-                        _methodCache.Add(payloadParameter.ParameterType, new CachedMethod(CachedMethodType.PayloadWithContext, method));
+                        var payloadParameterType = Reflection.GetAssemblyQualifiedTypeName(payloadParameter.ParameterType);
+                        _handlerMethods.Add(payloadParameterType, new CachedMethod(CachedMethodType.PayloadWithContext, method));
                     }
                 }
             }

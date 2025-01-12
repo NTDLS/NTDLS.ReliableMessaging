@@ -11,4 +11,14 @@ namespace Test.Library
             Message = message;
         }
     }
+
+    public class MyQueryReply : IRmQueryReply
+    {
+        public string Message { get; set; }
+
+        public MyQueryReply(string message)
+        {
+            Message = message;
+        }
+    }
 }

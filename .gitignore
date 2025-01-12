@@ -66,3 +66,11 @@ TestHarness/CustomProviders/Test.ServerCustomProviders/bin/
 TestHarness/CustomProviders/Test.ServerCustomProviders/obj/
 
 *.user
+
+TestHarness/GenericConvention/Test.ClientByGenericConvention/obj/
+
+TestHarness/GenericConvention/Test.ClientByGenericConvention/bin/
+
+TestHarness/GenericConvention/Test.ServerByGenericConvention/bin/
+
+TestHarness/GenericConvention/Test.ServerByGenericConvention/obj/
