@@ -614,7 +614,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             }
 
             var genericType = Type.GetType(frame.ObjectType)
-                ?? throw new Exception($"Unknown extraction payload type {frame.ObjectType}.");
+                ?? throw new Exception($"Unknown extraction payload type [{frame.ObjectType}].");
 
             var toObjectMethod = typeof(Utility).GetMethod("RmDeserializeFramePayloadToObject")
                     ?? throw new Exception($"Could not resolve RmDeserializeFramePayloadToObject().");

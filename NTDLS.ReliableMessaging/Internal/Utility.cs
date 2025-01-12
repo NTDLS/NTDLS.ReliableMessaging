@@ -1,4 +1,5 @@
-﻿using ProtoBuf;
+﻿using Microsoft.Extensions.Caching.Memory;
+using ProtoBuf;
 using System.IO.Compression;
 using System.Text.Json;
 
@@ -6,6 +7,41 @@ namespace NTDLS.ReliableMessaging.Internal
 {
     internal static class Utility
     {
+        internal static IMemoryCache _cache = new MemoryCache(new MemoryCacheOptions());
+        internal static MemoryCacheEntryOptions _slidingOneMinute = new() { SlidingExpiration = TimeSpan.FromMinutes(1) };
+
+        public static bool CacheGet<T>(string key, out T? value)
+            => _cache.TryGetValue(key, out value);
+
+        public static void CacheSet(string key, object value, TimeSpan slidingExpiration)
+            => _cache.Set(key, value, new MemoryCacheEntryOptions() { SlidingExpiration = slidingExpiration });
+
+        public static void CacheSet(string key, object value)
+            => _cache.Set(key, value, _slidingOneMinute);
+
+        public static string GetAssemblyQualifiedType(object obj)
+        {
+            return GetAssemblyQualifiedType(obj.GetType());
+        }
+
+        public static string GetAssemblyQualifiedType(Type type)
+        {
+            var assemblyQualifiedName = type.AssemblyQualifiedName
+                ?? throw new Exception("The assembly qualified type name is not available.");
+
+            if (CacheGet(assemblyQualifiedName, out string? objectType) && objectType != null)
+            {
+                return objectType;
+            }
+
+            objectType = CompiledRegEx.TypeTagsRegex().Replace(assemblyQualifiedName, string.Empty);
+            objectType = CompiledRegEx.TypeCleanupRegex().Replace(objectType, ", ").Trim();
+
+            CacheSet(assemblyQualifiedName, objectType);
+
+            return objectType;
+        }
+
         public static bool ImplementsGenericInterfaceWithArgument(Type type, Type genericInterface, Type argumentType)
         {
             return type.GetInterfaces().Any(interfaceType =>

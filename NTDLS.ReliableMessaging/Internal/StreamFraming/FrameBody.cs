@@ -39,10 +39,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// </summary>
         public FrameBody(IRmSerializationProvider? serializationProvider, IRmPayload framePayload)
         {
-            var assemblyQualifiedName = framePayload.GetType()?.AssemblyQualifiedName ?? string.Empty;
-            var parts = assemblyQualifiedName.Split(','); //We only want the first two parts, not the version and such.
-            ObjectType = parts.Length > 1 ? $"{parts[0]},{parts[1].Trim()}" : assemblyQualifiedName;
-
+            ObjectType = Utility.GetAssemblyQualifiedType(framePayload);
             Bytes = Encoding.UTF8.GetBytes(Utility.RmSerializeFramePayloadToText(serializationProvider, framePayload));
         }
 
@@ -51,14 +48,8 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// </summary>
         public FrameBody(IRmSerializationProvider? serializationProvider, IRmPayload framePayload, Type expectedReplyType)
         {
-            var ertAssemblyQualifiedName = expectedReplyType?.AssemblyQualifiedName ?? string.Empty;
-            var ertParts = ertAssemblyQualifiedName.Split(','); //We only want the first two parts, not the version and such.
-            ExpectedReplyType = ertParts.Length > 1 ? $"{ertParts[0]},{ertParts[1].Trim()}" : ertAssemblyQualifiedName;
-
-            var otAssemblyQualifiedName = framePayload.GetType()?.AssemblyQualifiedName ?? string.Empty;
-            var otParts = otAssemblyQualifiedName.Split(','); //We only want the first two parts, not the version and such.
-            ObjectType = otParts.Length > 1 ? $"{otParts[0]},{otParts[1].Trim()}" : otAssemblyQualifiedName;
-
+            ExpectedReplyType = Utility.GetAssemblyQualifiedType(expectedReplyType);
+            ObjectType = Utility.GetAssemblyQualifiedType(framePayload);
             Bytes = Encoding.UTF8.GetBytes(Utility.RmSerializeFramePayloadToText(serializationProvider, framePayload));
         }
 
