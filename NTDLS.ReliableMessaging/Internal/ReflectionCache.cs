@@ -130,8 +130,11 @@ namespace NTDLS.ReliableMessaging.Internal
                 return cached;
             }
 
-            if (payloadType.IsGenericType)
+            if (payloadType.IsGenericType && cachedMethod.Method.IsGenericMethod == true)
             {
+                //If both the payload and the handler function are generic, We need to create a
+                //  generic version of the handler function using the generic types of the payload.
+
                 // Get the generic type definition and its assembly name
                 var typeDefinitionName = payloadType.GetGenericTypeDefinition().FullName
                      ?? throw new Exception("The generic type name is not available.");
@@ -196,7 +199,7 @@ namespace NTDLS.ReliableMessaging.Internal
         /// </summary>
         private bool GetCachedMethod(IRmPayload payload, [NotNullWhen(true)] out CachedMethod? cachedMethod)
         {
-            var typeName = Reflection.GetAssemblyQualifiedTypeName(payload);
+            var typeName = Reflection.GetAssemblyQualifiedTypeNameWithClosedGenerics(payload);
 
             if (_handlerMethods.TryGetValue(typeName, out cachedMethod) == false)
             {
@@ -238,8 +241,8 @@ namespace NTDLS.ReliableMessaging.Internal
                             }
                         }
 
-                        var payloadParameterType = Reflection.GetAssemblyQualifiedTypeName(payloadParameter.ParameterType);
-                        _handlerMethods.Add(payloadParameterType, new CachedMethod(CachedMethodType.PayloadOnly, method));
+                        var payloadParameterTypeName = Reflection.GetAssemblyQualifiedTypeNameWithClosedGenerics(payloadParameter.ParameterType);
+                        _handlerMethods.Add(payloadParameterTypeName, new CachedMethod(CachedMethodType.PayloadOnly, method));
                     }
                 }
                 else if (parameters.Length == 2)
@@ -269,8 +272,8 @@ namespace NTDLS.ReliableMessaging.Internal
                             }
                         }
 
-                        var payloadParameterType = Reflection.GetAssemblyQualifiedTypeName(payloadParameter.ParameterType);
-                        _handlerMethods.Add(payloadParameterType, new CachedMethod(CachedMethodType.PayloadWithContext, method));
+                        var payloadParameterTypeName = Reflection.GetAssemblyQualifiedTypeNameWithClosedGenerics(payloadParameter.ParameterType);
+                        _handlerMethods.Add(payloadParameterTypeName, new CachedMethod(CachedMethodType.PayloadWithContext, method));
                     }
                 }
             }

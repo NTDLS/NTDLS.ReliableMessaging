@@ -5,33 +5,35 @@ VisualStudioVersion = 17.6.33829.357
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.ReliableMessaging", "NTDLS.ReliableMessaging\NTDLS.ReliableMessaging.csproj", "{46E59B81-DB93-442A-A8A7-E49676BB65CC}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TestHarness", "TestHarness", "{4AE9DDC6-D4A5-4195-B552-C15BF03498F8}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TestApps", "TestApps", "{4AE9DDC6-D4A5-4195-B552-C15BF03498F8}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Eventing", "Eventing", "{4917EF85-4577-4D5B-8BC2-547A3100D939}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Convention", "Convention", "{F68532AA-86D3-43AC-A1C8-C9FCB22B3305}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test.Library", "TestHarness\Test.Library\Test.Library.csproj", "{17F74AA3-A549-4F64-B1DD-ECF6DCA54B98}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test.Library", "TestApps\Test.Library\Test.Library.csproj", "{17F74AA3-A549-4F64-B1DD-ECF6DCA54B98}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test.ClientByConvention", "TestHarness\Convention\Test.ClientByConvention\Test.ClientByConvention.csproj", "{5FFF3299-003E-4645-B7E3-A91FB5F3D2AB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test.ClientByConvention", "TestApps\Convention\Test.ClientByConvention\Test.ClientByConvention.csproj", "{5FFF3299-003E-4645-B7E3-A91FB5F3D2AB}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test.ServerByConvention", "TestHarness\Convention\Test.ServerByConvention\Test.ServerByConvention.csproj", "{75AC96C5-3F8C-4052-AE73-E77BC4128D72}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test.ServerByConvention", "TestApps\Convention\Test.ServerByConvention\Test.ServerByConvention.csproj", "{75AC96C5-3F8C-4052-AE73-E77BC4128D72}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test.ClientByEventing", "TestHarness\Eventing\Test.ClientByEventing\Test.ClientByEventing.csproj", "{A341729C-5009-4EE1-87B6-3A72ED97ED8E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test.ClientByEventing", "TestApps\Eventing\Test.ClientByEventing\Test.ClientByEventing.csproj", "{A341729C-5009-4EE1-87B6-3A72ED97ED8E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test.ServerByEventing", "TestHarness\Eventing\Test.ServerByEventing\Test.ServerByEventing.csproj", "{1EF60F4E-D331-4D5F-8214-74DE2022BE96}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test.ServerByEventing", "TestApps\Eventing\Test.ServerByEventing\Test.ServerByEventing.csproj", "{1EF60F4E-D331-4D5F-8214-74DE2022BE96}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CustomProviders", "CustomProviders", "{A0726908-0A82-4A5B-8F87-93731378320F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test.ClientCustomProviders", "TestHarness\CustomProviders\Test.ClientCustomProviders\Test.ClientCustomProviders.csproj", "{9A554CCF-494D-4572-9F10-3566C4873B7E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test.ClientCustomProviders", "TestApps\CustomProviders\Test.ClientCustomProviders\Test.ClientCustomProviders.csproj", "{9A554CCF-494D-4572-9F10-3566C4873B7E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test.ServerCustomProviders", "TestHarness\CustomProviders\Test.ServerCustomProviders\Test.ServerCustomProviders.csproj", "{57D0F795-84E5-4B1A-8C09-8C127EA38919}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test.ServerCustomProviders", "TestApps\CustomProviders\Test.ServerCustomProviders\Test.ServerCustomProviders.csproj", "{57D0F795-84E5-4B1A-8C09-8C127EA38919}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GenericConvention", "GenericConvention", "{81AAF09E-60E0-47CE-8B84-3626CCF93FD6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.ClientByGenericConvention", "TestHarness\GenericConvention\Test.ClientByGenericConvention\Test.ClientByGenericConvention.csproj", "{400326F6-84D8-4805-A859-DADBD00A20B4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.ClientByGenericConvention", "TestApps\GenericConvention\Test.ClientByGenericConvention\Test.ClientByGenericConvention.csproj", "{400326F6-84D8-4805-A859-DADBD00A20B4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.ServerByGenericConvention", "TestHarness\GenericConvention\Test.ServerByGenericConvention\Test.ServerByGenericConvention.csproj", "{AB6A7E33-D032-4DB2-98B1-55B1B1665041}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.ServerByGenericConvention", "TestApps\GenericConvention\Test.ServerByGenericConvention\Test.ServerByGenericConvention.csproj", "{AB6A7E33-D032-4DB2-98B1-55B1B1665041}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{AC8C58C4-F5B1-40FB-8600-2F7FF4BC7A98}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -79,6 +81,10 @@ Global
 		{AB6A7E33-D032-4DB2-98B1-55B1B1665041}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AB6A7E33-D032-4DB2-98B1-55B1B1665041}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AB6A7E33-D032-4DB2-98B1-55B1B1665041}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC8C58C4-F5B1-40FB-8600-2F7FF4BC7A98}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC8C58C4-F5B1-40FB-8600-2F7FF4BC7A98}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC8C58C4-F5B1-40FB-8600-2F7FF4BC7A98}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC8C58C4-F5B1-40FB-8600-2F7FF4BC7A98}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -97,6 +103,7 @@ Global
 		{81AAF09E-60E0-47CE-8B84-3626CCF93FD6} = {4AE9DDC6-D4A5-4195-B552-C15BF03498F8}
 		{400326F6-84D8-4805-A859-DADBD00A20B4} = {81AAF09E-60E0-47CE-8B84-3626CCF93FD6}
 		{AB6A7E33-D032-4DB2-98B1-55B1B1665041} = {81AAF09E-60E0-47CE-8B84-3626CCF93FD6}
+		{AC8C58C4-F5B1-40FB-8600-2F7FF4BC7A98} = {4AE9DDC6-D4A5-4195-B552-C15BF03498F8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {0A97F31B-3DD3-4185-9954-84DF465CCF84}
