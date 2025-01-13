@@ -9,6 +9,11 @@
 
         public static string GetAssemblyQualifiedTypeName(Type type)
         {
+            if (Caching.CacheTryGet<string>($"GetAssemblyQualifiedTypeName:{type}", out var objectTypeName) && objectTypeName != null)
+            {
+                return objectTypeName;
+            }
+
             string assemblyQualifiedName;
 
             if (type.IsGenericType)
@@ -27,10 +32,12 @@
                     ?? throw new Exception("The type name is not available.");
             }
 
-            var objectType = CompiledRegEx.TypeTagsRegex().Replace(assemblyQualifiedName, string.Empty);
-            objectType = CompiledRegEx.TypeCleanupRegex().Replace(objectType, ", ").Trim();
+            objectTypeName = CompiledRegEx.TypeTagsRegex().Replace(assemblyQualifiedName, string.Empty);
+            objectTypeName = CompiledRegEx.TypeCleanupRegex().Replace(objectTypeName, ", ").Trim();
 
-            return objectType;
+            Caching.CacheSetOneMinute(type, objectTypeName);
+
+            return objectTypeName;
         }
 
         public static string GetAssemblyQualifiedTypeNameWithClosedGenerics(object obj)
@@ -40,6 +47,11 @@
 
         public static string GetAssemblyQualifiedTypeNameWithClosedGenerics(Type type)
         {
+            if (Caching.CacheTryGet<string>($"GetAssemblyQualifiedTypeNameWithClosedGenerics:{type}", out var objectTypeName) && objectTypeName != null)
+            {
+                return objectTypeName;
+            }
+
             string assemblyQualifiedName;
 
             if (type.IsGenericType)
@@ -50,10 +62,10 @@
                 var assemblyName = type.Assembly.FullName
                      ?? throw new Exception("The generic assembly type name is not available.");
 
+                // Recursively get the AssemblyQualifiedName of generic arguments
                 var genericArguments = type.GetGenericArguments()
                     .Select(t => t.AssemblyQualifiedName ?? GetAssemblyQualifiedTypeNameWithClosedGenerics(t));
 
-                // Recursively get the AssemblyQualifiedName of generic arguments
                 string genericArgumentsString = '[' + string.Join("], [", genericArguments) + ']';
 
                 assemblyQualifiedName  = $"{typeDefinitionName}[{genericArgumentsString}], {assemblyName}";
@@ -64,10 +76,12 @@
                     ?? throw new Exception("The type name is not available.");
             }
 
-            var objectType = CompiledRegEx.TypeTagsRegex().Replace(assemblyQualifiedName, string.Empty);
-            objectType = CompiledRegEx.TypeCleanupRegex().Replace(objectType, ", ").Trim();
+            objectTypeName = CompiledRegEx.TypeTagsRegex().Replace(assemblyQualifiedName, string.Empty);
+            objectTypeName = CompiledRegEx.TypeCleanupRegex().Replace(objectTypeName, ", ").Trim();
 
-            return objectType;
+            Caching.CacheSetOneMinute(type, objectTypeName);
+
+            return objectTypeName;
         }
 
         public static bool ImplementsGenericInterfaceWithArgument(Type type, Type genericInterface, Type argumentType)
