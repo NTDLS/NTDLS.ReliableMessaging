@@ -76,23 +76,12 @@ namespace NTDLS.ReliableMessaging.Internal
             try
             {
                 //First we try to invoke functions that match the signature, if that fails we will fall back to invoking the OnNotificationReceived() event.
-                if (Context.Endpoint.ReflectionCache.GetCachedMethod(payload.GetType(), out var cachedMethod))
+                if (Context.Endpoint.ReflectionCache.RouteToNotificationHander(Context, payload))
                 {
-                    if (Context.Endpoint.ReflectionCache.GetCachedInstance(cachedMethod, out var cachedInstance))
-                    {
-                        switch (cachedMethod.MethodType)
-                        {
-                            case ReflectionCache.CachedMethodType.PayloadOnly:
-                                cachedMethod.Method.Invoke(cachedInstance, new object[] { payload });
-                                break;
-                            case ReflectionCache.CachedMethodType.PayloadWithContext:
-                                cachedMethod.Method.Invoke(cachedInstance, new object[] { Context, payload });
-                                break;
-                        }
-                        return;
-                    }
+                    return; //Notification was handled by handler routing.
                 }
 
+                //Try to handle the query with a bound notification hander.
                 Context.Endpoint.InvokeOnNotificationReceived(Context, payload);
             }
             catch (Exception ex)
@@ -105,27 +94,14 @@ namespace NTDLS.ReliableMessaging.Internal
         {
             try
             {
-                //First we try to invoke functions that match the signature, if that fails we will fall back to invoking the OnQueryReceived() event.
-                if (Context.Endpoint.ReflectionCache.GetCachedMethod(payload.GetType(), out var cachedMethod))
+                //First we try to invoke functions that match the signature, if that fails we will fall back to invoking the OnNotificationReceived() event.
+                if (Context.Endpoint.ReflectionCache.RouteToQueryHander(Context, payload, out var invocationResult))
                 {
-                    if (Context.Endpoint.ReflectionCache.GetCachedInstance(cachedMethod, out var cachedInstance))
-                    {
-                        IRmQueryReply? result = null;
-
-                        switch (cachedMethod.MethodType)
-                        {
-                            case ReflectionCache.CachedMethodType.PayloadOnly:
-                                result = cachedMethod.Method.Invoke(cachedInstance, new object[] { payload }) as IRmQueryReply;
-                                break;
-                            case ReflectionCache.CachedMethodType.PayloadWithContext:
-                                result = cachedMethod.Method.Invoke(cachedInstance, new object[] { Context, payload }) as IRmQueryReply;
-                                break;
-                        }
-
-                        return result ?? throw new Exception("Query must return a valid instance of IRmQueryReply.");
-                    }
+                    //Query was handled by handler routing.
+                    return invocationResult ?? throw new Exception("Query must return a valid instance of IRmQueryReply.");
                 }
 
+                //Try to handle the query with a bound event hander.
                 return Context.Endpoint.InvokeOnQueryReceived(Context, payload);
             }
             catch (Exception ex)

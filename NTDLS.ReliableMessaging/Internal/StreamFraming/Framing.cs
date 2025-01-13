@@ -404,9 +404,9 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         private static byte[] AssembleFrame(RmContext context, FrameBody frameBody,
             IRmCompressionProvider? compressionProvider, IRmCryptographyProvider? cryptographyProvider)
         {
-            var frameBodyBytes = Utility.SerializeToByteArray(frameBody);
+            var frameBodyBytes = Serialization.SerializeToByteArray(frameBody);
 
-            var compressedFrameBodyBytes = compressionProvider?.Compress(context, frameBodyBytes) ?? Utility.Compress(frameBodyBytes);
+            var compressedFrameBodyBytes = compressionProvider?.Compress(context, frameBodyBytes) ?? Compression.Compress(frameBodyBytes);
 
             if (cryptographyProvider != null)
             {
@@ -509,8 +509,8 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                         compressedFrameBodyBytes = cryptographyProvider.Decrypt(context, compressedFrameBodyBytes);
                     }
 
-                    var FrameBodyBytes = compressionProvider?.DeCompress(context, compressedFrameBodyBytes) ?? Utility.Decompress(compressedFrameBodyBytes);
-                    var frameBody = Utility.DeserializeToObject<FrameBody>(FrameBodyBytes);
+                    var FrameBodyBytes = compressionProvider?.DeCompress(context, compressedFrameBodyBytes) ?? Compression.Decompress(compressedFrameBodyBytes);
+                    var frameBody = Serialization.DeserializeToObject<FrameBody>(FrameBodyBytes);
 
                     //Zero out the consumed portion of the frame buffer - more for fun than anything else.
                     Array.Clear(frameBuffer.FrameBuilder, 0, grossFrameSize);
@@ -543,7 +543,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                         }
                         processNotificationCallback(notification);
                     }
-                    else if (Utility.ImplementsGenericInterfaceWithArgument(framePayload.GetType(), typeof(IRmQuery<>), typeof(IRmQueryReply)))
+                    else if (Reflection.ImplementsGenericInterfaceWithArgument(framePayload.GetType(), typeof(IRmQuery<>), typeof(IRmQueryReply)))
                     {
                         if (processFrameQueryCallback == null)
                         {
@@ -616,7 +616,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             var genericType = Type.GetType(frame.ObjectType)
                 ?? throw new Exception($"Unknown extraction payload type [{frame.ObjectType}].");
 
-            var toObjectMethod = typeof(Utility).GetMethod("RmDeserializeFramePayloadToObject")
+            var toObjectMethod = typeof(Serialization).GetMethod("RmDeserializeFramePayloadToObject")
                     ?? throw new Exception($"Could not resolve RmDeserializeFramePayloadToObject().");
 
             genericToObjectMethod = toObjectMethod.MakeGenericMethod(genericType);
