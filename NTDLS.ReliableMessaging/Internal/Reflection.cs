@@ -9,7 +9,7 @@
 
         public static string GetAssemblyQualifiedTypeName(Type type)
         {
-            if (Caching.CacheTryGet<string>($"GetAssemblyQualifiedTypeName:{type}", out var objectTypeName) && objectTypeName != null)
+            if (Caching.CacheTryGet<string>($"AQT:{type}", out var objectTypeName) && objectTypeName != null)
             {
                 return objectTypeName;
             }
@@ -47,7 +47,7 @@
 
         public static string GetAssemblyQualifiedTypeNameWithClosedGenerics(Type type)
         {
-            if (Caching.CacheTryGet<string>($"GetAssemblyQualifiedTypeNameWithClosedGenerics:{type}", out var objectTypeName) && objectTypeName != null)
+            if (Caching.CacheTryGet<string>($"AQT_WCT:{type}", out var objectTypeName) && objectTypeName != null)
             {
                 return objectTypeName;
             }

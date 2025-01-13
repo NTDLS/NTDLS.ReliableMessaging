@@ -11,7 +11,7 @@ namespace NTDLS.ReliableMessaging.Internal
         /// <summary>
         /// Determines the type of method which will be executed.
         /// </summary>
-        public enum CachedMethodType
+        internal enum CachedMethodType
         {
             /// <summary>
             /// The hander function has only a payload parameter.
@@ -26,7 +26,7 @@ namespace NTDLS.ReliableMessaging.Internal
         /// <summary>
         /// An instance of a cached method.
         /// </summary>
-        public class CachedMethod
+        internal class CachedMethod
         {
             /// <summary>
             /// The reflection instance of the cached method.
@@ -41,8 +41,6 @@ namespace NTDLS.ReliableMessaging.Internal
             /// <summary>
             /// Creates a new instance of the CachedMethod class.
             /// </summary>
-            /// <param name="methodType"></param>
-            /// <param name="method"></param>
             public CachedMethod(CachedMethodType methodType, MethodInfo method)
             {
                 MethodType = methodType;
