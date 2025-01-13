@@ -247,9 +247,6 @@ namespace NTDLS.ReliableMessaging.Internal
                 }
                 else if (parameters.Length == 2)
                 {
-                    //Notification prototype: void HandleMyNotification(RmContext context, MyNotification notification)
-                    //Query prototype:        IReliableMessagingQueryReply HandleMyQuery(RmContext context, MyQuery query)
-
                     if (typeof(RmContext).IsAssignableFrom(parameters[0].ParameterType) == false)
                     {
                         continue;
