@@ -62,22 +62,22 @@ namespace NTDLS.ReliableMessaging.Internal
         /// Calls the appropriate handler function for the given query payload.
         /// </summary>
         /// <returns>Returns true if the function was found and executed.</returns>
-        internal bool RouteToQueryHander(RmContext context, IRmPayload payload, out IRmQueryReply? invocationResult)
+        internal bool RouteToQueryHander(RmContext context, IRmPayload queryPayload, out IRmQueryReply? invocationResult)
         {
             //First we try to invoke functions that match the signature, if that fails we will fall back to invoking the OnNotificationReceived() event.
-            if (GetCachedMethod(payload, out var cachedMethod))
+            if (GetCachedMethod(queryPayload, out var cachedMethod))
             {
                 if (GetCachedInstance(cachedMethod, out var cachedInstance))
                 {
-                    var method = MakeGenericMethodForPayload(cachedMethod, payload);
+                    var method = MakeGenericMethodForPayload(cachedMethod, queryPayload);
 
                     switch (cachedMethod.MethodType)
                     {
                         case CachedMethodType.PayloadOnly:
-                            invocationResult = method.Invoke(cachedInstance, [payload]) as IRmQueryReply;
+                            invocationResult = method.Invoke(cachedInstance, [queryPayload]) as IRmQueryReply;
                             return true;
                         case CachedMethodType.PayloadWithContext:
-                            invocationResult = method.Invoke(cachedInstance, [context, payload]) as IRmQueryReply;
+                            invocationResult = method.Invoke(cachedInstance, [context, queryPayload]) as IRmQueryReply;
                             return true;
                     }
                 }
@@ -92,22 +92,22 @@ namespace NTDLS.ReliableMessaging.Internal
         /// Calls the appropriate handler function for the given notification payload.
         /// </summary>
         /// <returns>Returns true if the function was found and executed.</returns>
-        internal bool RouteToNotificationHander(RmContext context, IRmPayload payload)
+        internal bool RouteToNotificationHander(RmContext context, IRmPayload notificationPayload)
         {
             //First we try to invoke functions that match the signature, if that fails we will fall back to invoking the OnNotificationReceived() event.
-            if (GetCachedMethod(payload, out var cachedMethod))
+            if (GetCachedMethod(notificationPayload, out var cachedMethod))
             {
                 if (GetCachedInstance(cachedMethod, out var cachedInstance))
                 {
-                    var method = MakeGenericMethodForPayload(cachedMethod, payload);
+                    var method = MakeGenericMethodForPayload(cachedMethod, notificationPayload);
 
                     switch (cachedMethod.MethodType)
                     {
                         case CachedMethodType.PayloadOnly:
-                            method.Invoke(cachedInstance, [payload]);
+                            method.Invoke(cachedInstance, [notificationPayload]);
                             return true;
                         case CachedMethodType.PayloadWithContext:
-                            method.Invoke(cachedInstance, [context, payload]);
+                            method.Invoke(cachedInstance, [context, notificationPayload]);
                             return true;
                     }
                 }
