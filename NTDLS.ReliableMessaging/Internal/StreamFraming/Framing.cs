@@ -16,16 +16,16 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <summary>
         /// The callback that is used to notify of the receipt of a notification frame.
         /// </summary>
-        /// <param name="payload">The notification payload.</param>
-        public delegate void ProcessFrameNotificationCallback(IRmNotification payload);
+        /// <param name="notification">The notification payload.</param>
+        public delegate void ProcessFrameNotificationCallback(IRmNotification notification);
 
         /// <summary>
         /// The callback that is used to notify of the receipt of a query frame. A return of type IFrameQueryReply
         ///  is  expected and will be routed to the originator and the appropriate waiting asynchronous task.
         /// </summary>
-        /// <param name="payload">The query payload</param>
+        /// <param name="query">The query payload</param>
         /// <returns>The reply payload to return to the originator.</returns>
-        public delegate IRmQueryReply ProcessFrameQueryCallback(IRmPayload payload);
+        public delegate IRmQueryReply ProcessFrameQueryCallback(IRmPayload query);
 
         /// <summary>
         /// Callback to get the callback that is called to allow for manipulation of bytes before/after they are sent/received.
@@ -541,7 +541,20 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                         {
                             throw new Exception("Notification handler was not supplied.");
                         }
-                        processNotificationCallback(notification);
+
+                        if (context.Endpoint.Configuration.AsynchronousNotifications)
+                        {
+                            //Keep a reference to the frame payload that we are going to perform an async wait on.
+                            var asynchronousNotification = notification;
+                            Task.Run(() =>
+                            {
+                                processNotificationCallback(asynchronousNotification);
+                            });
+                        }
+                        else
+                        {
+                            processNotificationCallback(notification);
+                        }
                     }
                     else if (Reflection.ImplementsGenericInterfaceWithArgument(framePayload.GetType(), typeof(IRmQuery<>), typeof(IRmQueryReply)))
                     {
@@ -553,10 +566,10 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                         if (context.Endpoint.Configuration.AsynchronousQueryWaiting)
                         {
                             //Keep a reference to the frame payload that we are going to perform an async wait on.
-                            var asynchronousWaitedFramePayload = framePayload;
+                            var asynchronousQuery = framePayload;
                             Task.Run(() =>
                             {
-                                var replyPayload = processFrameQueryCallback(asynchronousWaitedFramePayload);
+                                var replyPayload = processFrameQueryCallback(asynchronousQuery);
                                 stream.WriteReplyFrame(context, frameBody, replyPayload, serializationProvider, compressionProvider, cryptographyProvider);
                             });
                         }

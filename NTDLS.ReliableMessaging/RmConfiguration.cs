@@ -13,6 +13,11 @@ namespace NTDLS.ReliableMessaging
         public bool AsynchronousQueryWaiting { get; set; } = true;
 
         /// <summary>
+        /// When true, notifications are queued in a thread pool. Otherwise, notifications block other activities.
+        /// </summary>
+        public bool AsynchronousNotifications { get; set; } = true;
+
+        /// <summary>
         /// The default amount of time to wait for a query to reply before throwing a timeout exception.
         /// </summary>
         public TimeSpan QueryTimeout { get; set; } = TimeSpan.FromSeconds(30);
