@@ -55,8 +55,6 @@ namespace NTDLS.ReliableMessaging.Internal
                     {
                         //the famous do nothing loop!
                     }
-
-                    Disconnect(false);
                 }
                 catch (IOException)
                 {
@@ -68,6 +66,7 @@ namespace NTDLS.ReliableMessaging.Internal
                 }
             }
 
+            Disconnect(false);
             Context.Endpoint.InvokeOnDisconnected(Context);
         }
 
@@ -118,10 +117,11 @@ namespace NTDLS.ReliableMessaging.Internal
             if (_keepRunning)
             {
                 _keepRunning = false;
-                try { Context.Stream.Close(); } catch { }
-                try { Context.Stream.Dispose(); } catch { }
-                try { Context.TcpClient.Close(); } catch { }
-                try { Context.TcpClient.Dispose(); } catch { }
+
+                Exceptions.Ignore(Context.Stream.Close);
+                Exceptions.Ignore(Context.Stream.Dispose);
+                Exceptions.Ignore(Context.TcpClient.Close);
+                Exceptions.Ignore(Context.TcpClient.Dispose);
 
                 if (waitOnThread && Environment.CurrentManagedThreadId != Context.Thread.ManagedThreadId)
                 {
