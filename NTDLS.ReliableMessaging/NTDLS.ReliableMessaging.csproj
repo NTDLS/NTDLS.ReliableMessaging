@@ -15,7 +15,7 @@
     <PackageReleaseNotes>
       Possible missed cleanup on unexpected disconnect.
     </PackageReleaseNotes>
-    <Version>2.1.2</Version>
+    <Version>2.1.3</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>rpc;tcpip;ipc;stream;encryption;messaging;message-framing;</PackageTags>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>

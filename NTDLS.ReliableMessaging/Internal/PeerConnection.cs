@@ -55,6 +55,7 @@ namespace NTDLS.ReliableMessaging.Internal
                     {
                         //the famous do nothing loop!
                     }
+                    Disconnect(false);
                 }
                 catch (IOException)
                 {
