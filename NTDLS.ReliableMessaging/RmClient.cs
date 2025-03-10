@@ -40,6 +40,11 @@ namespace NTDLS.ReliableMessaging
         /// <returns></returns>
         public bool IsConnected => _tcpClient?.Connected == true;
 
+        /// <summary>
+        /// The unique id of the local connection.
+        /// </summary>
+        public Guid? ConnectionId { get => _activeConnection?.ConnectionId; }
+
         #region Events.
 
         /// <summary>
@@ -134,6 +139,13 @@ namespace NTDLS.ReliableMessaging
             _activeConnection?.Context.SetSerializationProvider(provider);
         }
 
+
+        /// <summary>
+        /// Gets the current custom serialization provider, if any.
+        /// </summary>
+        public IRmSerializationProvider? GetSerializationProvider()
+            => _activeConnection?.Context.GetSerializationProvider();
+
         /// <summary>
         /// Removes the serialization provider set by a previous call to SetSerializationProvider().
         /// </summary>
@@ -158,6 +170,12 @@ namespace NTDLS.ReliableMessaging
         }
 
         /// <summary>
+        /// Gets the current custom compression provider, if any.
+        /// </summary>
+        public IRmCompressionProvider? GetCompressionProvider()
+            => _activeConnection?.Context.GetCompressionProvider();
+
+        /// <summary>
         /// Removes the compression provider set by a previous call to SetCompressionProvider().
         /// </summary>
         public void ClearCompressionProvider()
@@ -179,6 +197,12 @@ namespace NTDLS.ReliableMessaging
             Configuration.CryptographyProvider = provider;
             _activeConnection?.Context.SetCryptographyProvider(provider);
         }
+
+        /// <summary>
+        /// Gets the current custom cryptography provider, if any.
+        /// </summary>
+        public IRmCryptographyProvider? GetCryptographyProvider()
+            => _activeConnection?.Context.GetCryptographyProvider();
 
         /// <summary>
         /// Removes the encryption provider set by a previous call to SetCryptographyProvider().
