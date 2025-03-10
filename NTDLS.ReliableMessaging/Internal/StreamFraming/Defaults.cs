@@ -5,7 +5,7 @@
         internal static class NtFrameDefaults
         {
             /// <summary>
-            /// The frame header delimiter. Used to literally seperate and detect the beginning of each packet.
+            /// The frame header delimiter. Used to literally separate and detect the beginning of each packet.
             /// </summary>
             public const int FRAME_DELIMITER = 948724593;
 

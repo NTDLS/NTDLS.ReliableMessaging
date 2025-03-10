@@ -143,16 +143,16 @@ namespace NTDLS.ReliableMessaging.Internal
                 // Recursively get the AssemblyQualifiedName of generic arguments
                 var genericTypeArguments = payloadType.GetGenericArguments()
                     .Select(t => Type.GetType(t.AssemblyQualifiedName ?? Reflection.GetAssemblyQualifiedTypeName(t))
-                     ?? throw new Exception($"The generic assembly type [{t.AssemblyQualifiedName}] could not be instanciated.")
+                     ?? throw new Exception($"The generic assembly type [{t.AssemblyQualifiedName}] could not be instantiated.")
                     ).ToArray();
 
                 if (genericTypeArguments == null)
                 {
-                    throw new Exception("The generic assembly type could not be instanciated.");
+                    throw new Exception("The generic assembly type could not be instantiated.");
                 }
 
                 var genericMethod = cachedMethod.Method.MakeGenericMethod(genericTypeArguments)
-                    ?? throw new Exception("The generic assembly type could not be instanciated.");
+                    ?? throw new Exception("The generic assembly type could not be instantiated.");
 
                 Caching.CacheSetOneMinute(payloadType, genericMethod);
 

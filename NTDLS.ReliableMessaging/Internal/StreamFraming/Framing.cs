@@ -509,8 +509,8 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                         compressedFrameBodyBytes = cryptographyProvider.Decrypt(context, compressedFrameBodyBytes);
                     }
 
-                    var FrameBodyBytes = compressionProvider?.DeCompress(context, compressedFrameBodyBytes) ?? Compression.Decompress(compressedFrameBodyBytes);
-                    var frameBody = Serialization.DeserializeToObject<FrameBody>(FrameBodyBytes);
+                    var frameBodyBytes = compressionProvider?.DeCompress(context, compressedFrameBodyBytes) ?? Compression.Decompress(compressedFrameBodyBytes);
+                    var frameBody = Serialization.DeserializeToObject<FrameBody>(frameBodyBytes);
 
                     //Zero out the consumed portion of the frame buffer - more for fun than anything else.
                     Array.Clear(frameBuffer.FrameBuilder, 0, grossFrameSize);
