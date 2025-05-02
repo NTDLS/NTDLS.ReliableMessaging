@@ -15,7 +15,7 @@
     <PackageReleaseNotes>
       Added crypto, compression, and serialization getters.
     </PackageReleaseNotes>
-    <Version>2.1.5</Version>
+    <Version>2.1.6</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>rpc;tcpip;ipc;stream;encryption;messaging;message-framing;</PackageTags>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -45,9 +45,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NTDLS.Helpers" Version="1.3.13" />
+    <PackageReference Include="NTDLS.Helpers" Version="1.3.16" />
     <PackageReference Include="NTDLS.Semaphore" Version="3.5.2" />
-    <PackageReference Include="protobuf-net" Version="3.2.46" />
+    <PackageReference Include="protobuf-net" Version="3.2.52" />
   </ItemGroup>
 
 </Project>
