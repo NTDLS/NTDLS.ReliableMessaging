@@ -13,6 +13,8 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
     /// </summary>
     internal static class Framing
     {
+        private static readonly SemaphoreSlim _writeLock = new(1, 1);
+
         /// <summary>
         /// The callback that is used to notify of the receipt of a notification frame.
         /// </summary>
@@ -64,6 +66,38 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         }
 
         #region Extension methods.
+
+        /// <summary>
+        /// Writes a byte array to the stream. This is a thread-safe method that uses a semaphore to ensure that only one thread can write to the stream at a time.
+        /// </summary>
+        public async static Task SafeWriteAsync(this Stream stream, byte[] buffer)
+        {
+            await _writeLock.WaitAsync();
+            try
+            {
+                await stream.WriteAsync(buffer, 0, buffer.Length);
+            }
+            finally
+            {
+                _writeLock.Release();
+            }
+        }
+
+        /// <summary>
+        /// Writes a byte array to the stream. This is a thread-safe method that uses a semaphore to ensure that only one thread can write to the stream at a time.
+        /// </summary>
+        public static void SafeWrite(this Stream stream, byte[] buffer)
+        {
+            _writeLock.Wait();
+            try
+            {
+                stream.Write(buffer, 0, buffer.Length);
+            }
+            finally
+            {
+                _writeLock.Release();
+            }
+        }
 
         /// <summary>
         /// Waits on bytes to become available on the stream, reads those bytes then parses the available frames (if any) and calls the appropriate callbacks.
@@ -155,7 +189,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
 
                 var frameBytes = AssembleFrame(context, frameBody, compressionProvider, cryptographyProvider);
 
-                await stream.WriteAsync(frameBytes);
+                await stream.SafeWriteAsync(frameBytes);
 
                 await Task.Run(() => // Wait for a reply asynchronously
                 {
@@ -232,16 +266,13 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
 
                 var frameBytes = AssembleFrame(context, frameBody, compressionProvider, cryptographyProvider);
 
-                lock (stream)
+                if (context.TcpClient.Connected)
                 {
-                    if (context.TcpClient.Connected)
+                    if (!stream.CanWrite)
                     {
-                        if (!stream.CanWrite)
-                        {
-                            throw new Exception("Peer is connected but stream is unwritable.");
-                        }
-                        stream.Write(frameBytes);
+                        throw new Exception("Peer is connected but stream is unwritable.");
                     }
+                    stream.SafeWrite(frameBytes);
                 }
 
                 //Wait for a reply. When a reply is received, it will be routed to the correct query via ApplyQueryReply().
@@ -313,20 +344,13 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             };
 
             var frameBytes = AssembleFrame(context, frameBody, compressionProvider, cryptographyProvider);
-            lock (stream)
+            if (context.TcpClient.Connected)
             {
-                if (context.TcpClient.Connected)
+                if (!stream.CanWrite)
                 {
-                    if (!stream.CanWrite)
-                    {
-                        throw new Exception("Peer is connected but stream is unwritable.");
-                    }
+                    throw new Exception("Peer is connected but stream is unwritable.");
                 }
-            }
-
-            if (context.TcpClient.Connected && stream.CanWrite)
-            {
-                stream.WriteAsync(frameBytes, 0, frameBytes.Length);
+                stream.SafeWrite(frameBytes);
             }
         }
 
@@ -353,16 +377,45 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             var frameBody = new FrameBody(serializationProvider, framePayload);
 
             var frameBytes = AssembleFrame(context, frameBody, compressionProvider, cryptographyProvider);
-            lock (stream)
+            if (context.TcpClient.Connected)
             {
-                if (context.TcpClient.Connected)
+                if (!stream.CanWrite)
                 {
-                    if (!stream.CanWrite)
-                    {
-                        throw new Exception("Peer is connected but stream is unwritable.");
-                    }
-                    stream.Write(frameBytes, 0, frameBytes.Length);
+                    throw new Exception("Peer is connected but stream is unwritable.");
                 }
+                stream.SafeWrite(frameBytes);
+            }
+        }
+
+        /// <summary>
+        /// Sends a one-time fire-and-forget notification to the stream.
+        /// </summary>
+        /// <param name="stream">The open stream that will be written to.</param>
+        /// <param name="context">Contains information about the endpoint and the connection.</param>
+        /// <param name="framePayload">The notification payload that will be written to the stream.</param>
+        /// <param name="serializationProvider">An optional callback that is called to allow for custom serialization.</param>
+        /// <param name="compressionProvider">An optional callback that is called to allow for manipulation of bytes before they are framed.</param>
+        /// <param name="cryptographyProvider">An optional callback that is called to allow for manipulation of bytes before they are framed.</param>
+        /// <exception cref="Exception"></exception>
+        public async static void WriteNotificationFrameAsync(this Stream stream, RmContext context,
+            IRmNotification framePayload, IRmSerializationProvider? serializationProvider,
+            IRmCompressionProvider? compressionProvider, IRmCryptographyProvider? cryptographyProvider)
+        {
+            if (stream == null)
+            {
+                throw new ArgumentNullException(nameof(stream), "Stream can not be null.");
+            }
+
+            var frameBody = new FrameBody(serializationProvider, framePayload);
+
+            var frameBytes = AssembleFrame(context, frameBody, compressionProvider, cryptographyProvider);
+            if (context.TcpClient.Connected)
+            {
+                if (!stream.CanWrite)
+                {
+                    throw new Exception("Peer is connected but stream is unwritable.");
+                }
+                await stream.SafeWriteAsync(frameBytes);
             }
         }
 
@@ -386,16 +439,13 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             var frameBody = new FrameBody(framePayload);
             var frameBytes = AssembleFrame(context, frameBody, compressionProvider, cryptographyProvider);
 
-            lock (stream)
+            if (context.TcpClient.Connected)
             {
-                if (context.TcpClient.Connected)
+                if (!stream.CanWrite)
                 {
-                    if (!stream.CanWrite)
-                    {
-                        throw new Exception("Peer is connected but stream is unwritable.");
-                    }
-                    stream.Write(frameBytes, 0, frameBytes.Length);
+                    throw new Exception("Peer is connected but stream is unwritable.");
                 }
+                stream.SafeWrite(frameBytes);
             }
         }
 

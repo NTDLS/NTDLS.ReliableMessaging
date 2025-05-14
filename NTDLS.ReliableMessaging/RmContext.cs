@@ -148,6 +148,13 @@ namespace NTDLS.ReliableMessaging
             => Stream.WriteNotificationFrame(this, notification, _serializationProvider, _compressionProvider, _cryptographyProvider);
 
         /// <summary>
+        /// Dispatches a one way notification to the connected server.
+        /// </summary>
+        /// <param name="notification">The notification message to send.</param>
+        public void NotifyAsync(IRmNotification notification)
+            => Stream.WriteNotificationFrame(this, notification, _serializationProvider, _compressionProvider, _cryptographyProvider);
+
+        /// <summary>
         /// Sends a query to the specified client and expects a reply.
         /// </summary>
         /// <typeparam name="T">The type of reply that is expected.</typeparam>

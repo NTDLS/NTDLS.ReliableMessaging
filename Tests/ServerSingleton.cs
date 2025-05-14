@@ -56,7 +56,7 @@ namespace Tests
                 Assert.Equal("query test", myGenericQuery.Message);
                 return new MyGenericQueryForEventReply<string>("query reply test");
             }
-            throw new NotImplementedException();    
+            throw new NotImplementedException();
         }
 
         private static void Server_OnNotificationReceived(RmContext context, IRmNotification payload)
