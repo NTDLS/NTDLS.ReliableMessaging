@@ -13,7 +13,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
     /// </summary>
     internal static class Framing
     {
-        private static readonly SemaphoreSlim _writeLock = new(1, 1);
+        private static readonly SemaphoreSlim _streamWriteLock = new(1, 1);
 
         /// <summary>
         /// The callback that is used to notify of the receipt of a notification frame.
@@ -68,34 +68,51 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         #region Extension methods.
 
         /// <summary>
-        /// Writes a byte array to the stream. This is a thread-safe method that uses a semaphore to ensure that only one thread can write to the stream at a time.
+        /// Writes a byte array to the stream.
+        /// This is a thread-safe method that uses a semaphore to ensure that only one thread can write to the stream at a time.
         /// </summary>
-        public async static Task SafeWriteAsync(this Stream stream, byte[] buffer)
+        public async static Task SafeWriteAsync(this Stream stream, RmContext context, byte[] buffer)
         {
-            await _writeLock.WaitAsync();
+            await _streamWriteLock.WaitAsync();
             try
             {
-                await stream.WriteAsync(buffer, 0, buffer.Length);
+                if (context.TcpClient.Connected)
+                {
+                    if (!stream.CanWrite)
+                    {
+                        throw new Exception("Peer is connected but stream is unwritable.");
+                    }
+                    await stream.WriteAsync(buffer);
+                }
+
             }
             finally
             {
-                _writeLock.Release();
+                _streamWriteLock.Release();
             }
         }
 
         /// <summary>
-        /// Writes a byte array to the stream. This is a thread-safe method that uses a semaphore to ensure that only one thread can write to the stream at a time.
+        /// Writes a byte array to the stream.
+        /// This is a thread-safe method that uses a semaphore to ensure that only one thread can write to the stream at a time.
         /// </summary>
-        public static void SafeWrite(this Stream stream, byte[] buffer)
+        public static void SafeWrite(this Stream stream, RmContext context, byte[] buffer)
         {
-            _writeLock.Wait();
+            _streamWriteLock.Wait();
             try
             {
-                stream.Write(buffer, 0, buffer.Length);
+                if (context.TcpClient.Connected)
+                {
+                    if (!stream.CanWrite)
+                    {
+                        throw new Exception("Peer is connected but stream is unwritable.");
+                    }
+                    stream.Write(buffer);
+                }
             }
             finally
             {
-                _writeLock.Release();
+                _streamWriteLock.Release();
             }
         }
 
@@ -188,16 +205,15 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 context.QueriesAwaitingReplies.Use(o => o.Add(queryAwaitingReply));
 
                 var frameBytes = AssembleFrame(context, frameBody, compressionProvider, cryptographyProvider);
+                await stream.SafeWriteAsync(context, frameBytes);
 
-                await stream.SafeWriteAsync(frameBytes);
-
-                await Task.Run(() => // Wait for a reply asynchronously
+                //Wait for a reply. When a reply is received, it will be routed to the correct query via ApplyQueryReply().
+                //ApplyQueryReply() will apply the payload data to queryAwaitingReply and trigger the wait event.
+                if (!queryAwaitingReply.WaitEvent.WaitOne(queryTimeout))
                 {
-                    if (!queryAwaitingReply.WaitEvent.WaitOne(queryTimeout))
-                    {
-                        throw new Exception("Query timeout expired while waiting on reply.");
-                    }
-                });
+                    context.QueriesAwaitingReplies.Use(o => o.Remove(queryAwaitingReply));
+                    throw new Exception("Query timeout expired while waiting on reply.");
+                }
 
                 context.QueriesAwaitingReplies.Use(o => o.Remove(queryAwaitingReply));
 
@@ -265,15 +281,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 context.QueriesAwaitingReplies.Use(o => o.Add(queryAwaitingReply));
 
                 var frameBytes = AssembleFrame(context, frameBody, compressionProvider, cryptographyProvider);
-
-                if (context.TcpClient.Connected)
-                {
-                    if (!stream.CanWrite)
-                    {
-                        throw new Exception("Peer is connected but stream is unwritable.");
-                    }
-                    stream.SafeWrite(frameBytes);
-                }
+                stream.SafeWrite(context, frameBytes);
 
                 //Wait for a reply. When a reply is received, it will be routed to the correct query via ApplyQueryReply().
                 //ApplyQueryReply() will apply the payload data to queryAwaitingReply and trigger the wait event.
@@ -344,16 +352,8 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             };
 
             var frameBytes = AssembleFrame(context, frameBody, compressionProvider, cryptographyProvider);
-            if (context.TcpClient.Connected)
-            {
-                if (!stream.CanWrite)
-                {
-                    throw new Exception("Peer is connected but stream is unwritable.");
-                }
-                stream.SafeWrite(frameBytes);
-            }
+            stream.SafeWrite(context, frameBytes);
         }
-
 
         /// <summary>
         /// Sends a one-time fire-and-forget notification to the stream.
@@ -375,16 +375,8 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             }
 
             var frameBody = new FrameBody(serializationProvider, framePayload);
-
             var frameBytes = AssembleFrame(context, frameBody, compressionProvider, cryptographyProvider);
-            if (context.TcpClient.Connected)
-            {
-                if (!stream.CanWrite)
-                {
-                    throw new Exception("Peer is connected but stream is unwritable.");
-                }
-                stream.SafeWrite(frameBytes);
-            }
+            stream.SafeWrite(context, frameBytes);
         }
 
         /// <summary>
@@ -407,16 +399,8 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             }
 
             var frameBody = new FrameBody(serializationProvider, framePayload);
-
             var frameBytes = AssembleFrame(context, frameBody, compressionProvider, cryptographyProvider);
-            if (context.TcpClient.Connected)
-            {
-                if (!stream.CanWrite)
-                {
-                    throw new Exception("Peer is connected but stream is unwritable.");
-                }
-                await stream.SafeWriteAsync(frameBytes);
-            }
+            await stream.SafeWriteAsync(context, frameBytes);
         }
 
         /// <summary>
@@ -438,15 +422,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
 
             var frameBody = new FrameBody(framePayload);
             var frameBytes = AssembleFrame(context, frameBody, compressionProvider, cryptographyProvider);
-
-            if (context.TcpClient.Connected)
-            {
-                if (!stream.CanWrite)
-                {
-                    throw new Exception("Peer is connected but stream is unwritable.");
-                }
-                stream.SafeWrite(frameBytes);
-            }
+            stream.SafeWrite(context, frameBytes);
         }
 
         #endregion
@@ -581,7 +557,10 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                     else if (framePayload is IRmQueryReply reply)
                     {
                         // A reply to a query was received, we need to find the waiting query - set the reply payload data and trigger the wait event.
-                        var waitingQuery = context.QueriesAwaitingReplies.Use(o => o.Single(o => o.FrameBodyId == frameBody.Id));
+                        var waitingQuery = context.QueriesAwaitingReplies.Use((o) =>
+                            o.SingleOrDefault(o => o.FrameBodyId == frameBody.Id)
+                            ?? throw new Exception($"No waiting query was found for the reply with id '{frameBody.Id}'. Possible query timeout."));
+
                         waitingQuery.ReplyPayload = reply;
                         waitingQuery.WaitEvent.Set();
                     }
