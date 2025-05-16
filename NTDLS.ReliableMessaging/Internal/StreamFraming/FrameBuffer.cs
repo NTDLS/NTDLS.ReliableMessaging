@@ -73,38 +73,45 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <returns>Returns false if the stream is closed.</returns>
         internal bool ReadStream(Stream stream)
         {
-            lock (this)
+            try
             {
-                try
+                ReceiveBufferUsed = stream.Read(ReceiveBuffer, 0, ReceiveBuffer.Length);
+                if (ReceiveBufferUsed == 0)
                 {
-                    ReceiveBufferUsed = stream.Read(ReceiveBuffer, 0, ReceiveBuffer.Length);
-                    if (ReceiveBufferUsed == 0)
-                    {
-                        return false; //Graceful stream disconnect.
-                    }
+                    return false; //Graceful stream disconnect.
+                }
+
+                lock (this)
+                {
+                    //If the receive buffer is full, we need to resize it.
                     if (ReceiveBufferUsed == ReceiveBuffer.Length && ReceiveBufferUsed < MaxReceiveBufferSize)
                     {
                         AutoGrowReceiveBuffer();
                     }
 
+                    //If the frame builder is full, we need to resize it.
                     if (FrameBuilderLength + ReceiveBufferUsed >= FrameBuilder.Length)
                     {
                         Array.Resize(ref FrameBuilder, FrameBuilderLength + ReceiveBufferUsed);
                     }
 
+                    //Copy the data from the receive buffer to the frame builder:
                     Buffer.BlockCopy(ReceiveBuffer, 0, FrameBuilder, FrameBuilderLength, ReceiveBufferUsed);
 
                     FrameBuilderLength += ReceiveBufferUsed;
                 }
-                catch (IOException)
-                {
-                    return false;
-                }
-
-                return true;
             }
+            catch (IOException)
+            {
+                return false;
+            }
+
+            return true;
         }
 
+        /// <summary>
+        /// Gets the next frame from the buffer. If there is not enough data in the buffer to make a complete frame, it will return false.
+        /// </summary>
         public bool GetNextFrame(RmContext context, RmEvents.ExceptionEvent? onException, [NotNullWhen(true)] out byte[]? compressedFrameBodyBytes)
         {
             lock (this)

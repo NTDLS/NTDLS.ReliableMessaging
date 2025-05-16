@@ -15,7 +15,7 @@
     <PackageReleaseNotes>
       Handles missing query for replies.
     </PackageReleaseNotes>
-    <Version>2.1.8</Version>
+    <Version>3.0.0</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>rpc;tcpip;ipc;stream;encryption;messaging;message-framing;</PackageTags>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
