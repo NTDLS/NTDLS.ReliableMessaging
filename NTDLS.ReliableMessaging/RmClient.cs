@@ -9,7 +9,8 @@ namespace NTDLS.ReliableMessaging
     /// <summary>
     /// Connects to a Median RPC Server then sends/received and processes notifications/queries.
     /// </summary>
-    public class RmClient : IRmEndpoint
+    public class RmClient
+        : IRmEndpoint
     {
         private TcpClient? _tcpClient;
         private PeerConnection? _activeConnection;

@@ -10,7 +10,8 @@ namespace NTDLS.ReliableMessaging
     /// <summary>
     /// Listens for connections from Median RPC Clients and processes the incoming notifications/queries.
     /// </summary>
-    public class RmServer : IRmEndpoint
+    public class RmServer
+        : IRmEndpoint
     {
         private TcpListener? _listener;
         private readonly PessimisticCriticalResource<List<PeerConnection>> _activeConnections = new();

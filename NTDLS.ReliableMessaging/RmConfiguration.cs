@@ -8,6 +8,11 @@ namespace NTDLS.ReliableMessaging
     public class RmConfiguration
     {
         /// <summary>
+        /// Whether to use a multiple thread for processing frames.
+        /// </summary>
+        public bool MultiThreadedFrameProcessing { get; set; } = true;
+
+        /// <summary>
         /// When true, query reply handlers are queued in a thread pool. Otherwise, queries block other activities.
         /// </summary>
         public bool AsynchronousQueryWaiting { get; set; } = true;
