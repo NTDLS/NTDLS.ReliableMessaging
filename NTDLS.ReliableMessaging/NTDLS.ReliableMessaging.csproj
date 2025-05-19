@@ -15,7 +15,7 @@
     <PackageReleaseNotes>
       Improves stream framing and processing with multiple processing threads.
     </PackageReleaseNotes>
-    <Version>3.0.1</Version>
+    <Version>3.0.2</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>rpc;tcpip;ipc;stream;encryption;messaging;message-framing;</PackageTags>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>

@@ -508,19 +508,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                     {
                         throw new Exception("Notification handler was not supplied.");
                     }
-                    if (context.Endpoint.Configuration.AsynchronousNotifications)
-                    {
-                        //Keep a reference to the frame payload that we are going to perform an async wait on.
-                        var asynchronousNotification = notification;
-                        Task.Run(() => //We do not wait on this task, we just fire and forget it.
-                        {
-                            processNotificationCallback(asynchronousNotification);
-                        });
-                    }
-                    else
-                    {
-                        processNotificationCallback(notification);
-                    }
+                    processNotificationCallback(notification);
                 }
                 else if (Reflection.ImplementsGenericInterfaceWithArgument(framePayload.GetType(), typeof(IRmQuery<>), typeof(IRmQueryReply)))
                 {
@@ -529,21 +517,8 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                         throw new Exception("Query handler was not supplied.");
                     }
 
-                    if (context.Endpoint.Configuration.AsynchronousQueryWaiting)
-                    {
-                        //Keep a reference to the frame payload that we are going to perform an async wait on.
-                        var asynchronousQuery = framePayload;
-                        Task.Run(() => //We do not wait on this task, we just fire and forget it.
-                        {
-                            var replyPayload = processFrameQueryCallback(asynchronousQuery);
-                            stream.WriteReplyFrame(context, frameBody, replyPayload, serializationProvider, compressionProvider, cryptographyProvider);
-                        });
-                    }
-                    else
-                    {
-                        var replyPayload = processFrameQueryCallback(framePayload);
-                        stream.WriteReplyFrame(context, frameBody, replyPayload, serializationProvider, compressionProvider, cryptographyProvider);
-                    }
+                    var replyPayload = processFrameQueryCallback(framePayload);
+                    stream.WriteReplyFrame(context, frameBody, replyPayload, serializationProvider, compressionProvider, cryptographyProvider);
                 }
                 else
                 {
