@@ -1,5 +1,4 @@
 ﻿using NTDLS.Helpers;
-using NTDLS.ReliableMessaging.Internal.Payloads;
 using NTDLS.Semaphore;
 using System.Reflection;
 using System.Text;
@@ -32,19 +31,16 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <summary>
         /// Callback to get the callback that is called to allow for manipulation of bytes before/after they are sent/received.
         /// </summary>
-        /// <returns></returns>
         public delegate IRmCryptographyProvider? GetEncryptionProviderCallback();
 
         /// <summary>
         /// Callback to get the callback that is called to allow for manipulation of bytes before/after they are sent/received.
         /// </summary>
-        /// <returns></returns>
         public delegate IRmCompressionProvider? GetCompressionProviderCallback();
 
         /// <summary>
         /// Callback to get the callback that is called to allow for custom serialization.
         /// </summary>
-        /// <returns></returns>
         public delegate IRmSerializationProvider? GetSerializationProviderCallback();
 
         private static readonly PessimisticCriticalResource<Dictionary<string, MethodInfo>> _reflectionCache = new();
@@ -129,7 +125,6 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <param name="getCompressionProviderCallback">An optional callback to get the callback that is called to allow for manipulation of bytes after they are received.</param>/// 
         /// <param name="getEncryptionProviderCallback">An optional callback to get the callback that is called to allow for manipulation of bytes after they are received.</param>
         /// <returns>Returns true if the stream is healthy, returns false if disconnected.</returns>
-        /// <exception cref="Exception"></exception>
         public static bool ReadAndProcessFrames(this Stream stream, RmContext context, RmEvents.ExceptionEvent? onException, FrameBuffer frameBuffer,
             ProcessFrameNotificationCallback? processNotificationCallback, ProcessFrameQueryCallback? processFrameQueryCallback,
             GetSerializationProviderCallback? getSerializationProviderCallback, GetCompressionProviderCallback? getCompressionProviderCallback,
@@ -164,16 +159,16 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                     cryptographyProvider = getEncryptionProviderCallback();
                 }
 
-                while (frameBuffer.GetNextFrame(context, onException, out var compressedFrameBodyBytes))
+                while (frameBuffer.GetNextFrame(context, onException, out var frameBodyBytes))
                 {
                     if (context.Messenger.Configuration.MultiThreadedFrameProcessing)
                     {
-                        Task.Run(() => stream.ProcessFrame(context, onException, compressedFrameBodyBytes, processNotificationCallback,
+                        Task.Run(() => stream.ProcessFrame(context, onException, frameBodyBytes, processNotificationCallback,
                             processFrameQueryCallback, serializationProvider, compressionProvider, cryptographyProvider));
                     }
                     else
                     {
-                        stream.ProcessFrame(context, onException, compressedFrameBodyBytes, processNotificationCallback,
+                        stream.ProcessFrame(context, onException, frameBodyBytes, processNotificationCallback,
                             processFrameQueryCallback, serializationProvider, compressionProvider, cryptographyProvider);
                     }
                 }
@@ -196,7 +191,6 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <param name="compressionProvider">An optional callback that is called to allow for manipulation of bytes before they are framed.</param>
         /// <param name="cryptographyProvider">An optional callback that is called to allow for manipulation of bytes before they are framed.</param>
         /// <returns>Returns the reply payload that is written to the stream from the recipient of the query.</returns>
-        /// <exception cref="Exception"></exception>
         public static async Task<T> WriteQueryFrameAsync<T>(this Stream stream, RmContext context,
             IRmQuery<T> framePayload, TimeSpan queryTimeout, IRmSerializationProvider? serializationProvider,
             IRmCompressionProvider? compressionProvider, IRmCryptographyProvider? cryptographyProvider) where T : IRmQueryReply
@@ -238,7 +232,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                     throw new Exception("Reply payload was empty.");
                 }
 
-                if (queryAwaitingReply.ReplyPayload is FramePayloadQueryReplyException ex)
+                if (queryAwaitingReply.ReplyPayload is RmQueryReplyException ex)
                 {
                     throw ex.GetException();
                 }
@@ -272,7 +266,6 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <param name="compressionProvider">An optional callback that is called to allow for manipulation of bytes before they are framed.</param>
         /// <param name="cryptographyProvider">An optional callback that is called to allow for manipulation of bytes before they are framed.</param>
         /// <returns>Returns the reply payload that is written to the stream from the recipient of the query.</returns>
-        /// <exception cref="Exception"></exception>
         public static Task<T> WriteQueryFrame<T>(this Stream stream, RmContext context,
             IRmQuery<T> framePayload, TimeSpan queryTimeout, IRmSerializationProvider? serializationProvider,
             IRmCompressionProvider? compressionProvider, IRmCryptographyProvider? cryptographyProvider) where T : IRmQueryReply
@@ -314,7 +307,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                     throw new Exception("Reply payload was empty.");
                 }
 
-                if (queryAwaitingReply.ReplyPayload is FramePayloadQueryReplyException ex)
+                if (queryAwaitingReply.ReplyPayload is RmQueryReplyException ex)
                 {
                     throw ex.GetException();
                 }
@@ -347,7 +340,6 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <param name="serializationProvider">An optional callback that is called to allow for custom serialization.</param>
         /// <param name="compressionProvider">An optional callback that is called to allow for manipulation of bytes before they are framed.</param>
         /// <param name="cryptographyProvider">An optional callback that is called to allow for manipulation of bytes before they are framed.</param>
-        /// <exception cref="Exception"></exception>
         public static void WriteReplyFrame(this Stream stream, RmContext context, FrameBody queryFrameBody,
             IRmQueryReply framePayload, IRmSerializationProvider? serializationProvider,
             IRmCompressionProvider? compressionProvider, IRmCryptographyProvider? cryptographyProvider)
@@ -375,7 +367,6 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <param name="serializationProvider">An optional callback that is called to allow for custom serialization.</param>
         /// <param name="compressionProvider">An optional callback that is called to allow for manipulation of bytes before they are framed.</param>
         /// <param name="cryptographyProvider">An optional callback that is called to allow for manipulation of bytes before they are framed.</param>
-        /// <exception cref="Exception"></exception>
         public static void WriteNotificationFrame(this Stream stream, RmContext context,
             IRmNotification framePayload, IRmSerializationProvider? serializationProvider,
             IRmCompressionProvider? compressionProvider, IRmCryptographyProvider? cryptographyProvider)
@@ -399,8 +390,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <param name="serializationProvider">An optional callback that is called to allow for custom serialization.</param>
         /// <param name="compressionProvider">An optional callback that is called to allow for manipulation of bytes before they are framed.</param>
         /// <param name="cryptographyProvider">An optional callback that is called to allow for manipulation of bytes before they are framed.</param>
-        /// <exception cref="Exception"></exception>
-        public async static void WriteNotificationFrameAsync(this Stream stream, RmContext context,
+        public async static Task WriteNotificationFrameAsync(this Stream stream, RmContext context,
             IRmNotification framePayload, IRmSerializationProvider? serializationProvider,
             IRmCompressionProvider? compressionProvider, IRmCryptographyProvider? cryptographyProvider)
         {
@@ -423,7 +413,6 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <param name="framePayload">The bytes will make up the body of the frame which is written to the stream.</param>
         /// <param name="compressionProvider">An optional callback that is called to allow for manipulation of bytes before they are framed.</param>
         /// <param name="cryptographyProvider">An optional callback that is called to allow for manipulation of bytes before they are framed.</param>
-        /// <exception cref="Exception"></exception>
         public static void WriteBytesFrame(this Stream stream, RmContext context, byte[] framePayload, IRmCompressionProvider? compressionProvider, IRmCryptographyProvider? cryptographyProvider)
         {
             if (stream == null)
@@ -436,6 +425,27 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             stream.SafeWrite(context, frameBytes);
         }
 
+        /// <summary>
+        /// Sends a one-time fire-and-forget byte array payload. These are and handled in processNotificationCallback().
+        /// When a raw byte array is use, all json serialization is skipped and checks for this payload type are prioritized for performance.
+        /// </summary>
+        /// <param name="stream">The open stream that will be written to.</param>
+        /// <param name="context">Contains information about the endpoint and the connection.</param>
+        /// <param name="framePayload">The bytes will make up the body of the frame which is written to the stream.</param>
+        /// <param name="compressionProvider">An optional callback that is called to allow for manipulation of bytes before they are framed.</param>
+        /// <param name="cryptographyProvider">An optional callback that is called to allow for manipulation of bytes before they are framed.</param>
+        public async static Task WriteBytesFrameAsync(this Stream stream, RmContext context, byte[] framePayload, IRmCompressionProvider? compressionProvider, IRmCryptographyProvider? cryptographyProvider)
+        {
+            if (stream == null)
+            {
+                throw new ArgumentNullException(nameof(stream), "Stream can not be null.");
+            }
+
+            var frameBody = new FrameBody(framePayload);
+            var frameBytes = AssembleFrame(context, frameBody, compressionProvider, cryptographyProvider);
+            await stream.SafeWriteAsync(context, frameBytes);
+        }
+
         #endregion
 
         private static byte[] AssembleFrame(RmContext context, FrameBody frameBody,
@@ -443,27 +453,30 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         {
             var frameBodyBytes = Serialization.SerializeToByteArray(frameBody);
 
-            var compressedFrameBodyBytes = compressionProvider?.Compress(context, frameBodyBytes) ?? Compression.Compress(frameBodyBytes);
+            if (compressionProvider != null)
+            {
+                frameBodyBytes = compressionProvider.Compress(context, frameBodyBytes);
+            }
 
             if (cryptographyProvider != null)
             {
-                compressedFrameBodyBytes = cryptographyProvider.Encrypt(context, compressedFrameBodyBytes);
+                frameBodyBytes = cryptographyProvider.Encrypt(context, frameBodyBytes);
             }
 
-            var grossFrameSize = compressedFrameBodyBytes.Length + NtFrameDefaults.FRAME_HEADER_SIZE;
+            var grossFrameSize = frameBodyBytes.Length + NtFrameDefaults.FRAME_HEADER_SIZE;
             var grossFrameBytes = new byte[grossFrameSize];
-            var frameCrc = CRC16.ComputeChecksum(compressedFrameBodyBytes);
+            var frameCrc = CRC16.ComputeChecksum(frameBodyBytes);
 
             Buffer.BlockCopy(BitConverter.GetBytes(NtFrameDefaults.FRAME_DELIMITER), 0, grossFrameBytes, 0, 4);
             Buffer.BlockCopy(BitConverter.GetBytes(grossFrameSize), 0, grossFrameBytes, 4, 4);
             Buffer.BlockCopy(BitConverter.GetBytes(frameCrc), 0, grossFrameBytes, 8, 2);
-            Buffer.BlockCopy(compressedFrameBodyBytes, 0, grossFrameBytes, NtFrameDefaults.FRAME_HEADER_SIZE, compressedFrameBodyBytes.Length);
+            Buffer.BlockCopy(frameBodyBytes, 0, grossFrameBytes, NtFrameDefaults.FRAME_HEADER_SIZE, frameBodyBytes.Length);
 
             return grossFrameBytes;
         }
 
         private static void ProcessFrame(this Stream stream, RmContext context,
-            RmEvents.ExceptionEvent? onException, byte[] compressedFrameBodyBytes,
+            RmEvents.ExceptionEvent? onException, byte[] frameBodyBytes,
             ProcessFrameNotificationCallback? processNotificationCallback,
             ProcessFrameQueryCallback? processFrameQueryCallback,
             IRmSerializationProvider? serializationProvider,
@@ -474,17 +487,19 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             {
                 if (cryptographyProvider != null)
                 {
-                    compressedFrameBodyBytes = cryptographyProvider.Decrypt(context, compressedFrameBodyBytes);
+                    frameBodyBytes = cryptographyProvider.Decrypt(context, frameBodyBytes);
                 }
 
-                var frameBodyBytes = compressionProvider?.DeCompress(context, compressedFrameBodyBytes)
-                    ?? Compression.Decompress(compressedFrameBodyBytes);
+                if (compressionProvider != null)
+                {
+                    frameBodyBytes = compressionProvider.DeCompress(context, frameBodyBytes);
+                }
 
                 var frameBody = Serialization.DeserializeToObject<FrameBody>(frameBodyBytes);
 
                 var framePayload = ExtractFramePayload(serializationProvider, frameBody);
 
-                if (framePayload is FramePayloadBytes frameNotificationBytes)
+                if (framePayload is RmBytesNotification frameNotificationBytes)
                 {
                     if (processNotificationCallback == null)
                     {
@@ -535,13 +550,11 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// Uses the "EnclosedPayloadType" to determine the type of the payload and then uses reflection
         /// to deserialize the json to that type. Deserialization is skipped when the type is byte[].
         /// </summary>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
         private static IRmPayload ExtractFramePayload(IRmSerializationProvider? serializationProvider, FrameBody frame)
         {
             if (frame.ObjectType == "byte[]")
             {
-                return new FramePayloadBytes(frame.Bytes);
+                return new RmBytesNotification(frame.Bytes);
             }
 
             string cacheKey = $"{frame.ObjectType}";

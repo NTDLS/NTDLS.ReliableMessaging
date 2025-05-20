@@ -13,9 +13,11 @@
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageReleaseNotes>
-      Improves stream framing and processing with multiple processing threads.
+      Removed default compression in lue of two in-built providers.
+      Corrected several async calls from the server side.
+      Resovled issues handling RmBytesNotification.
     </PackageReleaseNotes>
-    <Version>3.0.2</Version>
+    <Version>3.1.0</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>rpc;tcpip;ipc;stream;encryption;messaging;message-framing;</PackageTags>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>

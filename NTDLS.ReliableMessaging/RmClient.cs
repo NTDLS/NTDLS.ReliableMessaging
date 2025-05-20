@@ -38,7 +38,6 @@ namespace NTDLS.ReliableMessaging
         /// <summary>
         /// Returns true if the client is connected.
         /// </summary>
-        /// <returns></returns>
         public bool IsConnected => _tcpClient?.Connected == true;
 
         /// <summary>
@@ -102,7 +101,6 @@ namespace NTDLS.ReliableMessaging
         /// </summary>
         /// <param name="context">Information about the connection.</param>
         /// <param name="payload"></param>
-        /// <returns></returns>
         public delegate IRmQueryReply QueryReceivedEvent(RmContext context, IRmPayload payload);
 
         #endregion
@@ -283,6 +281,30 @@ namespace NTDLS.ReliableMessaging
         /// <param name="notification">The notification message to send.</param>
         public void Notify(IRmNotification notification)
             => _activeConnection.EnsureNotNull().Context.Notify(notification);
+
+
+        /// <summary>
+        /// Dispatches a one way notification to the connected server.
+        /// </summary>
+        /// <param name="notification">The notification message to send.</param>
+        public async Task NotifyAsync(IRmNotification notification)
+            => await _activeConnection.EnsureNotNull().Context.NotifyAsync(notification);
+
+        /// <summary>
+        /// Dispatches a one way RmBytesNotification notification to the connected server.
+        /// This is a special case notification that is optimized for throughput.
+        /// Convention-based handlers should handle the type: RmBytesNotification
+        /// </summary>
+        public void Notify(byte[] payload)
+            => _activeConnection.EnsureNotNull().Context.Notify(payload);
+
+        /// <summary>
+        /// Dispatches a one way RmBytesNotification notification to the connected server.
+        /// This is a special case notification that is optimized for throughput.
+        /// Convention-based handlers should handle the type: RmBytesNotification
+        /// </summary>
+        public async Task NotifyAsync(byte[] payload)
+            => await _activeConnection.EnsureNotNull().Context.NotifyAsync(payload);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply, using the default timeout.

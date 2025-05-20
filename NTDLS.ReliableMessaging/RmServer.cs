@@ -111,7 +111,6 @@ namespace NTDLS.ReliableMessaging
         /// </summary>
         /// <param name="context">Information about the connection.</param>
         /// <param name="payload"></param>
-        /// <returns></returns>
         public delegate IRmQueryReply QueryReceivedEvent(RmContext context, IRmPayload payload);
 
         #endregion
@@ -337,7 +336,6 @@ namespace NTDLS.ReliableMessaging
         /// </summary>
         /// <param name="connectionId">The connection id of the client</param>
         /// <param name="notification">The notification message to send.</param>
-        /// <exception cref="Exception"></exception>
         public void Notify(Guid connectionId, IRmNotification notification)
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
@@ -347,19 +345,42 @@ namespace NTDLS.ReliableMessaging
         }
 
         /// <summary>
-        /// Sends a query to the specified client and expects a reply, using the default timeout.
+        /// Dispatches a one way notification to the specified connection.
         /// </summary>
-        /// <typeparam name="T">The type of reply that is expected.</typeparam>
         /// <param name="connectionId">The connection id of the client</param>
-        /// <param name="query">The query message to send.</param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public async Task<T> Query<T>(Guid connectionId, IRmQuery<T> query) where T : IRmQueryReply
+        /// <param name="notification">The notification message to send.</param>
+        public async Task NotifyAsync(Guid connectionId, IRmNotification notification)
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
                 ?? throw new Exception($"Connection with id {connectionId} was not found.");
 
-            return await connection.Context.Query(query, Configuration.QueryTimeout);
+            await connection.Context.NotifyAsync(notification);
+        }
+
+        /// <summary>
+        /// Dispatches a one way RmBytesNotification notification to the connected server.
+        /// This is a special case notification that is optimized for throughput.
+        /// Convention-based handlers should handle the type: RmBytesNotification
+        /// </summary>
+        public void Notify(Guid connectionId, byte[] payload)
+        {
+            var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
+                ?? throw new Exception($"Connection with id {connectionId} was not found.");
+
+            connection.Context.Notify(payload);
+        }
+
+        /// <summary>
+        /// Dispatches a one way RmBytesNotification notification to the connected server.
+        /// This is a special case notification that is optimized for throughput.
+        /// Convention-based handlers should handle the type: RmBytesNotification
+        /// </summary>
+        public async Task NotifyAsync(Guid connectionId, byte[] payload)
+        {
+            var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
+                ?? throw new Exception($"Connection with id {connectionId} was not found.");
+
+            await connection.Context.NotifyAsync(payload);
         }
 
         /// <summary>
@@ -368,8 +389,20 @@ namespace NTDLS.ReliableMessaging
         /// <typeparam name="T">The type of reply that is expected.</typeparam>
         /// <param name="connectionId">The connection id of the client</param>
         /// <param name="query">The query message to send.</param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
+        public Task<T> Query<T>(Guid connectionId, IRmQuery<T> query) where T : IRmQueryReply
+        {
+            var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
+                ?? throw new Exception($"Connection with id {connectionId} was not found.");
+
+            return connection.Context.Query(query, Configuration.QueryTimeout);
+        }
+
+        /// <summary>
+        /// Sends a query to the specified client and expects a reply, using the default timeout.
+        /// </summary>
+        /// <typeparam name="T">The type of reply that is expected.</typeparam>
+        /// <param name="connectionId">The connection id of the client</param>
+        /// <param name="query">The query message to send.</param>
         public async Task<T> QueryAsync<T>(Guid connectionId, IRmQuery<T> query) where T : IRmQueryReply
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
@@ -385,14 +418,12 @@ namespace NTDLS.ReliableMessaging
         /// <param name="connectionId">The connection id of the client</param>
         /// <param name="query">The query message to send.</param>
         /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public async Task<T> Query<T>(Guid connectionId, IRmQuery<T> query, TimeSpan queryTimeout) where T : IRmQueryReply
+        public Task<T> Query<T>(Guid connectionId, IRmQuery<T> query, TimeSpan queryTimeout) where T : IRmQueryReply
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
                 ?? throw new Exception($"Connection with id {connectionId} was not found.");
 
-            return await connection.Context.Query(query, queryTimeout);
+            return connection.Context.Query(query, queryTimeout);
         }
 
         /// <summary>
@@ -402,8 +433,6 @@ namespace NTDLS.ReliableMessaging
         /// <param name="connectionId">The connection id of the client</param>
         /// <param name="query">The query message to send.</param>
         /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
         public async Task<T> QueryAsync<T>(Guid connectionId, IRmQuery<T> query, TimeSpan queryTimeout) where T : IRmQueryReply
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
@@ -446,7 +475,7 @@ namespace NTDLS.ReliableMessaging
         {
             if (OnNotificationReceived == null)
             {
-                throw new Exception("Notification hander event was not handled.");
+                throw new Exception("Notification event handler is not hooked and no convention-based hander matched the notification.");
             }
             OnNotificationReceived.Invoke(context, payload);
         }
@@ -455,7 +484,7 @@ namespace NTDLS.ReliableMessaging
         {
             if (OnQueryReceived == null)
             {
-                throw new Exception("Query hander event was not handled.");
+                throw new Exception("Query event handler is not hooked and no convention-based hander matched the query.");
             }
             return OnQueryReceived.Invoke(context, payload);
         }

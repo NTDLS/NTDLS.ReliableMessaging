@@ -1,5 +1,4 @@
 ﻿using NTDLS.Helpers;
-using NTDLS.ReliableMessaging.Internal.Payloads;
 using NTDLS.ReliableMessaging.Internal.StreamFraming;
 using System.Net.Sockets;
 using static NTDLS.ReliableMessaging.Internal.StreamFraming.Framing;
@@ -108,7 +107,7 @@ namespace NTDLS.ReliableMessaging.Internal
                 var rootException = ex.GetBaseException();
 
                 Context.Messenger.InvokeOnException(Context, rootException, payload);
-                return new FramePayloadQueryReplyException(rootException);
+                return new RmQueryReplyException(rootException);
             }
         }
 

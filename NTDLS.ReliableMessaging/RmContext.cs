@@ -6,7 +6,7 @@ using static NTDLS.ReliableMessaging.Internal.StreamFraming.Framing;
 namespace NTDLS.ReliableMessaging
 {
     /// <summary>
-    /// Contains information about the endpoint, the connection and various interaction functions.
+    /// Contains information about the messenger endpoint, connection and various interaction functions.
     /// </summary>
     public class RmContext
     {
@@ -151,8 +151,24 @@ namespace NTDLS.ReliableMessaging
         /// Dispatches a one way notification to the connected server.
         /// </summary>
         /// <param name="notification">The notification message to send.</param>
-        public void NotifyAsync(IRmNotification notification)
-            => Stream.WriteNotificationFrame(this, notification, _serializationProvider, _compressionProvider, _cryptographyProvider);
+        public async Task NotifyAsync(IRmNotification notification)
+            => await Stream.WriteNotificationFrameAsync(this, notification, _serializationProvider, _compressionProvider, _cryptographyProvider);
+
+        /// <summary>
+        /// Dispatches a one way RmBytesNotification notification to the connected server.
+        /// This is a special case notification that is optimized for throughput.
+        /// Convention-based handlers should handle the type: RmBytesNotification
+        /// </summary>
+        public void Notify(byte[] payload)
+            => Stream.WriteBytesFrame(this, payload, _compressionProvider, _cryptographyProvider);
+
+        /// <summary>
+        /// Dispatches a one way RmBytesNotification notification to the connected server.
+        /// This is a special case notification that is optimized for throughput.
+        /// Convention-based handlers should handle the type: RmBytesNotification
+        /// </summary>
+        public async Task NotifyAsync(byte[] payload)
+            => await Stream.WriteBytesFrameAsync(this, payload, _compressionProvider, _cryptographyProvider);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply.
@@ -161,8 +177,8 @@ namespace NTDLS.ReliableMessaging
         /// <param name="query">The query message to send.</param>
         /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
         /// <returns>Returns the result of the query.</returns>
-        public Task<T> QueryAsync<T>(IRmQuery<T> query, TimeSpan queryTimeout) where T : IRmQueryReply
-            => Stream.WriteQueryFrameAsync(this, query, queryTimeout, _serializationProvider, _compressionProvider, _cryptographyProvider);
+        public async Task<T> QueryAsync<T>(IRmQuery<T> query, TimeSpan queryTimeout) where T : IRmQueryReply
+            => await Stream.WriteQueryFrameAsync(this, query, queryTimeout, _serializationProvider, _compressionProvider, _cryptographyProvider);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply.
