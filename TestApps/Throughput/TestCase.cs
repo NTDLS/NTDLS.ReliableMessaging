@@ -5,7 +5,7 @@
         public string Name { get; set; }
         public DateTime? TransferStartTime { get; set; } = null;
         public long TotalBytesReceived = 0;
-        public int ChunksReceived  = 0;
+        public int ChunksReceived = 0;
         public int ChunkCount { get; set; }
 
         public TestCase(string name, int chunkCount)
@@ -22,7 +22,7 @@
 
         public double GetThroughputMbPerSecond()
         {
-            while(ChunksReceived != ChunkCount)
+            while (ChunksReceived != ChunkCount)
             {
                 Thread.Sleep(1); //Wait to receive all chunks
             }
