@@ -10,7 +10,7 @@ namespace NTDLS.ReliableMessaging
     /// Connects to a Median RPC Server then sends/received and processes notifications/queries.
     /// </summary>
     public class RmClient
-        : IRmEndpoint
+        : IRmMessenger
     {
         private TcpClient? _tcpClient;
         private PeerConnection? _activeConnection;
@@ -322,13 +322,13 @@ namespace NTDLS.ReliableMessaging
         public async Task<T> QueryAsync<T>(IRmQuery<T> query, TimeSpan queryTimeout) where T : IRmQueryReply
             => await _activeConnection.EnsureNotNull().Context.QueryAsync<T>(query, queryTimeout);
 
-        void IRmEndpoint.InvokeOnConnected(RmContext context)
+        void IRmMessenger.InvokeOnConnected(RmContext context)
             => OnConnected?.Invoke(context);
 
-        void IRmEndpoint.InvokeOnException(RmContext? context, Exception ex, IRmPayload? payload)
+        void IRmMessenger.InvokeOnException(RmContext? context, Exception ex, IRmPayload? payload)
             => OnException?.Invoke(context, ex, payload);
 
-        void IRmEndpoint.InvokeOnDisconnected(RmContext context)
+        void IRmMessenger.InvokeOnDisconnected(RmContext context)
         {
             _activeConnection = null;
 
@@ -337,7 +337,7 @@ namespace NTDLS.ReliableMessaging
             OnDisconnected?.Invoke(context);
         }
 
-        void IRmEndpoint.InvokeOnNotificationReceived(RmContext context, IRmNotification payload)
+        void IRmMessenger.InvokeOnNotificationReceived(RmContext context, IRmNotification payload)
         {
             if (OnNotificationReceived == null)
             {
@@ -346,7 +346,7 @@ namespace NTDLS.ReliableMessaging
             OnNotificationReceived.Invoke(context, payload);
         }
 
-        IRmQueryReply IRmEndpoint.InvokeOnQueryReceived(RmContext context, IRmPayload payload)
+        IRmQueryReply IRmMessenger.InvokeOnQueryReceived(RmContext context, IRmPayload payload)
         {
             if (OnQueryReceived == null)
             {

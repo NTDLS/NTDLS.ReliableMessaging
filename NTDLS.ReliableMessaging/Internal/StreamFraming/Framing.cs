@@ -166,7 +166,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
 
                 while (frameBuffer.GetNextFrame(context, onException, out var compressedFrameBodyBytes))
                 {
-                    if (context.Endpoint.Configuration.MultiThreadedFrameProcessing)
+                    if (context.Messenger.Configuration.MultiThreadedFrameProcessing)
                     {
                         Task.Run(() => stream.ProcessFrame(context, onException, compressedFrameBodyBytes, processNotificationCallback,
                             processFrameQueryCallback, serializationProvider, compressionProvider, cryptographyProvider));

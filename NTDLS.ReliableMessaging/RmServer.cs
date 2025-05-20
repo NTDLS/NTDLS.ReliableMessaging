@@ -11,7 +11,7 @@ namespace NTDLS.ReliableMessaging
     /// Listens for connections from Median RPC Clients and processes the incoming notifications/queries.
     /// </summary>
     public class RmServer
-        : IRmEndpoint
+        : IRmMessenger
     {
         private TcpListener? _listener;
         private readonly PessimisticCriticalResource<List<PeerConnection>> _activeConnections = new();
@@ -412,17 +412,17 @@ namespace NTDLS.ReliableMessaging
             return await connection.Context.QueryAsync(query, queryTimeout);
         }
 
-        void IRmEndpoint.InvokeOnConnected(RmContext context)
+        void IRmMessenger.InvokeOnConnected(RmContext context)
         {
             OnConnected?.Invoke(context);
         }
 
-        void IRmEndpoint.InvokeOnException(RmContext? context, Exception ex, IRmPayload? payload)
+        void IRmMessenger.InvokeOnException(RmContext? context, Exception ex, IRmPayload? payload)
         {
             OnException?.Invoke(context, ex, payload);
         }
 
-        void IRmEndpoint.InvokeOnDisconnected(RmContext context)
+        void IRmMessenger.InvokeOnDisconnected(RmContext context)
         {
             if (_keepRunning) //Avoid a race condition with the client thread waiting on a lock on _activeConnections that is held by Server.Stop().
             {
@@ -442,7 +442,7 @@ namespace NTDLS.ReliableMessaging
             OnDisconnected?.Invoke(context);
         }
 
-        void IRmEndpoint.InvokeOnNotificationReceived(RmContext context, IRmNotification payload)
+        void IRmMessenger.InvokeOnNotificationReceived(RmContext context, IRmNotification payload)
         {
             if (OnNotificationReceived == null)
             {
@@ -451,7 +451,7 @@ namespace NTDLS.ReliableMessaging
             OnNotificationReceived.Invoke(context, payload);
         }
 
-        IRmQueryReply IRmEndpoint.InvokeOnQueryReceived(RmContext context, IRmPayload payload)
+        IRmQueryReply IRmMessenger.InvokeOnQueryReceived(RmContext context, IRmPayload payload)
         {
             if (OnQueryReceived == null)
             {

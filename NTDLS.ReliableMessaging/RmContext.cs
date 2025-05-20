@@ -21,7 +21,7 @@ namespace NTDLS.ReliableMessaging
         /// <summary>
         /// This is the RPC server or client instance.
         /// </summary>
-        public IRmEndpoint Endpoint { get; private set; }
+        public IRmMessenger Messenger { get; private set; }
 
         /// <summary>
         /// The ID of the connection.
@@ -48,13 +48,13 @@ namespace NTDLS.ReliableMessaging
         /// <summary>
         /// Creates a new ReliableMessagingContext instance.
         /// </summary>
-        public RmContext(IRmEndpoint endpoint, TcpClient tcpClient, IRmSerializationProvider? serializationProvider,
+        public RmContext(IRmMessenger messenger, TcpClient tcpClient, IRmSerializationProvider? serializationProvider,
             IRmCompressionProvider? compressionProvider, IRmCryptographyProvider? cryptographyProvider, Thread thread, NetworkStream stream)
         {
             _serializationProvider = serializationProvider;
             _compressionProvider = compressionProvider;
             _cryptographyProvider = cryptographyProvider;
-            Endpoint = endpoint;
+            Messenger = messenger;
             ConnectionId = Guid.NewGuid();
             TcpClient = tcpClient;
             Thread = thread;
@@ -66,11 +66,11 @@ namespace NTDLS.ReliableMessaging
         /// </summary>
         public void Disconnect()
         {
-            if (Endpoint is RmClient client)
+            if (Messenger is RmClient client)
             {
                 client.Disconnect();
             }
-            else if (Endpoint is RmServer server)
+            else if (Messenger is RmServer server)
             {
                 server.Disconnect(ConnectionId);
             }
