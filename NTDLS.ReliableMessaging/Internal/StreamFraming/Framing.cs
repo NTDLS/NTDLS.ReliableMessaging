@@ -3,6 +3,7 @@ using NTDLS.Semaphore;
 using System.Reflection;
 using System.Text;
 using static NTDLS.ReliableMessaging.Internal.StreamFraming.Defaults;
+using static NTDLS.ReliableMessaging.RmContext;
 
 namespace NTDLS.ReliableMessaging.Internal.StreamFraming
 {
@@ -190,10 +191,12 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <param name="serializationProvider">An optional callback that is called to allow for custom serialization.</param>
         /// <param name="compressionProvider">An optional callback that is called to allow for manipulation of bytes before they are framed.</param>
         /// <param name="cryptographyProvider">An optional callback that is called to allow for manipulation of bytes before they are framed.</param>
+        /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
         /// <returns>Returns the reply payload that is written to the stream from the recipient of the query.</returns>
         public static async Task<T> WriteQueryFrameAsync<T>(this Stream stream, RmContext context,
             IRmQuery<T> framePayload, TimeSpan queryTimeout, IRmSerializationProvider? serializationProvider,
-            IRmCompressionProvider? compressionProvider, IRmCryptographyProvider? cryptographyProvider) where T : IRmQueryReply
+            IRmCompressionProvider? compressionProvider, IRmCryptographyProvider? cryptographyProvider,
+            OnQueryPrepared? onQueryPrepared) where T : IRmQueryReply
         {
             QueryAwaitingReply? queryAwaitingReply = null;
 
@@ -210,6 +213,8 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 context.QueriesAwaitingReplies.Use(o => o.Add(queryAwaitingReply));
 
                 var frameBytes = AssembleFrame(context, frameBody, compressionProvider, cryptographyProvider);
+
+                onQueryPrepared?.Invoke();
                 await stream.SafeWriteAsync(context, frameBytes);
 
                 //Wait for a reply. When a reply is received, it will be routed to the correct query via ApplyQueryReply().
@@ -265,10 +270,12 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <param name="serializationProvider">An optional callback that is called to allow for custom serialization.</param>
         /// <param name="compressionProvider">An optional callback that is called to allow for manipulation of bytes before they are framed.</param>
         /// <param name="cryptographyProvider">An optional callback that is called to allow for manipulation of bytes before they are framed.</param>
+        /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
         /// <returns>Returns the reply payload that is written to the stream from the recipient of the query.</returns>
         public static Task<T> WriteQueryFrame<T>(this Stream stream, RmContext context,
             IRmQuery<T> framePayload, TimeSpan queryTimeout, IRmSerializationProvider? serializationProvider,
-            IRmCompressionProvider? compressionProvider, IRmCryptographyProvider? cryptographyProvider) where T : IRmQueryReply
+            IRmCompressionProvider? compressionProvider, IRmCryptographyProvider? cryptographyProvider,
+            OnQueryPrepared? onQueryPrepared) where T : IRmQueryReply
         {
             QueryAwaitingReply? queryAwaitingReply = null;
 
@@ -285,6 +292,8 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 context.QueriesAwaitingReplies.Use(o => o.Add(queryAwaitingReply));
 
                 var frameBytes = AssembleFrame(context, frameBody, compressionProvider, cryptographyProvider);
+
+                onQueryPrepared?.Invoke();
                 stream.SafeWrite(context, frameBytes);
 
                 //Wait for a reply. When a reply is received, it will be routed to the correct query via ApplyQueryReply().

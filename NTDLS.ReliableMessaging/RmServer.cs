@@ -4,6 +4,7 @@ using NTDLS.ReliableMessaging.Internal.StreamFraming;
 using NTDLS.Semaphore;
 using System.Net;
 using System.Net.Sockets;
+using static NTDLS.ReliableMessaging.RmContext;
 
 namespace NTDLS.ReliableMessaging
 {
@@ -439,6 +440,68 @@ namespace NTDLS.ReliableMessaging
                 ?? throw new Exception($"Connection with id {connectionId} was not found.");
 
             return await connection.Context.QueryAsync(query, queryTimeout);
+        }
+
+        /// <summary>
+        /// Sends a query to the specified client and expects a reply, using the default timeout.
+        /// </summary>
+        /// <typeparam name="T">The type of reply that is expected.</typeparam>
+        /// <param name="connectionId">The connection id of the client</param>
+        /// <param name="query">The query message to send.</param>
+        /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
+        public Task<T> Query<T>(Guid connectionId, IRmQuery<T> query, OnQueryPrepared onQueryPrepared) where T : IRmQueryReply
+        {
+            var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
+                ?? throw new Exception($"Connection with id {connectionId} was not found.");
+
+            return connection.Context.Query(query, onQueryPrepared, Configuration.QueryTimeout);
+        }
+
+        /// <summary>
+        /// Sends a query to the specified client and expects a reply, using the default timeout.
+        /// </summary>
+        /// <typeparam name="T">The type of reply that is expected.</typeparam>
+        /// <param name="connectionId">The connection id of the client</param>
+        /// <param name="query">The query message to send.</param>
+        /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
+        public async Task<T> QueryAsync<T>(Guid connectionId, IRmQuery<T> query, OnQueryPrepared onQueryPrepared) where T : IRmQueryReply
+        {
+            var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
+                ?? throw new Exception($"Connection with id {connectionId} was not found.");
+
+            return await connection.Context.QueryAsync(query, onQueryPrepared, Configuration.QueryTimeout);
+        }
+
+        /// <summary>
+        /// Sends a query to the specified client and expects a reply.
+        /// </summary>
+        /// <typeparam name="T">The type of reply that is expected.</typeparam>
+        /// <param name="connectionId">The connection id of the client</param>
+        /// <param name="query">The query message to send.</param>
+        /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
+        /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
+        public Task<T> Query<T>(Guid connectionId, IRmQuery<T> query, OnQueryPrepared onQueryPrepared, TimeSpan queryTimeout) where T : IRmQueryReply
+        {
+            var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
+                ?? throw new Exception($"Connection with id {connectionId} was not found.");
+
+            return connection.Context.Query(query, onQueryPrepared, queryTimeout);
+        }
+
+        /// <summary>
+        /// Sends a query to the specified client and expects a reply.
+        /// </summary>
+        /// <typeparam name="T">The type of reply that is expected.</typeparam>
+        /// <param name="connectionId">The connection id of the client</param>
+        /// <param name="query">The query message to send.</param>
+        /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
+        /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
+        public async Task<T> QueryAsync<T>(Guid connectionId, IRmQuery<T> query, OnQueryPrepared onQueryPrepared, TimeSpan queryTimeout) where T : IRmQueryReply
+        {
+            var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
+                ?? throw new Exception($"Connection with id {connectionId} was not found.");
+
+            return await connection.Context.QueryAsync(query, onQueryPrepared, queryTimeout);
         }
 
         void IRmMessenger.InvokeOnConnected(RmContext context)

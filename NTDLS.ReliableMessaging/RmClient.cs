@@ -3,6 +3,7 @@ using NTDLS.ReliableMessaging.Internal;
 using NTDLS.ReliableMessaging.Internal.StreamFraming;
 using System.Net;
 using System.Net.Sockets;
+using static NTDLS.ReliableMessaging.RmContext;
 
 namespace NTDLS.ReliableMessaging
 {
@@ -343,6 +344,48 @@ namespace NTDLS.ReliableMessaging
         /// <returns>Returns the result of the query.</returns>
         public async Task<T> QueryAsync<T>(IRmQuery<T> query, TimeSpan queryTimeout) where T : IRmQueryReply
             => await _activeConnection.EnsureNotNull().Context.QueryAsync<T>(query, queryTimeout);
+
+        /// <summary>
+        /// Sends a query to the specified client and expects a reply, using the default timeout.
+        /// </summary>
+        /// <typeparam name="T">The type of reply that is expected.</typeparam>
+        /// <param name="query">The query message to send.</param>
+        /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
+        /// <returns>Returns the result of the query.</returns>
+        public Task<T> Query<T>(IRmQuery<T> query, OnQueryPrepared onQueryPrepared) where T : IRmQueryReply
+            => _activeConnection.EnsureNotNull().Context.Query<T>(query, onQueryPrepared, Configuration.QueryTimeout);
+
+        /// <summary>
+        /// Sends a query to the specified client and expects a reply, using the default timeout.
+        /// </summary>
+        /// <typeparam name="T">The type of reply that is expected.</typeparam>
+        /// <param name="query">The query message to send.</param>
+        /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
+        /// <returns>Returns the result of the query.</returns>
+        public async Task<T> QueryAsync<T>(IRmQuery<T> query, OnQueryPrepared onQueryPrepared) where T : IRmQueryReply
+            => await _activeConnection.EnsureNotNull().Context.QueryAsync<T>(query, onQueryPrepared, Configuration.QueryTimeout);
+
+        /// <summary>
+        /// Sends a query to the specified client and expects a reply.
+        /// </summary>
+        /// <typeparam name="T">The type of reply that is expected.</typeparam>
+        /// <param name="query">The query message to send.</param>
+        /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
+        /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
+        /// <returns>Returns the result of the query.</returns>
+        public Task<T> Query<T>(IRmQuery<T> query, OnQueryPrepared onQueryPrepared, TimeSpan queryTimeout) where T : IRmQueryReply
+            => _activeConnection.EnsureNotNull().Context.Query<T>(query, onQueryPrepared, queryTimeout);
+
+        /// <summary>
+        /// Sends a query to the specified client and expects a reply.
+        /// </summary>
+        /// <typeparam name="T">The type of reply that is expected.</typeparam>
+        /// <param name="query">The query message to send.</param>
+        /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
+        /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
+        /// <returns>Returns the result of the query.</returns>
+        public async Task<T> QueryAsync<T>(IRmQuery<T> query, OnQueryPrepared onQueryPrepared, TimeSpan queryTimeout) where T : IRmQueryReply
+            => await _activeConnection.EnsureNotNull().Context.QueryAsync<T>(query, onQueryPrepared, queryTimeout);
 
         void IRmMessenger.InvokeOnConnected(RmContext context)
             => OnConnected?.Invoke(context);

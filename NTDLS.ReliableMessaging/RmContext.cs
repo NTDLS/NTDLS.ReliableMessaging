@@ -10,6 +10,11 @@ namespace NTDLS.ReliableMessaging
     /// </summary>
     public class RmContext
     {
+        /// <summary>
+        /// callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.
+        /// </summary>
+        public delegate void OnQueryPrepared();
+
         private IRmSerializationProvider? _serializationProvider = null;
         private IRmCompressionProvider? _compressionProvider = null;
         private IRmCryptographyProvider? _cryptographyProvider = null;
@@ -178,7 +183,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
         /// <returns>Returns the result of the query.</returns>
         public async Task<T> QueryAsync<T>(IRmQuery<T> query, TimeSpan queryTimeout) where T : IRmQueryReply
-            => await Stream.WriteQueryFrameAsync(this, query, queryTimeout, _serializationProvider, _compressionProvider, _cryptographyProvider);
+            => await Stream.WriteQueryFrameAsync(this, query, queryTimeout, _serializationProvider, _compressionProvider, _cryptographyProvider, null);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply.
@@ -188,7 +193,29 @@ namespace NTDLS.ReliableMessaging
         /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
         /// <returns>Returns the result of the query.</returns>
         public Task<T> Query<T>(IRmQuery<T> query, TimeSpan queryTimeout) where T : IRmQueryReply
-            => Stream.WriteQueryFrame(this, query, queryTimeout, _serializationProvider, _compressionProvider, _cryptographyProvider);
+            => Stream.WriteQueryFrame(this, query, queryTimeout, _serializationProvider, _compressionProvider, _cryptographyProvider, null);
+
+        /// <summary>
+        /// Sends a query to the specified client and expects a reply.
+        /// </summary>
+        /// <typeparam name="T">The type of reply that is expected.</typeparam>
+        /// <param name="query">The query message to send.</param>
+        /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
+        /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
+        /// <returns>Returns the result of the query.</returns>
+        public async Task<T> QueryAsync<T>(IRmQuery<T> query, OnQueryPrepared onQueryPrepared, TimeSpan queryTimeout) where T : IRmQueryReply
+            => await Stream.WriteQueryFrameAsync(this, query, queryTimeout, _serializationProvider, _compressionProvider, _cryptographyProvider, onQueryPrepared);
+
+        /// <summary>
+        /// Sends a query to the specified client and expects a reply.
+        /// </summary>
+        /// <typeparam name="T">The type of reply that is expected.</typeparam>
+        /// <param name="query">The query message to send.</param>
+        /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
+        /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
+        /// <returns>Returns the result of the query.</returns>
+        public Task<T> Query<T>(IRmQuery<T> query, OnQueryPrepared onQueryPrepared, TimeSpan queryTimeout) where T : IRmQueryReply
+            => Stream.WriteQueryFrame(this, query, queryTimeout, _serializationProvider, _compressionProvider, _cryptographyProvider, onQueryPrepared);
 
         #endregion
     }
