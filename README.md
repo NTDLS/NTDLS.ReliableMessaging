@@ -7,8 +7,6 @@ NTDLS.ReliableMessaging provides incredibly lightweight, simple, and high-perfor
 Once connected, the server and the client can send fire-and-forget style notifications or dispatch queries which require a reply.
 All messages are handled by either convention or by events. Convention is achieved by adding a hander class with function signatures that match the message types which are being dispatched.
 
-All messages are guaranteed to be received in their entirety and in the order in which they were dispatched.
-
 CRC and compression are automatic and encryption is supported but optional.
 
 ## Examples of sending messages and receiving them by convention:
