@@ -118,3 +118,7 @@ TestApps/CustomProviders/Test.ServerCustomProviders/obj/
 TestApps/Throughput/bin/
 
 TestApps/Throughput/obj/
+
+TestApps/ExceptionPropagation/bin/
+
+TestApps/ExceptionPropagation/obj/

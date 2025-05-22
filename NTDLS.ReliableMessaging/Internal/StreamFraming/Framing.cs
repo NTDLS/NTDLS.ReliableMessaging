@@ -38,11 +38,11 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         {
             context.QueriesAwaitingReplies.Use(o =>
             {
-                foreach (var waitingQuery in o.Where(o => o.ConnectionId == connectionId))
+                foreach (var waitingQuery in o.Where(o => o.Value.ConnectionId == connectionId))
                 {
-                    waitingQuery.Exception = new Exception("The connection was terminated.");
-                    waitingQuery.ReplyPayload = null;
-                    waitingQuery.WaitEvent.Set();
+                    waitingQuery.Value.Exception = new Exception("The connection was terminated.");
+                    waitingQuery.Value.ReplyPayload = null;
+                    waitingQuery.Value.WaitEvent.Set();
                 }
             });
         }
@@ -161,7 +161,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 var frameBody = new FrameBody(context.GetSerializationProvider(), framePayload, typeof(T));
                 queryAwaitingReply = new QueryAwaitingReply(frameBody.Id, context.ConnectionId);
 
-                context.QueriesAwaitingReplies.Use(o => o.Add(queryAwaitingReply));
+                context.QueriesAwaitingReplies.Use(o => o.Add(frameBody.Id, queryAwaitingReply));
 
                 var frameBytes = AssembleFrame(context, frameBody);
 
@@ -172,11 +172,11 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 //ApplyQueryReply() will apply the payload data to queryAwaitingReply and trigger the wait event.
                 if (!queryAwaitingReply.WaitEvent.WaitOne(queryTimeout))
                 {
-                    context.QueriesAwaitingReplies.Use(o => o.Remove(queryAwaitingReply));
+                    context.QueriesAwaitingReplies.Use(o => o.Remove(frameBody.Id));
                     throw new Exception("Query timeout expired while waiting on reply.");
                 }
 
-                context.QueriesAwaitingReplies.Use(o => o.Remove(queryAwaitingReply));
+                context.QueriesAwaitingReplies.Use(o => o.Remove(frameBody.Id));
 
                 if (queryAwaitingReply.Exception != null)
                 {
@@ -204,7 +204,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             {
                 if (queryAwaitingReply != null)
                 {
-                    context.QueriesAwaitingReplies.Use(o => o.Remove(queryAwaitingReply));
+                    context.QueriesAwaitingReplies.Use(o => o.Remove(queryAwaitingReply.FrameBodyId));
                 }
                 return await Task.FromException<T>(ex);
             }
@@ -235,7 +235,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 var frameBody = new FrameBody(context.GetSerializationProvider(), framePayload, typeof(T));
                 queryAwaitingReply = new QueryAwaitingReply(frameBody.Id, context.ConnectionId);
 
-                context.QueriesAwaitingReplies.Use(o => o.Add(queryAwaitingReply));
+                context.QueriesAwaitingReplies.Use(o => o.Add(frameBody.Id, queryAwaitingReply));
 
                 var frameBytes = AssembleFrame(context, frameBody);
 
@@ -246,11 +246,11 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 //ApplyQueryReply() will apply the payload data to queryAwaitingReply and trigger the wait event.
                 if (queryAwaitingReply.WaitEvent.WaitOne(queryTimeout) == false)
                 {
-                    context.QueriesAwaitingReplies.Use(o => o.Remove(queryAwaitingReply));
+                    context.QueriesAwaitingReplies.Use(o => o.Remove(frameBody.Id));
                     throw new Exception("Query timeout expired while waiting on reply.");
                 }
 
-                context.QueriesAwaitingReplies.Use(o => o.Remove(queryAwaitingReply));
+                context.QueriesAwaitingReplies.Use(o => o.Remove(frameBody.Id));
 
                 if (queryAwaitingReply.Exception != null)
                 {
@@ -278,7 +278,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             {
                 if (queryAwaitingReply != null)
                 {
-                    context.QueriesAwaitingReplies.Use(o => o.Remove(queryAwaitingReply));
+                    context.QueriesAwaitingReplies.Use(o => o.Remove(queryAwaitingReply.FrameBodyId));
                 }
 
                 return Task.FromException<T>(ex);
@@ -426,8 +426,10 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 {
                     // A reply to a query was received, we need to find the waiting query - set the reply payload data and trigger the wait event.
                     var waitingQuery = context.QueriesAwaitingReplies.Use((o) =>
-                        o.SingleOrDefault(o => o.FrameBodyId == frameBody.Id)
-                        ?? throw new Exception($"No waiting query was found for the reply with id '{frameBody.Id}'. Possible query timeout."));
+                    {
+                        o.TryGetValue(frameBody.Id, out var waitingQuery);
+                        return waitingQuery;
+                    }) ?? throw new Exception($"No waiting query was found for the reply with id '{frameBody.Id}'. Possible query timeout.");
 
                     waitingQuery.ReplyPayload = reply;
                     waitingQuery.WaitEvent.Set();
@@ -441,12 +443,26 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                         var asynchronousNotificationReference = notification;
                         Task.Run(() => //We do not wait on this task, we just fire and forget it.
                         {
-                            processNotificationCallback(asynchronousNotificationReference);
+                            try
+                            {
+                                processNotificationCallback(asynchronousNotificationReference);
+                            }
+                            catch (Exception ex)
+                            {
+                                onException?.Invoke(context, ex.GetRoot() ?? ex, notification);
+                            }
                         });
                     }
                     else
                     {
-                        processNotificationCallback(notification);
+                        try
+                        {
+                            processNotificationCallback(notification);
+                        }
+                        catch (Exception ex)
+                        {
+                            onException?.Invoke(context, ex.GetRoot() ?? ex, notification);
+                        }
                     }
                 }
                 else if (Reflection.ImplementsGenericInterfaceWithArgument(framePayload.GetType(), typeof(IRmQuery<>), typeof(IRmQueryReply)))
@@ -455,17 +471,31 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                         && context.Messenger.Configuration.AsynchronousQueryWaiting)
                     {
                         //Keep a reference to the frame payload that we are going to perform an async wait on.
-                        var asynchronousQueryReference = framePayload;
+                        var asynchronousFramePayloadReference = framePayload;
                         Task.Run(() => //We do not wait on this task, we just fire and forget it.
                         {
-                            var replyPayload = processFrameQueryCallback(asynchronousQueryReference);
-                            stream.WriteReplyFrame(context, frameBody, replyPayload);
+                            try
+                            {
+                                var replyPayload = processFrameQueryCallback(asynchronousFramePayloadReference);
+                                stream.WriteReplyFrame(context, frameBody, replyPayload);
+                            }
+                            catch (Exception ex)
+                            {
+                                onException?.Invoke(context, ex.GetRoot() ?? ex, asynchronousFramePayloadReference);
+                            }
                         });
                     }
                     else
                     {
-                        var replyPayload = processFrameQueryCallback(framePayload);
-                        stream.WriteReplyFrame(context, frameBody, replyPayload);
+                        try
+                        {
+                            var replyPayload = processFrameQueryCallback(framePayload);
+                            stream.WriteReplyFrame(context, frameBody, replyPayload);
+                        }
+                        catch (Exception ex)
+                        {
+                            onException?.Invoke(context, ex.GetRoot() ?? ex, framePayload);
+                        }
                     }
                 }
                 else

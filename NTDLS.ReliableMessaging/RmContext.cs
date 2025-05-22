@@ -19,7 +19,10 @@ namespace NTDLS.ReliableMessaging
         private IRmCompressionProvider? _compressionProvider = null;
         private IRmCryptographyProvider? _cryptographyProvider = null;
 
-        internal PessimisticCriticalResource<List<QueryAwaitingReply>> QueriesAwaitingReplies { get; set; } = new();
+        /// <summary>
+        /// Gets or sets the collection of queries that are awaiting replies, identified by their FrameBody.Id.
+        /// </summary>
+        internal PessimisticCriticalResource<Dictionary<Guid, QueryAwaitingReply>> QueriesAwaitingReplies { get; set; } = new();
 
         #region Public Properties.
 
