@@ -13,9 +13,9 @@
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageReleaseNotes>
-      Simplified serialization compression and cryptography handlers.
+      Added generic sequence buffer.
     </PackageReleaseNotes>
-    <Version>3.2.0</Version>
+    <Version>3.2.2</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>rpc;tcpip;ipc;stream;encryption;messaging;message-framing;</PackageTags>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
