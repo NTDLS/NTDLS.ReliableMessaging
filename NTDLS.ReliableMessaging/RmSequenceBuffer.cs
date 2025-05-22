@@ -55,8 +55,8 @@
                 //The next packet in the sequence is the next one that needs to be sent. Flush it to the stream.
                 if (_lastConsumedSequence + 1 == sequence)
                 {
-                    _lastConsumedSequence = sequence;
                     handler(sequence, data);
+                    _lastConsumedSequence = sequence;
                 }
                 else
                 {
@@ -67,9 +67,9 @@
                 //Flush any packets that are now in order.
                 while (_buffer.TryGetValue(_lastConsumedSequence + 1, out var bytes))
                 {
+                    handler(_lastConsumedSequence + 1, bytes);
                     _buffer.Remove(_lastConsumedSequence + 1);
                     _lastConsumedSequence++;
-                    handler(sequence, data);
                 }
             }
         }
@@ -91,8 +91,8 @@
                 //The next packet in the sequence is the next one that needs to be sent. Flush it to the stream.
                 if (_lastConsumedSequence + 1 == sequence)
                 {
-                    _lastConsumedSequence = sequence;
                     handler(data);
+                    _lastConsumedSequence = sequence;
                 }
                 else
                 {
@@ -103,9 +103,9 @@
                 //Flush any packets that are now in order.
                 while (_buffer.TryGetValue(_lastConsumedSequence + 1, out var bytes))
                 {
+                    handler(bytes);
                     _buffer.Remove(_lastConsumedSequence + 1);
                     _lastConsumedSequence++;
-                    handler(data);
                 }
             }
         }
