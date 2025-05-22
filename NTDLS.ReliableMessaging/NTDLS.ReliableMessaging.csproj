@@ -16,7 +16,7 @@
       Added generic sequence buffer.
       Sequence buffer corrections.
     </PackageReleaseNotes>
-    <Version>3.2.3</Version>
+    <Version>3.2.4</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>rpc;tcpip;ipc;stream;encryption;messaging;message-framing;</PackageTags>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
