@@ -14,48 +14,107 @@ namespace Throughput
             Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.High;
 
             int steps = 12;
+            int chunkSize;
 
-            int chunkSize = 1024;
+            #region SendTestByteNotificationChunks.
+
+            chunkSize = 1024;
             for (int i = 1; i < steps; i++)
             {
-                SendTestByteChunks(chunkSize, 1000);
+                SendTestByteNotificationChunks(chunkSize, 1000);
                 chunkSize *= 2;
             }
 
             chunkSize = 1024;
             for (int i = 1; i < steps; i++)
             {
-                SendTestByteChunks(chunkSize, 1000, new RmDeflateCompressionProvider());
+                SendTestByteNotificationChunks(chunkSize, 1000, new RmDeflateCompressionProvider());
                 chunkSize *= 2;
             }
 
             chunkSize = 1024;
             for (int i = 1; i < steps; i++)
             {
-                SendTestByteChunks(chunkSize, 1000, new RmBrotliCompressionProvider());
+                SendTestByteNotificationChunks(chunkSize, 1000, new RmBrotliCompressionProvider());
+                chunkSize *= 2;
+            }
+
+            #endregion
+
+            #region SendTestMessageNotificationChunks.
+
+            chunkSize = 1024;
+            for (int i = 1; i < steps; i++)
+            {
+                SendTestMessageNotificationChunks(chunkSize, 1000);
                 chunkSize *= 2;
             }
 
             chunkSize = 1024;
             for (int i = 1; i < steps; i++)
             {
-                SendTestMessageChunks(chunkSize, 1000);
+                SendTestMessageNotificationChunks(chunkSize, 1000, new RmDeflateCompressionProvider());
                 chunkSize *= 2;
             }
 
             chunkSize = 1024;
             for (int i = 1; i < steps; i++)
             {
-                SendTestMessageChunks(chunkSize, 1000, new RmDeflateCompressionProvider());
+                SendTestMessageNotificationChunks(chunkSize, 1000, new RmBrotliCompressionProvider());
+                chunkSize *= 2;
+            }
+
+            #endregion
+
+            #region SendTestMessageQueryChunks.
+
+            chunkSize = 1024;
+            for (int i = 1; i < steps; i++)
+            {
+                SendTestMessageQueryChunks(chunkSize, 1000);
                 chunkSize *= 2;
             }
 
             chunkSize = 1024;
             for (int i = 1; i < steps; i++)
             {
-                SendTestMessageChunks(chunkSize, 1000, new RmBrotliCompressionProvider());
+                SendTestMessageQueryChunks(chunkSize, 1000, new RmDeflateCompressionProvider());
                 chunkSize *= 2;
             }
+
+            chunkSize = 1024;
+            for (int i = 1; i < steps; i++)
+            {
+                SendTestMessageQueryChunks(chunkSize, 1000, new RmBrotliCompressionProvider());
+                chunkSize *= 2;
+            }
+
+            #endregion
+
+            #region SendTestChaosQueryChunks.
+
+            chunkSize = 1024;
+            for (int i = 1; i < steps; i++)
+            {
+                SendTestChaosQueryChunks(chunkSize, 1000, 10);
+                chunkSize *= 2;
+            }
+
+            chunkSize = 1024;
+            for (int i = 1; i < steps; i++)
+            {
+                SendTestChaosQueryChunks(chunkSize, 1000, 10, new RmDeflateCompressionProvider());
+                chunkSize *= 2;
+            }
+
+            chunkSize = 1024;
+            for (int i = 1; i < steps; i++)
+            {
+                SendTestChaosQueryChunks(chunkSize, 1000, 10, new RmBrotliCompressionProvider());
+                chunkSize *= 2;
+            }
+
+            #endregion
 
             Console.WriteLine("Press [enter]] to exit.");
             Console.ReadLine();
@@ -71,7 +130,7 @@ namespace Throughput
             return buffer;
         }
 
-        private static void SendTestByteChunks(int chunkSize, int chunkCount, IRmCompressionProvider? compressionProvider = null)
+        private static void SendTestByteNotificationChunks(int chunkSize, int chunkCount, IRmCompressionProvider? compressionProvider = null)
         {
             var payload = GenerateRandomBytes(chunkSize, _randSeed);
 
@@ -93,7 +152,7 @@ namespace Throughput
 
             string compressionName = compressionProvider?.GetType().Name ?? "No-compression";
 
-            client.Query(new TestBeginQuery($"Byte-array {compressionName} {chunkSize / 1024}", chunkCount));
+            client.Query(new TestBeginQuery($"ByteArray {compressionName} {chunkSize}", chunkCount));
 
             for (int i = 0; i < chunkCount; i++)
             {
@@ -106,7 +165,7 @@ namespace Throughput
             server.Stop();
         }
 
-        private static void SendTestMessageChunks(int chunkSize, int chunkCount, IRmCompressionProvider? compressionProvider = null)
+        private static void SendTestMessageNotificationChunks(int chunkSize, int chunkCount, IRmCompressionProvider? compressionProvider = null)
         {
             var payload = GenerateRandomBytes(chunkSize, _randSeed);
 
@@ -128,12 +187,94 @@ namespace Throughput
 
             string compressionName = compressionProvider?.GetType().Name ?? "No-compression";
 
-            client.Query(new TestBeginQuery($"Message {compressionName} {chunkSize / 1024}", chunkCount));
+            client.Query(new TestBeginQuery($"Notification {compressionName} {chunkSize}", chunkCount));
 
             for (int i = 0; i < chunkCount; i++)
             {
                 client.Notify(new ChunkNotification(payload));
             }
+
+            client.Query(new TestEndQuery());
+
+            client.Disconnect();
+            server.Stop();
+        }
+
+        private static void SendTestMessageQueryChunks(int chunkSize, int chunkCount, IRmCompressionProvider? compressionProvider = null)
+        {
+            var payload = GenerateRandomBytes(chunkSize, _randSeed);
+
+            var server = new RmServer();
+            if (compressionProvider != null)
+            {
+                server.SetCompressionProvider(compressionProvider);
+            }
+            server.Start(_port);
+            server.AddHandler(new MessageHandlers());
+
+            //Connect client.
+            var client = new RmClient();
+            if (compressionProvider != null)
+            {
+                client.SetCompressionProvider(compressionProvider);
+            }
+            client.Connect("127.0.0.1", _port);
+
+            string compressionName = compressionProvider?.GetType().Name ?? "No-compression";
+
+            client.Query(new TestBeginQuery($"Query {compressionName} {chunkSize}", chunkCount));
+
+            for (int i = 0; i < chunkCount; i++)
+            {
+                client.Query(new ChunkQuery(payload));
+            }
+
+            client.Query(new TestEndQuery());
+
+            client.Disconnect();
+            server.Stop();
+        }
+
+        private static void SendTestChaosQueryChunks(int chunkSize, int chunkCount, int threadCount, IRmCompressionProvider? compressionProvider = null)
+        {
+            var payload = GenerateRandomBytes(chunkSize, _randSeed);
+
+            var server = new RmServer();
+            if (compressionProvider != null)
+            {
+                server.SetCompressionProvider(compressionProvider);
+            }
+            server.Start(_port);
+            server.AddHandler(new MessageHandlers());
+
+            //Connect client.
+            var client = new RmClient();
+            if (compressionProvider != null)
+            {
+                client.SetCompressionProvider(compressionProvider);
+            }
+            client.Connect("127.0.0.1", _port);
+
+            string compressionName = compressionProvider?.GetType().Name ?? "No-compression";
+
+            var tasks = new List<Task>();
+
+            client.Query(new TestBeginQuery($"Chaos {compressionName} {chunkSize}", chunkCount * threadCount * 3));
+
+            for (int t = 0; t < threadCount; t++)
+            {
+                tasks.Add(Task.Run(() =>
+                {
+                    for (int i = 0; i < chunkCount; i++)
+                    {
+                        client.Query(new ChunkQuery(payload));
+                        client.Notify(new ChunkNotification(payload));
+                        client.Notify(payload);
+                    }
+                }));
+            }
+
+            Task.WaitAll(tasks.ToArray());
 
             client.Query(new TestEndQuery());
 

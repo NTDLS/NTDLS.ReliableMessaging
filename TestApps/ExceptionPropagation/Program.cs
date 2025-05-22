@@ -43,7 +43,7 @@ namespace ExceptionPropagation
 
         private static IRmQueryReply Server_OnQueryReceived(RmContext context, IRmPayload payload)
         {
-            if(payload is TestQuery)
+            if (payload is TestQuery)
             {
                 Console.WriteLine($"Server received query: {payload.GetType().Name}");
                 return new TestQueryReply();

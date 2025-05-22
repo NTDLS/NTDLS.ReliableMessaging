@@ -1,5 +1,5 @@
 ﻿using NTDLS.ReliableMessaging.Internal.StreamFraming;
-using NTDLS.Semaphore;
+using System.Collections.Concurrent;
 using System.Net.Sockets;
 using static NTDLS.ReliableMessaging.Internal.StreamFraming.Framing;
 
@@ -22,7 +22,7 @@ namespace NTDLS.ReliableMessaging
         /// <summary>
         /// Gets or sets the collection of queries that are awaiting replies, identified by their FrameBody.Id.
         /// </summary>
-        internal PessimisticCriticalResource<Dictionary<Guid, QueryAwaitingReply>> QueriesAwaitingReplies { get; set; } = new();
+        internal ConcurrentDictionary<Guid, QueryAwaitingReply> QueriesAwaitingReplies { get; set; } = new();
 
         #region Public Properties.
 
