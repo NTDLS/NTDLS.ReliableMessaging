@@ -120,7 +120,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             {
                 while (frameBuffer.GetNextFrame(context, onException, out var frameBodyBytes))
                 {
-                    if (context.Messenger.Configuration.MultiThreadedFrameProcessing)
+                    if (context.Messenger.Configuration.AsynchronousFrameProcessing)
                     {
                         Task.Run(() => stream.ProcessFrame(context, onException, frameBodyBytes, processNotificationCallback, processFrameQueryCallback));
                     }
@@ -315,7 +315,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <param name="stream">The open stream that will be written to.</param>
         /// <param name="context">Contains information about the endpoint and the connection.</param>
         /// <param name="framePayload">The notification payload that will be written to the stream.</param>
-        public static void WriteNotificationFrame(this Stream stream, RmContext context,IRmNotification framePayload)
+        public static void WriteNotificationFrame(this Stream stream, RmContext context, IRmNotification framePayload)
         {
             if (stream == null)
             {
@@ -434,16 +434,39 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 }
                 else if (framePayload is IRmNotification notification)
                 {
-                    if (processNotificationCallback == null)
+                    if (!context.Messenger.Configuration.AsynchronousFrameProcessing
+                        && context.Messenger.Configuration.AsynchronousNotifications)
                     {
-                        throw new Exception("Notification handler was not supplied.");
+                        //Keep a reference to the frame payload that we are going to perform an async wait on.
+                        var asynchronousNotificationReference = notification;
+                        Task.Run(() => //We do not wait on this task, we just fire and forget it.
+                        {
+                            processNotificationCallback(asynchronousNotificationReference);
+                        });
                     }
-                    processNotificationCallback(notification);
+                    else
+                    {
+                        processNotificationCallback(notification);
+                    }
                 }
                 else if (Reflection.ImplementsGenericInterfaceWithArgument(framePayload.GetType(), typeof(IRmQuery<>), typeof(IRmQueryReply)))
                 {
-                    var replyPayload = processFrameQueryCallback(framePayload);
-                    stream.WriteReplyFrame(context, frameBody, replyPayload);
+                    if (!context.Messenger.Configuration.AsynchronousFrameProcessing
+                        && context.Messenger.Configuration.AsynchronousQueryWaiting)
+                    {
+                        //Keep a reference to the frame payload that we are going to perform an async wait on.
+                        var asynchronousQueryReference = framePayload;
+                        Task.Run(() => //We do not wait on this task, we just fire and forget it.
+                        {
+                            var replyPayload = processFrameQueryCallback(asynchronousQueryReference);
+                            stream.WriteReplyFrame(context, frameBody, replyPayload);
+                        });
+                    }
+                    else
+                    {
+                        var replyPayload = processFrameQueryCallback(framePayload);
+                        stream.WriteReplyFrame(context, frameBody, replyPayload);
+                    }
                 }
                 else
                 {
