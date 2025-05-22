@@ -46,10 +46,7 @@ namespace NTDLS.ReliableMessaging.Internal
                 {
                     while (Context.Stream.ReadAndProcessFrames(Context, Context.Messenger.InvokeOnException, _frameBuffer,
                         (payload) => OnNotificationReceived(payload),
-                        (payload) => OnQueryReceived(payload),
-                        Context.GetSerializationProvider,/*This is a delegate function call so that we can get the provider at the latest possible moment.*/
-                        Context.GetCompressionProvider,/*This is a delegate function call so that we can get the provider at the latest possible moment.*/
-                        Context.GetCryptographyProvider/*This is a delegate function call so that we can get the provider at the latest possible moment.*/))
+                        (payload) => OnQueryReceived(payload)))
                     {
                         //the famous do nothing loop!
                     }

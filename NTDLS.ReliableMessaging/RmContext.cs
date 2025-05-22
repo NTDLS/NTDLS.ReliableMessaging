@@ -84,7 +84,8 @@ namespace NTDLS.ReliableMessaging
         #region IRmSerializationProvider.
 
         /// <summary>
-        /// Sets the custom serialization provider that this client should use when sending/receiving data. Can be cleared by passing null or calling ClearSerializationProvider().
+        /// Sets the custom serialization provider that this client should use when sending/receiving data.
+        /// Can be cleared by passing null or calling ClearSerializationProvider().
         /// </summary>
         public void SetSerializationProvider(IRmSerializationProvider? provider)
             => _serializationProvider = provider;
@@ -104,7 +105,8 @@ namespace NTDLS.ReliableMessaging
         #region IRmCompressionProvider.
 
         /// <summary>
-        /// Sets the custom compression provider that this client should use when sending/receiving data. Can be cleared by passing null or calling ClearCompressionProvider().
+        /// Sets the custom compression provider that this client should use when sending/receiving data.
+        /// Can be cleared by passing null or calling ClearCompressionProvider().
         /// </summary>
         public void SetCompressionProvider(IRmCompressionProvider? provider)
             => _compressionProvider = provider;
@@ -124,7 +126,8 @@ namespace NTDLS.ReliableMessaging
         #region IRmCryptographyProvider.
 
         /// <summary>
-        /// Sets the custom encryption provider that this client should use when sending/receiving data. Can be cleared by passing null or calling ClearCryptographyProvider().
+        /// Sets the custom encryption provider that this client should use when sending/receiving data.
+        /// Can be cleared by passing null or calling ClearCryptographyProvider().
         /// </summary>
         public void SetCryptographyProvider(IRmCryptographyProvider? provider)
             => _cryptographyProvider = provider;
@@ -150,14 +153,14 @@ namespace NTDLS.ReliableMessaging
         /// </summary>
         /// <param name="notification">The notification message to send.</param>
         public void Notify(IRmNotification notification)
-            => Stream.WriteNotificationFrame(this, notification, _serializationProvider, _compressionProvider, _cryptographyProvider);
+            => Stream.WriteNotificationFrame(this, notification);
 
         /// <summary>
         /// Dispatches a one way notification to the connected server.
         /// </summary>
         /// <param name="notification">The notification message to send.</param>
         public async Task NotifyAsync(IRmNotification notification)
-            => await Stream.WriteNotificationFrameAsync(this, notification, _serializationProvider, _compressionProvider, _cryptographyProvider);
+            => await Stream.WriteNotificationFrameAsync(this, notification);
 
         /// <summary>
         /// Dispatches a one way RmBytesNotification notification to the connected server.
@@ -165,7 +168,7 @@ namespace NTDLS.ReliableMessaging
         /// Convention-based handlers should handle the type: RmBytesNotification
         /// </summary>
         public void Notify(byte[] payload)
-            => Stream.WriteBytesFrame(this, payload, _compressionProvider, _cryptographyProvider);
+            => Stream.WriteBytesFrame(this, payload);
 
         /// <summary>
         /// Dispatches a one way RmBytesNotification notification to the connected server.
@@ -173,7 +176,7 @@ namespace NTDLS.ReliableMessaging
         /// Convention-based handlers should handle the type: RmBytesNotification
         /// </summary>
         public async Task NotifyAsync(byte[] payload)
-            => await Stream.WriteBytesFrameAsync(this, payload, _compressionProvider, _cryptographyProvider);
+            => await Stream.WriteBytesFrameAsync(this, payload);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply.
@@ -183,7 +186,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
         /// <returns>Returns the result of the query.</returns>
         public async Task<T> QueryAsync<T>(IRmQuery<T> query, TimeSpan queryTimeout) where T : IRmQueryReply
-            => await Stream.WriteQueryFrameAsync(this, query, queryTimeout, _serializationProvider, _compressionProvider, _cryptographyProvider, null);
+            => await Stream.WriteQueryFrameAsync(this, query, queryTimeout, null);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply.
@@ -193,7 +196,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
         /// <returns>Returns the result of the query.</returns>
         public Task<T> Query<T>(IRmQuery<T> query, TimeSpan queryTimeout) where T : IRmQueryReply
-            => Stream.WriteQueryFrame(this, query, queryTimeout, _serializationProvider, _compressionProvider, _cryptographyProvider, null);
+            => Stream.WriteQueryFrame(this, query, queryTimeout, null);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply.
@@ -204,7 +207,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
         /// <returns>Returns the result of the query.</returns>
         public async Task<T> QueryAsync<T>(IRmQuery<T> query, OnQueryPrepared onQueryPrepared, TimeSpan queryTimeout) where T : IRmQueryReply
-            => await Stream.WriteQueryFrameAsync(this, query, queryTimeout, _serializationProvider, _compressionProvider, _cryptographyProvider, onQueryPrepared);
+            => await Stream.WriteQueryFrameAsync(this, query, queryTimeout, onQueryPrepared);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply.
@@ -215,7 +218,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
         /// <returns>Returns the result of the query.</returns>
         public Task<T> Query<T>(IRmQuery<T> query, OnQueryPrepared onQueryPrepared, TimeSpan queryTimeout) where T : IRmQueryReply
-            => Stream.WriteQueryFrame(this, query, queryTimeout, _serializationProvider, _compressionProvider, _cryptographyProvider, onQueryPrepared);
+            => Stream.WriteQueryFrame(this, query, queryTimeout, onQueryPrepared);
 
         #endregion
     }
