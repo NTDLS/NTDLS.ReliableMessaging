@@ -109,6 +109,8 @@ Also note that the query message handlers also support generics, so if you have 
 ## Performance
 The throughput is regularly tested with each release of ReliableMessaging and notifications are suitable for multi-gigabit communication. Your miles will vary depending on whether you use compression, encryption, and the size of the messages that are being sent. Generally, larger messages have the highest throughput.
 
+![image](https://github.com/user-attachments/assets/79008a17-e8d5-48f5-80af-315ba7495219)
+
 
 ## Examples of sending messages and receiving them by convention:
 ## Server:
