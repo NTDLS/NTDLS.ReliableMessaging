@@ -292,22 +292,6 @@ namespace NTDLS.ReliableMessaging
             => await _activeConnection.EnsureNotNull().Context.NotifyAsync(notification);
 
         /// <summary>
-        /// Dispatches a one way RmBytesNotification notification to the connected server.
-        /// This is a special case notification that is optimized for throughput.
-        /// Convention-based handlers should handle the type: RmBytesNotification
-        /// </summary>
-        public void Notify(byte[] payload)
-            => _activeConnection.EnsureNotNull().Context.Notify(payload);
-
-        /// <summary>
-        /// Dispatches a one way RmBytesNotification notification to the connected server.
-        /// This is a special case notification that is optimized for throughput.
-        /// Convention-based handlers should handle the type: RmBytesNotification
-        /// </summary>
-        public async Task NotifyAsync(byte[] payload)
-            => await _activeConnection.EnsureNotNull().Context.NotifyAsync(payload);
-
-        /// <summary>
         /// Sends a query to the specified client and expects a reply, using the default timeout.
         /// </summary>
         /// <typeparam name="T">The type of reply that is expected.</typeparam>

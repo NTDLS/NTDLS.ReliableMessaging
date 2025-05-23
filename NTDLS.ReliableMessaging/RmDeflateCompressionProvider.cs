@@ -5,7 +5,8 @@ namespace NTDLS.ReliableMessaging
     /// <summary>
     /// Default compression provider that uses the Deflate compression algorithm.
     /// </summary>
-    public class RmDeflateCompressionProvider : IRmCompressionProvider
+    public class RmDeflateCompressionProvider
+        : IRmCompressionProvider
     {
         /// <summary>
         /// Compression level to use when compressing the payload.

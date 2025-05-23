@@ -54,16 +54,6 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         }
 
         /// <summary>
-        /// Instantiates a frame payload using a raw byte array.
-        /// </summary>
-        /// <param name="bytesPayload"></param>
-        public FrameBody(byte[] bytesPayload)
-        {
-            ObjectType = "byte[]";
-            Bytes = bytesPayload;
-        }
-
-        /// <summary>
         /// Instantiates a frame payload.
         /// </summary>
         public FrameBody()

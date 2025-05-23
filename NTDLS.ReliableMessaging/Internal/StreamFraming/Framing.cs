@@ -1,6 +1,5 @@
 ﻿using NTDLS.Helpers;
-using NTDLS.Semaphore;
-using System.Reflection;
+using System.Collections.Concurrent;
 using System.Text;
 using static NTDLS.ReliableMessaging.Internal.StreamFraming.Defaults;
 using static NTDLS.ReliableMessaging.RmContext;
@@ -29,7 +28,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <returns>The reply payload to return to the originator.</returns>
         public delegate IRmQueryReply ProcessFrameQueryCallback(IRmPayload query);
 
-        private static readonly OptimisticCriticalResource<Dictionary<string, MethodInfo>> _reflectionCache = new();
+        private static readonly ConcurrentDictionary<string, Func<IRmSerializationProvider?, string, IRmPayload>> _deserializationCache = new();
 
         /// <summary>
         /// When a connection is dropped, we need to make sure that we cancel any waiting queries.
@@ -345,44 +344,6 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             await stream.SafeWriteAsync(context, frameBytes);
         }
 
-        /// <summary>
-        /// Sends a one-time fire-and-forget byte array payload. These are and handled in processNotificationCallback().
-        /// When a raw byte array is use, all json serialization is skipped and checks for this payload type are prioritized for performance.
-        /// </summary>
-        /// <param name="stream">The open stream that will be written to.</param>
-        /// <param name="context">Contains information about the endpoint and the connection.</param>
-        /// <param name="framePayload">The bytes will make up the body of the frame which is written to the stream.</param>
-        public static void WriteBytesFrame(this Stream stream, RmContext context, byte[] framePayload)
-        {
-            if (stream == null)
-            {
-                throw new ArgumentNullException(nameof(stream), "Stream can not be null.");
-            }
-
-            var frameBody = new FrameBody(framePayload);
-            var frameBytes = AssembleFrame(context, frameBody);
-            stream.SafeWrite(context, frameBytes);
-        }
-
-        /// <summary>
-        /// Sends a one-time fire-and-forget byte array payload. These are and handled in processNotificationCallback().
-        /// When a raw byte array is use, all json serialization is skipped and checks for this payload type are prioritized for performance.
-        /// </summary>
-        /// <param name="stream">The open stream that will be written to.</param>
-        /// <param name="context">Contains information about the endpoint and the connection.</param>
-        /// <param name="framePayload">The bytes will make up the body of the frame which is written to the stream.</param>
-        public async static Task WriteBytesFrameAsync(this Stream stream, RmContext context, byte[] framePayload)
-        {
-            if (stream == null)
-            {
-                throw new ArgumentNullException(nameof(stream), "Stream can not be null.");
-            }
-
-            var frameBody = new FrameBody(framePayload);
-            var frameBytes = AssembleFrame(context, frameBody);
-            await stream.SafeWriteAsync(context, frameBytes);
-        }
-
         #endregion
 
         private static byte[] AssembleFrame(RmContext context, FrameBody frameBody)
@@ -418,14 +379,9 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
 
                 var framePayload = ExtractFramePayload(context.GetSerializationProvider(), frameBody);
 
-                if (framePayload is RmBytesNotification frameNotificationBytes)
+                if (framePayload is IRmQueryReply reply)
                 {
-                    processNotificationCallback(frameNotificationBytes);
-                }
-                else if (framePayload is IRmQueryReply reply)
-                {
-                    // A reply to a query was received, we need to find the waiting query - set the reply payload data and trigger the wait event.
-
+                    // A reply to a query was received, we need to find the waiting query, set the reply payload data then trigger its wait event.
                     if (!context.QueriesAwaitingReplies.TryGetValue(frameBody.Id, out var waitingQuery))
                     {
                         throw new Exception($"No waiting query was found for the reply with id '{frameBody.Id}'. Possible query timeout.");
@@ -510,49 +466,31 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         }
 
         /// <summary>
-        /// Uses the "EnclosedPayloadType" to determine the type of the payload and then uses reflection
-        /// to deserialize the json to that type. Deserialization is skipped when the type is byte[].
+        /// Uses the "EnclosedPayloadType" to determine the type of the payload and deserialize the json to that type.
         /// </summary>
         private static IRmPayload ExtractFramePayload(IRmSerializationProvider? serializationProvider, FrameBody frame)
         {
-            if (frame.ObjectType == "byte[]")
+            if (!_deserializationCache.TryGetValue(frame.ObjectType, out var deserializeMethod))
             {
-                return new RmBytesNotification(frame.Bytes);
+                var genericType = Type.GetType(frame.ObjectType)
+                    ?? throw new Exception($"Unknown extraction payload type [{frame.ObjectType}].");
+
+                var methodInfo = typeof(Serialization).GetMethod(nameof(Serialization.RmDeserializeFramePayloadToObject))
+                    ?? throw new Exception("Could not resolve RmDeserializeFramePayloadToObject().");
+
+                var genericMethod = methodInfo.MakeGenericMethod(genericType);
+
+                // Create a delegate for the deserialization method.
+                deserializeMethod = (Func<IRmSerializationProvider?, string, IRmPayload>)
+                    Delegate.CreateDelegate(typeof(Func<IRmSerializationProvider?, string, IRmPayload>), genericMethod);
+
+                _deserializationCache.TryAdd(frame.ObjectType, deserializeMethod);
             }
 
-            string cacheKey = $"{frame.ObjectType}";
+            var json = Encoding.UTF8.GetString(frame.Bytes);
 
-            var genericToObjectMethod = _reflectionCache.Read((o) =>
-            {
-                if (o.TryGetValue(cacheKey, out var method))
-                {
-                    return method;
-                }
-                return null;
-            });
-
-            string json = Encoding.UTF8.GetString(frame.Bytes);
-
-            if (genericToObjectMethod != null)
-            {
-                //Call the generic deserialization:
-                return (IRmPayload?)genericToObjectMethod.Invoke(null, new object?[] { serializationProvider, json })
-                    ?? throw new Exception($"Extraction payload can not be null.");
-            }
-
-            var genericType = Type.GetType(frame.ObjectType)
-                ?? throw new Exception($"Unknown extraction payload type [{frame.ObjectType}].");
-
-            var toObjectMethod = typeof(Serialization).GetMethod("RmDeserializeFramePayloadToObject")
-                    ?? throw new Exception($"Could not resolve RmDeserializeFramePayloadToObject().");
-
-            genericToObjectMethod = toObjectMethod.MakeGenericMethod(genericType);
-
-            _reflectionCache.Write((o) => o.TryAdd(cacheKey, genericToObjectMethod));
-
-            //Call the generic deserialization:
-            return (IRmPayload?)genericToObjectMethod.Invoke(null, new object?[] { serializationProvider, json })
-                ?? throw new Exception($"Extraction payload can not be null.");
+            return deserializeMethod(serializationProvider, json)
+                ?? throw new Exception("Extraction payload cannot be null.");
         }
     }
 }

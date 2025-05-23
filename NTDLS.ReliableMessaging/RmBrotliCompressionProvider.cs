@@ -5,7 +5,8 @@ namespace NTDLS.ReliableMessaging
     /// <summary>
     /// Default compression provider that uses the Brotli compression algorithm.
     /// </summary>
-    public class RmBrotliCompressionProvider : IRmCompressionProvider
+    public class RmBrotliCompressionProvider
+        : IRmCompressionProvider
     {
         /// <summary>
         /// Compression level to use when compressing the payload.

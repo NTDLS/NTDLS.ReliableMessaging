@@ -100,8 +100,8 @@ namespace NTDLS.ReliableMessaging
         /// Event fired when a notification is received from a client.
         /// </summary>
         /// <param name="context">Information about the connection.</param>
-        /// <param name="payload"></param>
-        public delegate void NotificationReceivedEvent(RmContext context, IRmNotification payload);
+        /// <param name="notification"></param>
+        public delegate void NotificationReceivedEvent(RmContext context, IRmNotification notification);
 
         /// <summary>
         /// Event fired when a query is received from a client.
@@ -111,8 +111,8 @@ namespace NTDLS.ReliableMessaging
         /// Event fired when a query is received from a client.
         /// </summary>
         /// <param name="context">Information about the connection.</param>
-        /// <param name="payload"></param>
-        public delegate IRmQueryReply QueryReceivedEvent(RmContext context, IRmPayload payload);
+        /// <param name="query"></param>
+        public delegate IRmQueryReply QueryReceivedEvent(RmContext context, IRmPayload query);
 
         #endregion
 
@@ -356,32 +356,6 @@ namespace NTDLS.ReliableMessaging
                 ?? throw new Exception($"Connection with id {connectionId} was not found.");
 
             await connection.Context.NotifyAsync(notification);
-        }
-
-        /// <summary>
-        /// Dispatches a one way RmBytesNotification notification to the connected server.
-        /// This is a special case notification that is optimized for throughput.
-        /// Convention-based handlers should handle the type: RmBytesNotification
-        /// </summary>
-        public void Notify(Guid connectionId, byte[] payload)
-        {
-            var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
-                ?? throw new Exception($"Connection with id {connectionId} was not found.");
-
-            connection.Context.Notify(payload);
-        }
-
-        /// <summary>
-        /// Dispatches a one way RmBytesNotification notification to the connected server.
-        /// This is a special case notification that is optimized for throughput.
-        /// Convention-based handlers should handle the type: RmBytesNotification
-        /// </summary>
-        public async Task NotifyAsync(Guid connectionId, byte[] payload)
-        {
-            var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
-                ?? throw new Exception($"Connection with id {connectionId} was not found.");
-
-            await connection.Context.NotifyAsync(payload);
         }
 
         /// <summary>

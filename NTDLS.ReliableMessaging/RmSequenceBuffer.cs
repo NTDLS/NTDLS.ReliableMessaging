@@ -44,11 +44,11 @@
         /// <remarks>This method ensures that packets are processed in sequential order. If a packet
         /// arrives out of order, it is stored in an internal buffer until all preceding packets have been processed.
         /// Once the missing packets are received, the buffered packets are processed in sequence.</remarks>
-        /// <param name="sequence">The sequence number of the data packet. Must be greater than or equal to the last processed sequence number.</param>
         /// <param name="data">The data associated with the packet to be processed.</param>
+        /// <param name="sequence">The sequence number of the data packet. Must be greater than or equal to the last processed sequence number.</param>
         /// <param name="handler">A delegate that handles the processing of a data packet. The delegate is invoked with the sequence number
         /// and data when the packet is ready to be processed in order.</param>
-        public void Process(long sequence, T data, BufferSequenceHandler handler)
+        public void Process(T data, long sequence, BufferSequenceHandler handler)
         {
             lock (_buffer)
             {
@@ -80,11 +80,11 @@
         /// <remarks>This method ensures that packets are processed in sequential order. If a packet
         /// arrives out of order, it is stored in an internal buffer until all preceding packets have been processed.
         /// Once the missing packets are received, the buffered packets are processed in sequence.</remarks>
-        /// <param name="sequence">The sequence number of the data packet. Must be greater than or equal to the last processed sequence number.</param>
         /// <param name="data">The data associated with the packet to be processed.</param>
+        /// <param name="sequence">The sequence number of the data packet. Must be greater than or equal to the last processed sequence number.</param>
         /// <param name="handler">A delegate that handles the processing of a data packet. The delegate is invoked with
         /// data when the packet is ready to be processed in order.</param>
-        public void Process(long sequence, T data, BufferHandler handler)
+        public void Process(T data, long sequence, BufferHandler handler)
         {
             lock (_buffer)
             {

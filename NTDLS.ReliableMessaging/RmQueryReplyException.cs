@@ -3,7 +3,8 @@
     /// <summary>
     /// Used when an exception occurs during a query.
     /// </summary>
-    public class RmQueryReplyException : IRmQueryReply
+    public class RmQueryReplyException
+        : IRmQueryReply
     {
         /// <summary>
         /// The exception that occurred while executing the query.

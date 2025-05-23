@@ -2,12 +2,113 @@
 
 📦 Be sure to check out the NuGet package: https://www.nuget.org/packages/NTDLS.ReliableMessaging
 
-NTDLS.ReliableMessaging provides incredibly lightweight, simple, and high-performance TCP/IP based inter-process-communication / RPC functionality. This includes a server which listens for incoming connections and a client which makes a connection to the server.
+NTDLS.ReliableMessaging provides lightweight, simple, and high-performance TCP/IP based inter-process-communication / RPC functionality.
 
-Once connected, the server and the client can send fire-and-forget style notifications or dispatch queries which require a reply.
-All messages are handled by either convention or by events. Convention is achieved by adding a hander class with function signatures that match the message types which are being dispatched.
+Once connected, the peers can send fire-and-forget style notifications or dispatch queries which require replies - all of which are handled either by events or convention.
 
-CRC and compression are automatic and encryption is supported but optional.
+## Use Cases
+ReliableMessaging can be used to simply communicate between a backend service and a UI or service-to-service communication.
+
+It has been successfully implemented as the communications backbone of instant-messaging services, file transfer applications, proxy services, tunneling services, message queuing servers, key-value servers and even as the communication protocol for a relational-database server.
+
+## Asynchronous / Synchronous
+By default, all queries and notifications are handled asynchronously, but that can be disabled via the configuration. The default configuration means that these messages can be received out of order. To ensure order you can use one of three methods:
+
+1. Disable AsynchronousFrameProcessing, AsynchronousNotifications and/or AsynchronousQueryWaiting via the configuration that is passed to RmServer and/or RmClient.
+2. Use Queries instead notifications. Queries require a reply from the server so allow the connected client to operation synchronously with the server – even when operating in asynchronous mode.
+3. Use the built in RmSequenceBuffer to buffer out of order packets. This is used in conjunction with a custom notification class that communicated the “packet sequence”.
+
+## Compression
+Compress is added with a call to the client and server SetCompressionProvider() function with a reference to a compression provider. ReliableMessaging supples two built in compression providers: RmDeflateCompressionProvider and RmBrotliCompressionProvider(), but you can implement your own by inheriting from IRmCompressionProvider.
+
+## Encryption
+Encryption is added to the connection by a call to client and server SetCryptographyProvider() function with a reference to an encryption provider that inherits from IRmCryptographyProvider.
+Server and the client can use a simple cryptography provider with a “hard coded” encryption key, meaning that they the server will expect each connecting client to encrypt the data with the same provider and key. However, once connected, the client and server can set the encryption provider for the connection. This allows the two peers to negotiate a key (such as Diffie-Hellman implementation or RSA) and use a custom provider to implement AES or some other encryption.
+
+The server and client Query() function contains a special pre-flight delegate handler to allow you to initialize encryption after a query packet has been built but before it has been dispatched to the remote peer:
+```
+client.Query(new ImGoingToInitializeEncryptionNowQuery(publicKey), ()=>
+{
+    //This is the pre-flight delegate where we would initialize the encryption provider for the client.
+    client.SetCryptographyProvider(new MyCryptoProvider(publicKey));
+});
+```
+
+## CRC (Cyclic redundancy check)
+CRC is automatic and is applied and checked for each packet. If the CRC does not match, an exception is thrown and the packet is skipped. Since TCP/IP already implements CRC checks, this check is doubly redundant and is not ever expected to occur in real-world situations.
+
+## Notification Message Sending and Receiving
+Notifications are fire-and-forget messages that are communicated by calling the Notify() function on the server or client and passing a class that implements the IRmNotification interface.
+The server and client can receive these messages in one of two ways:
+
+### Events
+Hooking the client or server OnNotificationReceived event
+```
+OnNotificationReceived += (RmContext context, IRmNotification payload) =>
+    {
+        if(payload is MyNotification myNotification)
+        {
+        }
+    }
+```
+
+### Convention
+Creating a class that inherits from IRmMessageHandler and adding it to the client or server via a call to AddHandler(). The client and server can have as many handlers as you’d like, depending on how you want to separate your business logic.
+The handler class would contain functions whose signatures match the signature of the notification types that you are sending. For example:
+```
+class MessageHandlers : IRmMessageHandler
+{
+    public void SomeFunctionName(RmContext context, MyNotification notification)
+    {
+        Console.WriteLine($"Server received notification: {notification.Message}");
+    }
+}
+```
+
+In this case, when the client or server sends a MyNotification type, this handler will be called with the deserialized object. Also note that the notification message handlers also support generics, so if you have a class that use generics such as MyNotification<T> where T is another type, the signature just needs to match the same type that was sent via the call to Notify().
+
+## Query Message Sending and Receiving
+Queries messages that wait on a reply from the server and are communicated by calling the Query() function on the server or client and passing a class that implements the IRmQuery<IRmQueryReply> interface.
+The server and client can receive these messages in one of two ways:
+
+### Events
+Hooking the client or server OnQueryReceived event
+```
+OnQueryReceived += (RmContext context, IRmPayload payload) =>
+    {
+        if (payload is MyQuery myQuery)
+        {
+            Console.WriteLine($"Server received query: '{myQuery.Message}'");
+            return new MyQueryReply("This is the query reply from the server.");
+        }
+        else
+        {
+            throw new Exception("Payload type was not handled.");
+        }
+    }
+```
+
+### Convention
+Creating a class that inherits from IRmMessageHandler and adding it to the client or server via a call to AddHandler(). The client and server can have as many handlers as you’d like, depending on how you want to separate your business logic.
+The handler class would contain functions whose signatures match the signature of the query types that you are sending. For example:
+```
+class MessageHandlers : IRmMessageHandler
+{
+    public MyQueryReply MyQueryReceived(RmContext context, MyQuery query)
+    {
+        Console.WriteLine($"Server received query: '{query.Message}'");
+
+        return new MyQueryReply("This is query reply from the server.");
+    }
+}
+```
+
+In this case, when the client or server sends a MyQuery type, this handler will be called with the deserialized object. Unlike notifications, both the event or the convention based handlers should return a reply to the query where the type is denoted by the signature of the query type. (e.g. for IRmQuery<IRmQueryReply>, the reply should be of type IRmQueryReply).
+Also note that the query message handlers also support generics, so if you have a class that use generics such as MyQuery <T> where T is another type, the signature just needs to match the same type that was sent via the call to Query().
+
+## Performance
+The throughput is regularly tested with each release of ReliableMessaging and notifications are suitable for multi-gigabit communication. Your miles will vary depending on whether you use compression, encryption, and the size of the messages that are being sent. Generally, larger messages have the highest throughput.
+
 
 ## Examples of sending messages and receiving them by convention:
 ## Server:
@@ -20,7 +121,7 @@ static void Main()
 
     server.AddHandler(new HandlerMethods());
 
-    server.Start(31254);
+    server.Start(ExampleConstants.PortNumber);
 
     Console.WriteLine("Press [enter] to shutdown.");
     Console.ReadLine();
@@ -38,7 +139,7 @@ static void Main()
     //Start a client and connect to the server.
     var client = new RmClient();
 
-    client.Connect("localhost", 31254);
+    client.Connect("localhost", ExampleConstants.PortNumber);
 
     client.Notify(new MyNotification("This is message 001 from the client."));
     client.Notify(new MyNotification("This is message 002 from the client."));
@@ -70,7 +171,7 @@ static void Main()
   > Classes like this can be added to the server or the client to handle incomming notifications or queries.
 
 ```csharp
-internal class HandlerMethods : IReliableMessagingMessageHandler
+internal class HandlerMethods : IRmMessageHandler
 {
     public void MyNotificationReceived(RmContext context, MyNotification notification)
     {
@@ -85,7 +186,7 @@ internal class HandlerMethods : IReliableMessagingMessageHandler
 }
 ```
 
-## Examples of sending messages and receiving them by events.
+## Examples of sending messages and receiving them with events.
 ```csharp
 static void Main()
 {
@@ -93,9 +194,14 @@ static void Main()
 
     server.OnNotificationReceived += Server_OnNotificationReceived;
     server.OnQueryReceived += Server_OnQueryReceived;
-    server.OnException += Server_OnException;
 
-    server.Start(31254);
+    // Handle the OnException event, otherwise the server will ignore any exceptions.
+    server.OnException += (context, ex, payload) =>
+    {
+        Console.WriteLine($"Server exception: {ex.Message}");
+    };
+
+    server.Start(ExampleConstants.PortNumber);
 
     Console.WriteLine("Press [enter] to shutdown.");
     Console.ReadLine();
@@ -130,10 +236,10 @@ private static void Server_OnNotificationReceived(RmContext context, IRmNotifica
 ```
 
 ## Payloads:
-  > Classes that implement IReliableMessagingNotification are fire-and-forget type messages.
+  > Classes that implement IRmNotification are fire-and-forget type messages.
 
 ```csharp
-public class MyNotification : IReliableMessagingNotification
+public class MyNotification : IRmNotification
 {
     public string Message { get; set; }
 
@@ -144,9 +250,9 @@ public class MyNotification : IReliableMessagingNotification
 }
 ```
 
-> Classes that implement IReliableMessagingQuery are queries and they expect a reply, in this case the expected reply is in the type of MyQueryReply.
+> Classes that implement IRmQuery are queries and they expect a reply, in this case the expected reply is in the type of MyQueryReply.
 ```csharp
-public class MyQuery : IReliableMessagingQuery<MyQueryReply>
+public class MyQuery : IRmQuery<MyQueryReply>
 {
     public string Message { get; set; }
 
@@ -157,9 +263,9 @@ public class MyQuery : IReliableMessagingQuery<MyQueryReply>
 }
 ```
 
-> Classes that implement IReliableMessagingQueryReply are replies from a dispatched query.
+> Classes that implement IRmQueryReply are replies from a dispatched query.
 ```csharp
-public class MyQueryReply : IReliableMessagingQueryReply
+public class MyQueryReply : IRmQueryReply
 {
     public string Message { get; set; }
 
