@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Portable.BouncyCastle" Version="1.9.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\NTDLS.ReliableMessaging\NTDLS.ReliableMessaging.csproj" />
   </ItemGroup>
 

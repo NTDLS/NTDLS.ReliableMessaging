@@ -1,71 +1,89 @@
-﻿using Example.Cryptography.Server;
-using Example.Shared.Sequencing;
+﻿using Example.Shared;
+using Example.Shared.Cryptography;
 using NTDLS.ReliableMessaging;
+using Org.BouncyCastle.Crypto.Agreement;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Security;
+using Org.BouncyCastle.X509;
 using System.Collections.Concurrent;
+using System.Security.Cryptography;
 
 namespace Example.Cryptography.Server
 {
-    internal class MessageHandlers : IRmMessageHandler
+    internal class MessageHandlers
+        : IRmMessageHandler
     {
-        /// <summary>
-        /// Used to store the file transfer sessions.
-        /// </summary>
-        private readonly ConcurrentDictionary<Guid, FileTransferSession> _sessions = new();
+        ConcurrentDictionary<Guid, RmAesCryptographyProvider> _cryptographyProviders = new();
 
-        /// <summary>
-        /// Client is about to start sending a file.
-        /// </summary>
-        public BeginFileTransferQueryReply BeginFileTransferQuery(BeginFileTransferQuery notification)
+        public PublicKeyExchangeQueryReply PublicKeyExchangeQuery(RmContext context, PublicKeyExchangeQuery query)
         {
-            Console.WriteLine($"Received file transfer request: [{notification.FileName}] ({notification.FileSize} bytes)");
+            #region BouncyCastle Diffie-Hellman key exchange (outside the scope of this example).
 
-            _sessions.TryAdd(notification.FileId, new FileTransferSession(notification.FileName, notification.FileSize));
-            return new BeginFileTransferQueryReply();
+            var dhParams = DHStandardGroups.rfc3526_2048;
+            var keyGen = GeneratorUtilities.GetKeyPairGenerator("DH");
+            keyGen.Init(new DHKeyGenerationParameters(new SecureRandom(), dhParams));
+
+            //Deserialize client public key (without parameters)
+            var receivedKeyRaw = (DHPublicKeyParameters)PublicKeyFactory.CreateKey(query.PublicKeyBytes);
+
+            //Force the known parameters onto it.
+            var receivedKey = new DHPublicKeyParameters(receivedKeyRaw.Y, dhParams);
+
+            var keyPair = keyGen.GenerateKeyPair();
+
+            //Proceed with agreement
+            var agreement = new DHBasicAgreement();
+            agreement.Init(keyPair.Private);
+            var sharedSecret = agreement.CalculateAgreement(receivedKey);
+            var secretBytes = sharedSecret.ToByteArrayUnsigned();
+
+            //Create a new public key to send back to the client.
+            var publicKey = new DHPublicKeyParameters(((DHPublicKeyParameters)keyPair.Public).Y, dhParams);
+            var publicKeyBytes = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(publicKey).GetDerEncoded();
+
+            #endregion
+
+            //We now have the shared secret, so we can create the AES key.
+            var aesKey = SHA256.HashData(secretBytes);
+
+            //We cant apply the cryptography provider yet, because we need to send the public key back to the client first.
+            //So we store it in a dictionary for later use. The client will let us know when it is ready to apply the cryptography provider.
+            _cryptographyProviders.TryAdd(context.ConnectionId, new RmAesCryptographyProvider(aesKey));
+
+            return new PublicKeyExchangeQueryReply(publicKeyBytes);
         }
 
         /// <summary>
-        /// Client is sending a chunk of the file.
+        /// The client is letting us know that it is ready to apply the cryptography provider.
         /// </summary>
-        /// <param name="notification"></param>
-        public void FileChunkNotification(FileChunkNotification notification)
+        public ApplyCryptographyQueryReply ApplyCryptographyQuery(RmContext context, ApplyCryptographyQuery query)
         {
-            if (_sessions.TryGetValue(notification.FileId, out var session))
+            //Get the previously stored cryptography provider and set it on the context.
+            //Yes, TryRemove gets the value and removes it from the dictionary.
+            if (_cryptographyProviders.TryRemove(context.ConnectionId, out var cryptographyProvider))
             {
-                //We use a RmSequenceBuffer because it ensures that packets that are
-                //  received out of order are buffered and processed in the proper order.
-                session.SequenceBuffer.Process(notification.Bytes, notification.Sequence, (data) =>
-                {
-                    //If this weren't a mock process, this is where we would write the data to a file.
-                    session.BytesReceived += data.Length;
-                });
+                context.SetCryptographyProvider(cryptographyProvider);
             }
             else
             {
-                Console.WriteLine($"No session found for file ID: {notification.FileId}");
+                throw new Exception("Cryptography provider not found.");
             }
+            return new ApplyCryptographyQueryReply();
         }
 
         /// <summary>
-        /// Client is done sending the file.
+        /// Just a simple notification to show that the client can send notifications to the server.
         /// </summary>
-        public EndFileTransferQueryReply EndFileTransferQuery(EndFileTransferQuery notification)
+        public void MyNotification(RmContext context, MyNotification notification)
         {
-            if (_sessions.TryGetValue(notification.FileId, out var session))
+            if (context.GetCryptographyProvider() == null)
             {
-                //Wait for the last packet to be received.
-                while (session.BytesReceived != session.FileSize)
-                {
-                    Thread.Sleep(100);
-                }
-
-                Console.WriteLine($"File [{session.FileName}] received successfully.");
-            }
-            else
-            {
-                Console.WriteLine($"No session found for file ID: {notification.FileId}");
+                //Just to prove that the cryptography provider is set on the context.
+                throw new Exception("Cryptography provider not set.");
             }
 
-            return new EndFileTransferQueryReply();
+            context.Notify(new MyNotification("This message was sent from the Server to the Client, ENCRYPTED!"));
+            Console.WriteLine($"Server received notification: \"{notification.Message}\"");
         }
     }
 }
