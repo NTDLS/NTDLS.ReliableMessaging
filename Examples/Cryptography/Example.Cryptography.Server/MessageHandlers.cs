@@ -10,6 +10,11 @@ using System.Security.Cryptography;
 
 namespace Example.Cryptography.Server
 {
+    /// <summary>
+    /// This is the server-side implementation of the message handlers for the cryptography example.
+    /// 
+    /// See: Example.Cryptography.Client.MessageHandlers for the client-side implementation.
+    /// </summary>
     internal class MessageHandlers
         : IRmMessageHandler
     {
@@ -72,7 +77,7 @@ namespace Example.Cryptography.Server
         }
 
         /// <summary>
-        /// Just a simple notification to show that the client can send notifications to the server.
+        /// Just a simple notification to show that the client can send encrypted notifications to the server.
         /// </summary>
         public void MyNotification(RmContext context, MyNotification notification)
         {
