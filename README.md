@@ -6,6 +6,9 @@ NTDLS.ReliableMessaging provides lightweight, simple, and high-performance TCP/I
 
 Once connected, the peers can send fire-and-forget style notifications or dispatch queries which require replies - all of which are handled either by events or convention.
 
+## Testing Status
+[![Regression Tests](https://github.com/NTDLS/NTDLS.ReliableMessaging/actions/workflows/Regression%20Tests.yml/badge.svg)](https://github.com/NTDLS/NTDLS.ReliableMessaging/actions/workflows/Regression%20Tests.yml)
+
 ## Use Cases
 ReliableMessaging can be used to simply communicate between a backend service and a UI or service-to-service communication.
 
