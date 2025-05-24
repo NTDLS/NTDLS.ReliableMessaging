@@ -26,7 +26,7 @@ Encryption is added to the connection by a call to client and server SetCryptogr
 Server and the client can use a simple cryptography provider with a “hard coded” encryption key, meaning that they the server will expect each connecting client to encrypt the data with the same provider and key. However, once connected, the client and server can set the encryption provider for the connection. This allows the two peers to negotiate a key (such as Diffie-Hellman implementation or RSA) and use a custom provider to implement AES or some other encryption.
 
 The server and client Query() function contains a special pre-flight delegate handler to allow you to initialize encryption after a query packet has been built but before it has been dispatched to the remote peer:
-```
+```csharp
 client.Query(new ImGoingToInitializeEncryptionNowQuery(publicKey), ()=>
 {
     //This is the pre-flight delegate where we would initialize the encryption provider for the client.
@@ -43,7 +43,7 @@ The server and client can receive these messages in one of two ways:
 
 ### Events
 Hooking the client or server OnNotificationReceived event
-```
+```csharp
 OnNotificationReceived += (RmContext context, IRmNotification payload) =>
     {
         if(payload is MyNotification myNotification)
@@ -55,7 +55,7 @@ OnNotificationReceived += (RmContext context, IRmNotification payload) =>
 ### Convention
 Creating a class that inherits from IRmMessageHandler and adding it to the client or server via a call to AddHandler(). The client and server can have as many handlers as you’d like, depending on how you want to separate your business logic.
 The handler class would contain functions whose signatures match the signature of the notification types that you are sending. For example:
-```
+```csharp
 class MessageHandlers : IRmMessageHandler
 {
     public void SomeFunctionName(RmContext context, MyNotification notification)
@@ -73,7 +73,7 @@ The server and client can receive these messages in one of two ways:
 
 ### Events
 Hooking the client or server OnQueryReceived event
-```
+```csharp
 OnQueryReceived += (RmContext context, IRmPayload payload) =>
     {
         if (payload is MyQuery myQuery)
@@ -91,7 +91,7 @@ OnQueryReceived += (RmContext context, IRmPayload payload) =>
 ### Convention
 Creating a class that inherits from IRmMessageHandler and adding it to the client or server via a call to AddHandler(). The client and server can have as many handlers as you’d like, depending on how you want to separate your business logic.
 The handler class would contain functions whose signatures match the signature of the query types that you are sending. For example:
-```
+```csharp
 class MessageHandlers : IRmMessageHandler
 {
     public MyQueryReply MyQueryReceived(RmContext context, MyQuery query)
@@ -116,7 +116,7 @@ The throughput is regularly tested with each release of ReliableMessaging and no
 ## Server with convention based handler
 Starts a server and adds a single message handler which is used to process messages that are sent by a client.
 
-```
+```csharp
 var server = new RmServer();
 server.AddHandler(new HandlerMethods());
 server.Start(31254);
@@ -126,7 +126,7 @@ server.Start(31254);
 
 Handler class that is used to catch and process messages. Handlers like this can be added to the client and/or the server – and you can add as many of them as you want to separate business logic.
 
-```
+```csharp
 internal class HandlerMethods : IRmMessageHandler
 {
     public void MyNotificationReceived(RmContext context, MyNotification notification)
@@ -148,7 +148,7 @@ Alternatively, you can use events to process messages. This is an example of a s
 
 Additionally, you can add a mix of event handlers and convention-based handlers. Messages are first matched to the convention handlers, and any unhandled messages are then routed to event hooks.
 
-```
+```csharp
 var server = new RmServer();
 
 server.OnNotificationReceived += Server_OnNotificationReceived;
@@ -189,7 +189,7 @@ void Server_OnNotificationReceived(RmContext context, IRmNotification notificati
 
 ## Client
 An example clientthat connects to the server and sends a few notifications and a query.
-```
+```csharp
 var client = new RmClient();
 
 client.Connect("localhost", 31254);
@@ -219,7 +219,7 @@ client.Query(new MyQuery("This is the query from the client.")).ContinueWith(x =
 
 Example message class that implements IRmNotification for fire-and-forget messages.
 
-```
+```csharp
 public class MyNotification : IRmNotification
 {
     public string Message { get; set; }
@@ -232,7 +232,7 @@ public class MyNotification : IRmNotification
 ```
 
 Example message class that implements IRmQuery for query messages. These messages expect a reply of the given type, in this case the expected reply is in the type of MyQueryReply.
-```
+```csharp
 public class MyQuery : IRmQuery<MyQueryReply>
 {
     public string Message { get; set; }
@@ -245,7 +245,7 @@ public class MyQuery : IRmQuery<MyQueryReply>
 ```
 
 Classes that implement IRmQueryReply are replies in response to a query message.
-```
+```csharp
 public class MyQueryReply : IRmQueryReply
 {
     public string Message { get; set; }
