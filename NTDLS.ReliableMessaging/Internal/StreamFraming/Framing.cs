@@ -470,26 +470,22 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// </summary>
         private static IRmPayload ExtractFramePayload(IRmSerializationProvider? serializationProvider, FrameBody frame)
         {
-            if (!_deserializationCache.TryGetValue(frame.ObjectType, out var deserializeMethod))
+            var deserializeMethod = _deserializationCache.GetOrAdd(frame.ObjectType, typeName =>
             {
-                var genericType = Type.GetType(frame.ObjectType)
-                    ?? throw new Exception($"Unknown extraction payload type [{frame.ObjectType}].");
+                var genericType = Type.GetType(typeName)
+                    ?? throw new Exception($"Unknown extraction payload type [{typeName}].");
 
-                var methodInfo = typeof(Serialization).GetMethod(nameof(Serialization.RmDeserializeFramePayloadToObject))
+                var methodInfo = typeof(Serialization).GetMethod(nameof(Serialization.RmDeserializeFramePayloadToObject),
+                    new[] { typeof(IRmSerializationProvider), typeof(string) })
                     ?? throw new Exception("Could not resolve RmDeserializeFramePayloadToObject().");
 
                 var genericMethod = methodInfo.MakeGenericMethod(genericType);
 
-                // Create a delegate for the deserialization method.
-                deserializeMethod = (Func<IRmSerializationProvider?, string, IRmPayload>)
+                return (Func<IRmSerializationProvider?, string, IRmPayload>)
                     Delegate.CreateDelegate(typeof(Func<IRmSerializationProvider?, string, IRmPayload>), genericMethod);
+            });
 
-                _deserializationCache.TryAdd(frame.ObjectType, deserializeMethod);
-            }
-
-            var json = Encoding.UTF8.GetString(frame.Bytes);
-
-            return deserializeMethod(serializationProvider, json)
+            return deserializeMethod(serializationProvider, Encoding.UTF8.GetString(frame.Bytes))
                 ?? throw new Exception("Extraction payload cannot be null.");
         }
     }
