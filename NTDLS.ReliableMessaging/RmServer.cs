@@ -15,7 +15,7 @@ namespace NTDLS.ReliableMessaging
         : IRmMessenger
     {
         private TcpListener? _listener;
-        private readonly PessimisticCriticalResource<List<PeerConnection>> _activeConnections = new();
+        private readonly PessimisticCriticalResource<List<RmPeerConnection>> _activeConnections = new();
         private Thread? _listenerThreadProc;
         private bool _keepRunning;
 
@@ -47,7 +47,7 @@ namespace NTDLS.ReliableMessaging
         /// <summary>
         /// Cache of class instances and method reflection information for message handlers.
         /// </summary>
-        public ReflectionCache ReflectionCache { get; private set; } = new();
+        public RmReflectionCache ReflectionCache { get; private set; } = new();
 
         /// <summary>
         /// Creates a new instance of RmServer with the default configuration.
@@ -301,7 +301,7 @@ namespace NTDLS.ReliableMessaging
                     {
                         if (_keepRunning) //Check again, we may have received a connection while shutting down.
                         {
-                            var activeConnection = new PeerConnection(this, tcpClient, Configuration,
+                            var activeConnection = new RmPeerConnection(this, tcpClient, Configuration,
                                 Configuration.SerializationProvider, Configuration.CompressionProvider, Configuration.CryptographyProvider);
 
                             _activeConnections.Use((o) => o.Add(activeConnection));
@@ -496,14 +496,14 @@ namespace NTDLS.ReliableMessaging
                 {
                     foreach (var connection in o)
                     {
-                        Framing.TerminateWaitingQueries(context, connection.ConnectionId);
+                        RmFraming.TerminateWaitingQueries(context, connection.ConnectionId);
                     }
 
                     o.RemoveAll(o => o.ConnectionId == context.ConnectionId);
                 });
             }
 
-            Framing.TerminateWaitingQueries(context, context.ConnectionId);
+            RmFraming.TerminateWaitingQueries(context, context.ConnectionId);
 
             OnDisconnected?.Invoke(context);
         }

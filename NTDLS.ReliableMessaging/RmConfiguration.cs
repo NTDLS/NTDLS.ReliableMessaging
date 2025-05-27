@@ -1,6 +1,4 @@
-﻿using static NTDLS.ReliableMessaging.Internal.StreamFraming.Defaults;
-
-namespace NTDLS.ReliableMessaging
+﻿namespace NTDLS.ReliableMessaging
 {
     /// <summary>
     /// Configuration for server/or client.
@@ -33,18 +31,18 @@ namespace NTDLS.ReliableMessaging
         /// The initial size in bytes of the receive buffer.
         /// If the buffer ever gets full while receiving data it will be automatically resized up to MaxReceiveBufferSize.
         /// </summary>
-        public int InitialReceiveBufferSize { get; set; } = NtFrameDefaults.INITIAL_BUFFER_SIZE;
+        public int InitialReceiveBufferSize { get; set; } = RmConstants.InitialBufferSize;
 
         /// <summary>
         ///The maximum size in bytes of the receive buffer.
         ///If the buffer ever gets full while receiving data it will be automatically resized up to MaxReceiveBufferSize.
         /// </summary>
-        public int MaxReceiveBufferSize { get; set; } = NtFrameDefaults.MAX_BUFFER_SIZE;
+        public int MaxReceiveBufferSize { get; set; } = RmConstants.MaxBufferSize;
 
         /// <summary>
         ///The growth rate of the auto-resizing for the receive buffer.
         /// </summary>
-        public double ReceiveBufferGrowthRate { get; set; } = NtFrameDefaults.BUFFER_GROWTH_RATE;
+        public double ReceiveBufferGrowthRate { get; set; } = RmConstants.BufferGrowthRate;
 
         /// <summary>
         /// Custom serialization provider. Otherwise the default will be used.

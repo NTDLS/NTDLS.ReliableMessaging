@@ -1,6 +1,6 @@
 ﻿namespace NTDLS.ReliableMessaging.Internal.StreamFraming
 {
-    internal static class CRC16
+    internal static class RmCRC16
     {
         private const ushort polynomial = 0xAB01;
         private static readonly ushort[] table = new ushort[256];
@@ -27,7 +27,7 @@
             return crc;
         }
 
-        static CRC16()
+        static RmCRC16()
         {
             ushort value;
             ushort temp;

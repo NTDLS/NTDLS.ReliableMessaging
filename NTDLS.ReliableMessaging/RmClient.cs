@@ -14,7 +14,7 @@ namespace NTDLS.ReliableMessaging
         : IRmMessenger
     {
         private TcpClient? _tcpClient;
-        private PeerConnection? _activeConnection;
+        private RmPeerConnection? _activeConnection;
 
         /// <summary>
         /// Configuration that was used to initialize the client.
@@ -29,7 +29,7 @@ namespace NTDLS.ReliableMessaging
         /// <summary>
         /// Cache of class instances and method reflection information for message handlers.
         /// </summary>
-        public ReflectionCache ReflectionCache { get; private set; } = new();
+        public RmReflectionCache ReflectionCache { get; private set; } = new();
 
         /// <summary>
         /// A user settable object that can be accessed via the Context.Endpoint.Parameter Especially useful for convention based calls.
@@ -228,7 +228,7 @@ namespace NTDLS.ReliableMessaging
             }
 
             var tcpClient = new TcpClient(hostName, port);
-            _activeConnection = new PeerConnection(this, tcpClient, Configuration,
+            _activeConnection = new RmPeerConnection(this, tcpClient, Configuration,
                 Configuration.SerializationProvider, Configuration.CompressionProvider, Configuration.CryptographyProvider);
 
             _tcpClient = tcpClient;
@@ -250,7 +250,7 @@ namespace NTDLS.ReliableMessaging
 
             var tcpClient = new TcpClient();
             tcpClient.Connect(ipAddress, port);
-            _activeConnection = new PeerConnection(this, tcpClient, Configuration,
+            _activeConnection = new RmPeerConnection(this, tcpClient, Configuration,
                                 Configuration.SerializationProvider, Configuration.CompressionProvider, Configuration.CryptographyProvider);
 
             _tcpClient = tcpClient;
@@ -381,7 +381,7 @@ namespace NTDLS.ReliableMessaging
         {
             _activeConnection = null;
 
-            Framing.TerminateWaitingQueries(context, context.ConnectionId);
+            RmFraming.TerminateWaitingQueries(context, context.ConnectionId);
 
             OnDisconnected?.Invoke(context);
         }

@@ -1,10 +1,15 @@
-﻿using ProtoBuf;
+﻿using NTDLS.ReliableMessaging.Internal.StreamFraming;
+using ProtoBuf;
+using System.Collections.Concurrent;
+using System.Text;
 using System.Text.Json;
 
 namespace NTDLS.ReliableMessaging.Internal
 {
-    internal class Serialization
+    internal class RmSerialization
     {
+        private static readonly ConcurrentDictionary<string, Func<IRmSerializationProvider?, string, IRmPayload>> _deserializationCache = new();
+
         public static byte[] SerializeToByteArray(object obj)
         {
             if (obj == null) return Array.Empty<byte>();
@@ -46,6 +51,30 @@ namespace NTDLS.ReliableMessaging.Internal
             {
                 return JsonSerializer.Deserialize<T>(json);
             }
+        }
+
+        /// <summary>
+        /// Uses the "EnclosedPayloadType" to determine the type of the payload and deserialize the json to that type.
+        /// </summary>
+        public static IRmPayload ExtractFramePayload(IRmSerializationProvider? serializationProvider, RmFrameBody frame)
+        {
+            var deserializeMethod = _deserializationCache.GetOrAdd(frame.ObjectType, typeName =>
+            {
+                var genericType = Type.GetType(typeName)
+                    ?? throw new Exception($"Unknown extraction payload type [{typeName}].");
+
+                var methodInfo = typeof(RmSerialization).GetMethod(nameof(RmDeserializeFramePayloadToObject),
+                    new[] { typeof(IRmSerializationProvider), typeof(string) })
+                    ?? throw new Exception("Could not resolve RmDeserializeFramePayloadToObject().");
+
+                var genericMethod = methodInfo.MakeGenericMethod(genericType);
+
+                return (Func<IRmSerializationProvider?, string, IRmPayload>)
+                    Delegate.CreateDelegate(typeof(Func<IRmSerializationProvider?, string, IRmPayload>), genericMethod);
+            });
+
+            return deserializeMethod(serializationProvider, Encoding.UTF8.GetString(frame.Bytes))
+                ?? throw new Exception("Extraction payload cannot be null.");
         }
     }
 }

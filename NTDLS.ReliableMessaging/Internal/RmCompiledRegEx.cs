@@ -2,7 +2,7 @@
 
 namespace NTDLS.ReliableMessaging.Internal
 {
-    internal partial class CompiledRegEx
+    internal partial class RmCompiledRegEx
     {
         [GeneratedRegex(@"(,?\s*Version\s*=\s*[\d.]+)|(,?\s*Culture\s*=\s*[^,]+)|(,?\s*PublicKeyToken\s*=\s*[^,\]]+)")]
         internal static partial Regex TypeTagsRegex();
