@@ -49,7 +49,7 @@ namespace NTDLS.ReliableMessaging
         /// <summary>
         /// Decompress the payload using deflate.
         /// </summary>
-        public byte[] DeCompress(RmContext context, byte[] compressedPayload)
+        public byte[] Decompress(RmContext context, byte[] compressedPayload)
         {
             using var msi = new MemoryStream(compressedPayload);
             using var mso = new MemoryStream();

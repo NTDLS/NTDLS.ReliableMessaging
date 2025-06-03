@@ -45,17 +45,17 @@
         public double ReceiveBufferGrowthRate { get; set; } = RmConstants.BufferGrowthRate;
 
         /// <summary>
-        /// Custom serialization provider. Otherwise the default will be used.
+        /// Serialization provider, otherwise the default RmJsonSerializationProvider will be used.
         /// </summary>
-        public IRmSerializationProvider? SerializationProvider = null;
+        public IRmSerializationProvider? SerializationProvider = new RmJsonSerializationProvider();
 
         /// <summary>
-        /// Custom compression provider. Otherwise the default will be used.
+        /// Compression provider, otherwise none will be used.
         /// </summary>
         public IRmCompressionProvider? CompressionProvider = null;
 
         /// <summary>
-        /// Custom encryption provider. Otherwise none will be used.
+        /// Cryptography provider, otherwise none will be used.
         /// </summary>
         public IRmCryptographyProvider? CryptographyProvider = null;
 

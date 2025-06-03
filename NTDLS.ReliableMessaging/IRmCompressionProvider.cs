@@ -19,6 +19,6 @@
         /// <param name="context">Contains information about the endpoint and the connection.</param>
         /// <param name="compressedPayload">Contains the compressed data.</param>
         /// <returns>Return the altered bytes.</returns>
-        public byte[] DeCompress(RmContext context, byte[] compressedPayload);
+        public byte[] Decompress(RmContext context, byte[] compressedPayload);
     }
 }

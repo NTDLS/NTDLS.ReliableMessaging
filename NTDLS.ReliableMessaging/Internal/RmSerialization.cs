@@ -2,13 +2,12 @@
 using ProtoBuf;
 using System.Collections.Concurrent;
 using System.Text;
-using System.Text.Json;
 
 namespace NTDLS.ReliableMessaging.Internal
 {
     internal class RmSerialization
     {
-        private static readonly ConcurrentDictionary<string, Func<IRmSerializationProvider?, string, IRmPayload>> _deserializationCache = new();
+        private static readonly ConcurrentDictionary<string, Func<IRmSerializationProvider, string, IRmPayload>> _deserializationCache = new();
 
         public static byte[] SerializeToByteArray(object obj)
         {
@@ -26,37 +25,19 @@ namespace NTDLS.ReliableMessaging.Internal
             return Serializer.Deserialize<T>(stream);
         }
 
-        public static string RmSerializeFramePayloadToText<T>(IRmSerializationProvider? serializationProvider, T obj)
-        {
-            if (serializationProvider != null) //Using custom serialization.
-            {
-                return serializationProvider.SerializeToText(obj);
-            }
-            else //Using built-in default serialization.
-            {
-                return JsonSerializer.Serialize((object?)obj);
-            }
-        }
+        public static string RmSerializeFramePayloadToText<T>(IRmSerializationProvider serializationProvider, T obj)
+            => serializationProvider.SerializeToText(obj);
 
         /// <summary>
         /// Deserializes a payload to an object. This is called via reflection via Framing.ExtractFramePayload.
         /// </summary>
-        public static T? RmDeserializeFramePayloadToObject<T>(IRmSerializationProvider? serializationProvider, string json)
-        {
-            if (serializationProvider != null) //Using custom serialization.
-            {
-                return serializationProvider.DeserializeToObject<T>(json);
-            }
-            else //Using built-in default serialization.
-            {
-                return JsonSerializer.Deserialize<T>(json);
-            }
-        }
+        public static T? RmDeserializeFramePayloadToObject<T>(IRmSerializationProvider serializationProvider, string json)
+            => serializationProvider.DeserializeToObject<T>(json);
 
         /// <summary>
         /// Uses the "EnclosedPayloadType" to determine the type of the payload and deserialize the json to that type.
         /// </summary>
-        public static IRmPayload ExtractFramePayload(IRmSerializationProvider? serializationProvider, RmFrameBody frame)
+        public static IRmPayload ExtractFramePayload(IRmSerializationProvider serializationProvider, RmFrameBody frame)
         {
             var deserializeMethod = _deserializationCache.GetOrAdd(frame.ObjectType, typeName =>
             {
@@ -69,8 +50,8 @@ namespace NTDLS.ReliableMessaging.Internal
 
                 var genericMethod = methodInfo.MakeGenericMethod(genericType);
 
-                return (Func<IRmSerializationProvider?, string, IRmPayload>)
-                    Delegate.CreateDelegate(typeof(Func<IRmSerializationProvider?, string, IRmPayload>), genericMethod);
+                return (Func<IRmSerializationProvider, string, IRmPayload>)
+                    Delegate.CreateDelegate(typeof(Func<IRmSerializationProvider, string, IRmPayload>), genericMethod);
             });
 
             return deserializeMethod(serializationProvider, Encoding.UTF8.GetString(frame.Bytes))

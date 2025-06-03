@@ -152,7 +152,8 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                     throw new ArgumentNullException(nameof(stream), "Stream can not be null.");
                 }
 
-                var frameBody = new RmFrameBody(context.GetSerializationProvider(), framePayload, typeof(T));
+                var serializationProvider = context.GetSerializationProvider() ?? throw new Exception("Serialization provider is not set.");
+                var frameBody = new RmFrameBody(serializationProvider, framePayload, typeof(T));
                 queryAwaitingReply = new RmQueryAwaitingReply(frameBody.Id, context.ConnectionId);
 
                 context.QueriesAwaitingReplies.TryAdd(frameBody.Id, queryAwaitingReply);
@@ -226,7 +227,8 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                     throw new ArgumentNullException(nameof(stream), "Stream can not be null.");
                 }
 
-                var frameBody = new RmFrameBody(context.GetSerializationProvider(), framePayload, typeof(T));
+                var serializationProvider = context.GetSerializationProvider() ?? throw new Exception("Serialization provider is not set.");
+                var frameBody = new RmFrameBody(serializationProvider, framePayload, typeof(T));
                 queryAwaitingReply = new RmQueryAwaitingReply(frameBody.Id, context.ConnectionId);
 
                 context.QueriesAwaitingReplies.TryAdd(frameBody.Id, queryAwaitingReply);
@@ -294,7 +296,8 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 throw new ArgumentNullException(nameof(stream), "Stream cannot be null.");
             }
 
-            var frameBody = new RmFrameBody(context.GetSerializationProvider(), framePayload)
+            var serializationProvider = context.GetSerializationProvider() ?? throw new Exception("Serialization provider is not set.");
+            var frameBody = new RmFrameBody(serializationProvider, framePayload)
             {
                 Id = queryFrameBody.Id
             };
@@ -316,7 +319,8 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 throw new ArgumentNullException(nameof(stream), "Stream can not be null.");
             }
 
-            var frameBody = new RmFrameBody(context.GetSerializationProvider(), framePayload);
+            var serializationProvider = context.GetSerializationProvider() ?? throw new Exception("Serialization provider is not set.");
+            var frameBody = new RmFrameBody(serializationProvider, framePayload);
             var frameBytes = AssembleFrame(context, frameBody);
             stream.SafeWrite(context, frameBytes);
         }
@@ -334,7 +338,8 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 throw new ArgumentNullException(nameof(stream), "Stream can not be null.");
             }
 
-            var frameBody = new RmFrameBody(context.GetSerializationProvider(), framePayload);
+            var serializationProvider = context.GetSerializationProvider() ?? throw new Exception("Serialization provider is not set.");
+            var frameBody = new RmFrameBody(serializationProvider, framePayload);
             var frameBytes = AssembleFrame(context, frameBody);
             await stream.SafeWriteAsync(context, frameBytes);
         }
@@ -368,11 +373,12 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             try
             {
                 frameBodyBytes = context.GetCryptographyProvider()?.Decrypt(context, frameBodyBytes) ?? frameBodyBytes;
-                frameBodyBytes = context.GetCompressionProvider()?.DeCompress(context, frameBodyBytes) ?? frameBodyBytes;
+                frameBodyBytes = context.GetCompressionProvider()?.Decompress(context, frameBodyBytes) ?? frameBodyBytes;
+
+                var serializationProvider = context.GetSerializationProvider() ?? throw new Exception("Serialization provider is not set.");
 
                 var frameBody = RmSerialization.DeserializeToObject<RmFrameBody>(frameBodyBytes);
-
-                var framePayload = RmSerialization.ExtractFramePayload(context.GetSerializationProvider(), frameBody);
+                var framePayload = RmSerialization.ExtractFramePayload(serializationProvider, frameBody);
 
                 if (framePayload is IRmQueryReply reply)
                 {

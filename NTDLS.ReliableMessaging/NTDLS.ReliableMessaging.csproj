@@ -13,10 +13,9 @@
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageReleaseNotes>
-      Added generic sequence buffer.
-      Sequence buffer corrections.
+      Added default serialization provider.
     </PackageReleaseNotes>
-    <Version>3.2.6</Version>
+    <Version>3.2.7</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>rpc;tcpip;ipc;stream;encryption;messaging;message-framing;</PackageTags>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>

@@ -37,7 +37,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <summary>
         /// Instantiates a frame payload with a serialized payload.
         /// </summary>
-        public RmFrameBody(IRmSerializationProvider? serializationProvider, IRmPayload framePayload)
+        public RmFrameBody(IRmSerializationProvider serializationProvider, IRmPayload framePayload)
         {
             ObjectType = RmReflection.GetAssemblyQualifiedTypeNameWithClosedGenerics(framePayload);
             Bytes = Encoding.UTF8.GetBytes(RmSerialization.RmSerializeFramePayloadToText(serializationProvider, framePayload));
@@ -46,7 +46,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <summary>
         /// Instantiates a frame payload with a serialized payload and expected reply type (for queries).
         /// </summary>
-        public RmFrameBody(IRmSerializationProvider? serializationProvider, IRmPayload framePayload, Type expectedReplyType)
+        public RmFrameBody(IRmSerializationProvider serializationProvider, IRmPayload framePayload, Type expectedReplyType)
         {
             ExpectedReplyType = RmReflection.GetAssemblyQualifiedTypeNameWithClosedGenerics(expectedReplyType);
             ObjectType = RmReflection.GetAssemblyQualifiedTypeNameWithClosedGenerics(framePayload);
