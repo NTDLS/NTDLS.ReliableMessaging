@@ -13,9 +13,9 @@
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageReleaseNotes>
-      NTDLS.Helpers update.
+      Dependency updates.
     </PackageReleaseNotes>
-    <Version>3.2.8</Version>
+    <Version>3.2.9</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>rpc;tcpip;ipc;stream;encryption;messaging;message-framing;</PackageTags>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -46,7 +46,7 @@
 
   <ItemGroup>
     <PackageReference Include="NTDLS.Helpers" Version="1.3.17" />
-    <PackageReference Include="NTDLS.Semaphore" Version="3.5.2" />
+    <PackageReference Include="NTDLS.Semaphore" Version="3.5.3" />
     <PackageReference Include="protobuf-net" Version="3.2.56" />
   </ItemGroup>
 
