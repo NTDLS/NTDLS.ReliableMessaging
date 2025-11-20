@@ -240,7 +240,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
 
                 //Wait for a reply. When a reply is received, it will be routed to the correct query via ApplyQueryReply().
                 //ApplyQueryReply() will apply the payload data to queryAwaitingReply and trigger the wait event.
-                if (queryAwaitingReply.WaitEvent.WaitOne(queryTimeout) == false)
+                if (!queryAwaitingReply.WaitEvent.WaitOne(queryTimeout))
                 {
                     context.QueriesAwaitingReplies.TryRemove(frameBody.Id, out _);
                     throw new Exception("Query timeout expired while waiting on reply.");
