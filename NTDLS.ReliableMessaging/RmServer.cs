@@ -393,12 +393,12 @@ namespace NTDLS.ReliableMessaging
         /// <param name="connectionId">The connection id of the client</param>
         /// <param name="query">The query message to send.</param>
         /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
-        public Task<T> Query<T>(Guid connectionId, IRmQuery<T> query, TimeSpan queryTimeout) where T : IRmQueryReply
+        public Task<T> Query<T>(Guid connectionId, IRmQuery<T> query, TimeSpan? queryTimeout) where T : IRmQueryReply
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
                 ?? throw new Exception($"Connection with id {connectionId} was not found.");
 
-            return connection.Context.Query(query, queryTimeout);
+            return connection.Context.Query(query, queryTimeout ?? Configuration.QueryTimeout);
         }
 
         /// <summary>
@@ -408,12 +408,12 @@ namespace NTDLS.ReliableMessaging
         /// <param name="connectionId">The connection id of the client</param>
         /// <param name="query">The query message to send.</param>
         /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
-        public async Task<T> QueryAsync<T>(Guid connectionId, IRmQuery<T> query, TimeSpan queryTimeout) where T : IRmQueryReply
+        public async Task<T> QueryAsync<T>(Guid connectionId, IRmQuery<T> query, TimeSpan? queryTimeout) where T : IRmQueryReply
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
                 ?? throw new Exception($"Connection with id {connectionId} was not found.");
 
-            return await connection.Context.QueryAsync(query, queryTimeout);
+            return await connection.Context.QueryAsync(query, queryTimeout ?? Configuration.QueryTimeout);
         }
 
         /// <summary>
@@ -454,12 +454,12 @@ namespace NTDLS.ReliableMessaging
         /// <param name="query">The query message to send.</param>
         /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
         /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
-        public Task<T> Query<T>(Guid connectionId, IRmQuery<T> query, OnQueryPrepared onQueryPrepared, TimeSpan queryTimeout) where T : IRmQueryReply
+        public Task<T> Query<T>(Guid connectionId, IRmQuery<T> query, OnQueryPrepared onQueryPrepared, TimeSpan? queryTimeout) where T : IRmQueryReply
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
                 ?? throw new Exception($"Connection with id {connectionId} was not found.");
 
-            return connection.Context.Query(query, onQueryPrepared, queryTimeout);
+            return connection.Context.Query(query, onQueryPrepared, queryTimeout ?? Configuration.QueryTimeout);
         }
 
         /// <summary>
@@ -470,12 +470,12 @@ namespace NTDLS.ReliableMessaging
         /// <param name="query">The query message to send.</param>
         /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
         /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
-        public async Task<T> QueryAsync<T>(Guid connectionId, IRmQuery<T> query, OnQueryPrepared onQueryPrepared, TimeSpan queryTimeout) where T : IRmQueryReply
+        public async Task<T> QueryAsync<T>(Guid connectionId, IRmQuery<T> query, OnQueryPrepared onQueryPrepared, TimeSpan? queryTimeout) where T : IRmQueryReply
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
                 ?? throw new Exception($"Connection with id {connectionId} was not found.");
 
-            return await connection.Context.QueryAsync(query, onQueryPrepared, queryTimeout);
+            return await connection.Context.QueryAsync(query, onQueryPrepared, queryTimeout ?? Configuration.QueryTimeout);
         }
 
         void IRmMessenger.InvokeOnConnected(RmContext context)

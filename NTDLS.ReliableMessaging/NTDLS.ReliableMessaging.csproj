@@ -13,9 +13,9 @@
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageReleaseNotes>
-      Dependency updates and introduced .net 10 support.
+      Nullable query timeouts for more flexible overloading.
     </PackageReleaseNotes>
-    <Version>3.2.10</Version>
+    <Version>3.2.11</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>rpc;tcpip;ipc;stream;encryption;messaging;message-framing;</PackageTags>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
