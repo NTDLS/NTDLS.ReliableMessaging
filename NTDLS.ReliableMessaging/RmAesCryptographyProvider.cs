@@ -1,4 +1,5 @@
 ﻿using System.Security.Cryptography;
+using System.Text;
 
 namespace NTDLS.ReliableMessaging
 {
@@ -14,13 +15,82 @@ namespace NTDLS.ReliableMessaging
         private readonly byte[] _aesKey;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="RmAesCryptographyProvider"/> class with the specified AES key.
+        /// Initializes a new instance of the DmAesCryptographyProvider class using the specified AES key.
         /// </summary>
-        /// <param name="aesKey"></param>
+        /// <param name="aesKey">A byte array containing the AES key to use for cryptographic operations. The array must be 16, 24, or 32
+        /// bytes in length, corresponding to 128, 192, or 256-bit key sizes.</param>
+        /// <exception cref="ArgumentNullException">Thrown if <paramref name="aesKey"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">Thrown if <paramref name="aesKey"/> is not 16, 24, or 32 bytes in length.</exception>
         public RmAesCryptographyProvider(byte[] aesKey)
         {
+            if (aesKey == null)
+                throw new ArgumentNullException(nameof(aesKey));
+
+            if (aesKey.Length != 16 && aesKey.Length != 24 && aesKey.Length != 32)
+                throw new ArgumentException("AES key must be 16, 24, or 32 bytes.", nameof(aesKey));
+
             _aesKey = aesKey;
         }
+
+        /// <summary>
+        /// Initializes a new instance of the RmAesCryptographyProvider class using a password and a specified AES key
+        /// size.
+        /// </summary>
+        /// <remarks>This constructor derives an AES key from the provided password using the specified
+        /// key size. For stronger security, use a complex password and a larger key size when possible.</remarks>
+        /// <param name="password">The password used to derive the cryptographic key for AES encryption and decryption. Cannot be null or
+        /// empty.</param>
+        /// <param name="aesKeySize">The size of the AES key to use for encryption and decryption. Defaults to Aes128 if not specified.</param>
+        public RmAesCryptographyProvider(string password, RmAesKeySize aesKeySize = RmAesKeySize.Aes128)
+            : this(DeriveKey(password, aesKeySize))
+        {
+        }
+
+        /// <summary>
+        /// Specifies the supported key sizes, in bytes, for AES encryption operations.
+        /// </summary>
+        /// <remarks>Use this enumeration to select the appropriate AES key size when configuring
+        /// cryptographic algorithms. The values correspond to the standard AES key lengths: 128, 192, and 256
+        /// bits.</remarks>
+        public enum RmAesKeySize
+        {
+            /// <summary>
+            /// Specifies the AES encryption algorithm with a 128-bit key size.
+            /// </summary>
+            /// <remarks>Use this value to indicate that cryptographic operations should employ AES
+            /// with a 128-bit key. AES-128 provides a balance of security and performance suitable for most
+            /// applications.</remarks>
+            Aes128 = 16,
+            /// <summary>
+            /// Specifies the Advanced Encryption Standard (AES) algorithm with a 192-bit key size.
+            /// </summary>
+            /// <remarks>Use this value to select AES encryption with a 192-bit key, which provides a
+            /// balance between performance and security.</remarks>
+            Aes192 = 24,
+            /// <summary>
+            /// Specifies a key size of 256 bits for AES encryption.
+            /// </summary>
+            /// <remarks>Use this value when configuring cryptographic operations that require AES-256
+            /// encryption. AES-256 provides a high level of security and is commonly used for protecting sensitive data.</remarks>
+            Aes256 = 32
+        }
+
+        private static byte[] DeriveKey(string password, RmAesKeySize aesKeySize = RmAesKeySize.Aes128)
+        {
+            if (string.IsNullOrWhiteSpace(password))
+                throw new ArgumentException("Password cannot be null or empty.", nameof(password));
+
+            byte[] salt = Encoding.UTF8.GetBytes("NTDLS.DatagramMessaging.AES");
+
+            return Rfc2898DeriveBytes.Pbkdf2(
+                password,
+                salt,
+                100000,
+                hashAlgorithm: HashAlgorithmName.SHA256,
+                (int)aesKeySize
+            );
+        }
+
 
         /// <summary>
         /// Decrypts the specified encrypted byte array using the provided <see cref="RmContext"/>.
