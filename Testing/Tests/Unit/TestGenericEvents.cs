@@ -11,7 +11,24 @@ namespace Tests.Unit
 
             client.Notify(new MyGenericNotificationForEvent<string>("test"));
 
-            await client.Query(new MyGenericQueryForEvent<string>($"query test")).ContinueWith(x =>
+            var reply = client.Query(new MyGenericQueryForEvent<string>($"query test"));
+            Console.WriteLine($"Client received query reply: '{reply.Message}'");
+            Assert.Equal("query reply test", reply.Message);
+
+            Thread.Sleep(500);
+            fixture.ThrowIfError();
+
+            client.Disconnect();
+        }
+
+        [Fact(DisplayName = "Test generic events (async).")]
+        public async Task TestAsync()
+        {
+            var client = ClientFactory.CreateAndConnect();
+
+            client.Notify(new MyGenericNotificationForEvent<string>("test"));
+
+            await client.QueryAsync(new MyGenericQueryForEvent<string>($"query test")).ContinueWith(x =>
             {
                 if (x.IsCompletedSuccessfully && x.Result != null)
                 {

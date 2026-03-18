@@ -5,13 +5,30 @@ namespace Tests.Unit
     public class TestEvents(ServerFixture fixture) : IClassFixture<ServerFixture>
     {
         [Fact(DisplayName = "Test events.")]
-        public async Task Test()
+        public void Test()
         {
             var client = ClientFactory.CreateAndConnect();
 
             client.Notify(new MyNotificationForEvent("test"));
 
-            await client.Query(new MyQueryForEvent($"query test")).ContinueWith(x =>
+            var reply = client.Query(new MyQueryForEvent($"query test"));
+            Console.WriteLine($"Client received query reply: '{reply.Message}'");
+            Assert.Equal("query reply test", reply.Message);
+
+            Thread.Sleep(500);
+            fixture.ThrowIfError();
+
+            client.Disconnect();
+        }
+
+        [Fact(DisplayName = "Test events (async).")]
+        public async Task TestAsync()
+        {
+            var client = ClientFactory.CreateAndConnect();
+
+            client.Notify(new MyNotificationForEvent("test"));
+
+            await client.QueryAsync(new MyQueryForEvent($"query test")).ContinueWith(x =>
             {
                 if (x.IsCompletedSuccessfully && x.Result != null)
                 {

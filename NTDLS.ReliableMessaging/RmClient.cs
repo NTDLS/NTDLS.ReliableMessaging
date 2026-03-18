@@ -297,7 +297,7 @@ namespace NTDLS.ReliableMessaging
         /// <typeparam name="T">The type of reply that is expected.</typeparam>
         /// <param name="query">The query message to send.</param>
         /// <returns>Returns the result of the query.</returns>
-        public Task<T> Query<T>(IRmQuery<T> query) where T : IRmQueryReply
+        public T Query<T>(IRmQuery<T> query) where T : IRmQueryReply
             => _activeConnection.EnsureNotNull().Context.Query<T>(query, Configuration.QueryTimeout);
 
         /// <summary>
@@ -316,7 +316,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="query">The query message to send.</param>
         /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
         /// <returns>Returns the result of the query.</returns>
-        public Task<T> Query<T>(IRmQuery<T> query, TimeSpan? queryTimeout) where T : IRmQueryReply
+        public T Query<T>(IRmQuery<T> query, TimeSpan? queryTimeout) where T : IRmQueryReply
             => _activeConnection.EnsureNotNull().Context.Query<T>(query, queryTimeout ?? Configuration.QueryTimeout);
 
         /// <summary>
@@ -336,7 +336,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="query">The query message to send.</param>
         /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
         /// <returns>Returns the result of the query.</returns>
-        public Task<T> Query<T>(IRmQuery<T> query, OnQueryPrepared onQueryPrepared) where T : IRmQueryReply
+        public T Query<T>(IRmQuery<T> query, OnQueryPrepared onQueryPrepared) where T : IRmQueryReply
             => _activeConnection.EnsureNotNull().Context.Query<T>(query, onQueryPrepared, Configuration.QueryTimeout);
 
         /// <summary>
@@ -357,7 +357,7 @@ namespace NTDLS.ReliableMessaging
         /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
         /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
         /// <returns>Returns the result of the query.</returns>
-        public Task<T> Query<T>(IRmQuery<T> query, OnQueryPrepared onQueryPrepared, TimeSpan? queryTimeout) where T : IRmQueryReply
+        public T Query<T>(IRmQuery<T> query, OnQueryPrepared onQueryPrepared, TimeSpan? queryTimeout) where T : IRmQueryReply
             => _activeConnection.EnsureNotNull().Context.Query<T>(query, onQueryPrepared, queryTimeout ?? Configuration.QueryTimeout);
 
         /// <summary>

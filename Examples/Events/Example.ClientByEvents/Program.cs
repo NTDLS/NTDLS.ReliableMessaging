@@ -37,18 +37,15 @@ namespace Example.ClientByEvents
                 };
 
                 //Send a query to the server, specify which type of reply we expect.
-                client.Query(new MyQuery($"This is query {messageNumber++} from the client.")).ContinueWith(x =>
+                try
                 {
-                    //If we received a reply, print it to the console.
-                    if (x.IsCompletedSuccessfully && x.Result != null)
-                    {
-                        Console.WriteLine($"Client received query reply: '{x.Result.Message}'");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Exception: '{x.Exception?.GetBaseException()?.Message}'");
-                    }
-                });
+                    var reply = client.Query(new MyQuery($"This is query {messageNumber++} from the client."));
+                    Console.WriteLine($"Client received query reply: '{reply.Message}'");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Exception: '{ex.GetBaseException().Message}'");
+                }
 
                 if (Console.KeyAvailable && Console.ReadKey(intercept: true).Key == ConsoleKey.Enter)
                 {

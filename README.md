@@ -22,7 +22,7 @@ By default, all queries and notifications are handled asynchronously, but that c
 3. Use the built in RmSequenceBuffer to buffer out of order packets. This is used in conjunction with a custom notification class that communicated the “packet sequence”.
 
 ## Compression
-Compress is added with a call to the client and server SetCompressionProvider() function with a reference to a compression provider. ReliableMessaging supples two built in compression providers: RmDeflateCompressionProvider and RmBrotliCompressionProvider(), but you can implement your own by inheriting from IRmCompressionProvider.
+Compress is added with a call to the client and server SetCompressionProvider() function with a reference to a compression provider. ReliableMessaging supplies two built in compression providers: RmDeflateCompressionProvider and RmBrotliCompressionProvider(), but you can implement your own by inheriting from IRmCompressionProvider.
 
 ## Encryption
 Encryption is added to the connection by a call to client and server SetCryptographyProvider() function with a reference to an encryption provider that inherits from IRmCryptographyProvider.
@@ -191,7 +191,8 @@ void Server_OnNotificationReceived(RmContext context, IRmNotification notificati
 ```
 
 ## Client
-An example clientthat connects to the server and sends a few notifications and a query.
+An example client that connects to the server and sends a few notifications and a query.
+Note that async versions of the Notify() and Query() functions are also available as NotifyAsync() and QueryAsync() respectively.
 ```csharp
 var client = new RmClient();
 
@@ -202,18 +203,8 @@ client.Notify(new MyNotification("This is message 002 from the client."));
 client.Notify(new MyNotification("This is message 003 from the client."));
 
 //Send a query to the server, wait on a reply.
-client.Query(new MyQuery("This is the query from the client.")).ContinueWith(x =>
-{
-    //If we received a reply, print it to the console.
-    if (x.IsCompletedSuccessfully && x.Result != null)
-    {
-        Console.WriteLine($"Client received query reply: '{x.Result.Message}'");
-    }
-    else
-    {
-        Console.WriteLine($"Exception: '{x.Exception?.GetBaseException()?.Message}'");
-    }
-});
+var reply = client.Query(new MyQuery("This is the query from the client."));
+Console.WriteLine($"Client received query reply: '{reply.Message}'");
 
 //client.Disconnect();
 ```

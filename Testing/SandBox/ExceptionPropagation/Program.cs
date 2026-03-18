@@ -33,17 +33,15 @@ namespace ExceptionPropagation
 
             //client.Notify(new TestNotification());
 
-            client.Query(new TestQuery()).ContinueWith((o) =>
+            try
             {
-                if (o.IsFaulted)
-                {
-                    Console.WriteLine($"Client received exception: {o.Exception?.InnerException?.Message}");
-                }
-                else
-                {
-                    Console.WriteLine($"Client received reply: {o.Result.GetType().Name}");
-                }
-            });
+                var reply = client.Query(new TestQuery());
+                Console.WriteLine($"Client received reply: {reply.GetType().Name}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception: '{ex.GetBaseException().Message}'");
+            }
 
             Console.WriteLine("Press [enter] to exit...");
             Console.ReadLine();

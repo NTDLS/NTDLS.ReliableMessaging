@@ -215,7 +215,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
         /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
         /// <returns>Returns the reply payload that is written to the stream from the recipient of the query.</returns>
-        public static Task<T> WriteQueryFrame<T>(this Stream stream, RmContext context,
+        public static T WriteQueryFrame<T>(this Stream stream, RmContext context,
             IRmQuery<T> framePayload, TimeSpan queryTimeout, OnQueryPrepared? onQueryPrepared) where T : IRmQueryReply
         {
             RmQueryAwaitingReply? queryAwaitingReply = null;
@@ -265,7 +265,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
 
                 if (queryAwaitingReply.ReplyPayload is T t)
                 {
-                    return Task.FromResult(t);
+                    return t;
                 }
 
                 throw new Exception($"Query expected a reply of type '{typeof(T).Name}', received '{queryAwaitingReply.ReplyPayload.GetType().Name}'.");
@@ -277,7 +277,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                     context.QueriesAwaitingReplies.TryRemove(queryAwaitingReply.FrameBodyId, out _);
                 }
 
-                return Task.FromException<T>(ex);
+                throw;
             }
         }
 

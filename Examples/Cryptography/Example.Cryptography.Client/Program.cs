@@ -46,27 +46,26 @@ namespace Example.Cryptography.Client
             #endregion
 
             //Send our public key to the server and wait for the reply.
-            var aesCryptographyProvider = client.Query(new PublicKeyExchangeQuery(publicKeyBytes)).ContinueWith((reply) =>
-            {
-                //Use the reply containing the public key from the server to create a shared secret.
-                #region BouncyCastle Diffie-Hellman key exchange (outside the scope of this example).
+            var reply = client.Query(new PublicKeyExchangeQuery(publicKeyBytes));
 
-                var receivedKeyRaw = (DHPublicKeyParameters)PublicKeyFactory.CreateKey(reply.Result.PublicKeyBytes);
-                var dhParams = DHStandardGroups.rfc3526_2048;
-                var receivedKey = new DHPublicKeyParameters(receivedKeyRaw.Y, dhParams);
+            //Use the reply containing the public key from the server to create a shared secret.
+            #region BouncyCastle Diffie-Hellman key exchange (outside the scope of this example).
 
-                var agreement = new DHBasicAgreement();
-                agreement.Init(keyPair.Private);
-                var sharedSecret = agreement.CalculateAgreement(receivedKey);
-                var secretBytes = sharedSecret.ToByteArrayUnsigned();
+            var receivedKeyRaw = (DHPublicKeyParameters)PublicKeyFactory.CreateKey(reply.PublicKeyBytes);
+            var receivedKey = new DHPublicKeyParameters(receivedKeyRaw.Y, dhParams);
 
-                #endregion
+            var agreement = new DHBasicAgreement();
+            agreement.Init(keyPair.Private);
+            var sharedSecret = agreement.CalculateAgreement(receivedKey);
+            var secretBytes = sharedSecret.ToByteArrayUnsigned();
 
-                //We now have the shared secret, so we can create the AES key.
-                var aesKey = SHA256.HashData(secretBytes);
+            #endregion
 
-                return new RmAesCryptographyProvider(aesKey);
-            }).Result;
+            //We now have the shared secret, so we can create the AES key.
+            var aesKey = SHA256.HashData(secretBytes);
+
+            var aesCryptographyProvider = new RmAesCryptographyProvider(aesKey);
+
 
             //Now that we have sent out public key and received the server's public key, we are almost ready to apply the cryptography provider.
             //  The problem is that we need to let the server know we are ready, and we really shouldn't do that with a fire-and-forget notification
