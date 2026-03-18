@@ -13,9 +13,9 @@
 		<RepositoryUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</RepositoryUrl>
 		<RepositoryType>Git</RepositoryType>
 		<PackageReleaseNotes>
-			Removed Task ambuguity for non async methods.
+			Removed Task ambiguity for non async methods.
 		</PackageReleaseNotes>
-		<Version>3.3.0</Version>
+		<Version>3.3.1</Version>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageTags>rpc;tcpip;ipc;stream;encryption;messaging;message-framing;</PackageTags>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
