@@ -19,6 +19,13 @@ namespace NTDLS.ReliableMessaging
         private IRmCompressionProvider? _compressionProvider = null;
         private IRmCryptographyProvider? _cryptographyProvider = null;
 
+
+        /// <summary>
+        /// Used for TCPClient stream write operations to ensure that only one write operation
+        /// is occurring at a time, since NetworkStream does not support concurrent writes.
+        /// </summary>
+        internal SemaphoreSlim StreamWriteLock { get; private set; } = new(1, 1);
+
         /// <summary>
         /// Gets or sets the collection of queries that are awaiting replies, identified by their FrameBody.Id.
         /// </summary>
@@ -170,10 +177,28 @@ namespace NTDLS.ReliableMessaging
         /// </summary>
         /// <typeparam name="T">The type of reply that is expected.</typeparam>
         /// <param name="query">The query message to send.</param>
+        /// <returns>Returns the result of the query.</returns>
+        public async Task<T> QueryAsync<T>(IRmQuery<T> query) where T : IRmQueryReply
+            => await Stream.WriteQueryFrameAsync(this, query, Messenger.Configuration.QueryTimeout, null);
+
+        /// <summary>
+        /// Sends a query to the specified client and expects a reply.
+        /// </summary>
+        /// <typeparam name="T">The type of reply that is expected.</typeparam>
+        /// <param name="query">The query message to send.</param>
         /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
         /// <returns>Returns the result of the query.</returns>
         public async Task<T> QueryAsync<T>(IRmQuery<T> query, TimeSpan queryTimeout) where T : IRmQueryReply
             => await Stream.WriteQueryFrameAsync(this, query, queryTimeout, null);
+
+        /// <summary>
+        /// Sends a query to the specified client and expects a reply.
+        /// </summary>
+        /// <typeparam name="T">The type of reply that is expected.</typeparam>
+        /// <param name="query">The query message to send.</param>
+        /// <returns>Returns the result of the query.</returns>
+        public T Query<T>(IRmQuery<T> query) where T : IRmQueryReply
+            => Stream.WriteQueryFrame(this, query, Messenger.Configuration.QueryTimeout, null);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply.

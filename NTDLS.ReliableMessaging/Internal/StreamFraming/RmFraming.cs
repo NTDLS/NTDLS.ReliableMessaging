@@ -9,8 +9,6 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
     /// </summary>
     internal static class RmFraming
     {
-        private static readonly SemaphoreSlim _streamWriteLock = new(1, 1);
-
         /// <summary>
         /// The callback that is used to notify of the receipt of a notification frame.
         /// </summary>
@@ -34,9 +32,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             {
                 if (kvp.Value.ConnectionId == connectionId)
                 {
-                    kvp.Value.Exception = new Exception("The connection was terminated.");
-                    kvp.Value.ReplyPayload = null;
-                    kvp.Value.WaitEvent.Set();
+                    kvp.Value.Tcs.SetException(new Exception("The connection was terminated."));
                 }
             }
         }
@@ -49,7 +45,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// </summary>
         public async static Task SafeWriteAsync(this Stream stream, RmContext context, byte[] buffer)
         {
-            await _streamWriteLock.WaitAsync();
+            await context.StreamWriteLock.WaitAsync();
             try
             {
                 if (context.TcpClient.Connected)
@@ -64,7 +60,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             }
             finally
             {
-                _streamWriteLock.Release();
+                context.StreamWriteLock.Release();
             }
         }
 
@@ -74,7 +70,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// </summary>
         public static void SafeWrite(this Stream stream, RmContext context, byte[] buffer)
         {
-            _streamWriteLock.Wait();
+            context.StreamWriteLock.Wait();
             try
             {
                 if (context.TcpClient.Connected)
@@ -88,7 +84,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             }
             finally
             {
-                _streamWriteLock.Release();
+                context.StreamWriteLock.Release();
             }
         }
 
@@ -162,38 +158,42 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
 
                 onQueryPrepared?.Invoke();
                 await stream.SafeWriteAsync(context, frameBytes);
+                IRmQueryReply? replyPayload = null;
 
                 //Wait for a reply. When a reply is received, it will be routed to the correct query via ApplyQueryReply().
-                //ApplyQueryReply() will apply the payload data to queryAwaitingReply and trigger the wait event.
-                if (!queryAwaitingReply.WaitEvent.WaitOne(queryTimeout))
+                try
                 {
-                    context.QueriesAwaitingReplies.TryRemove(frameBody.Id, out _);
+                    replyPayload = await queryAwaitingReply.Tcs.Task.WaitAsync(queryTimeout);
+                }
+                catch (TimeoutException)
+                {
                     throw new Exception("Query timeout expired while waiting on reply.");
                 }
-
-                context.QueriesAwaitingReplies.TryRemove(frameBody.Id, out _);
-
-                if (queryAwaitingReply.Exception != null)
+                catch
                 {
-                    throw queryAwaitingReply.Exception;
+                    throw; // came from Tcs.SetException(ex) — e.g. connection terminated, etc.
+                }
+                finally
+                {
+                    context.QueriesAwaitingReplies.TryRemove(frameBody.Id, out _);
                 }
 
-                if (queryAwaitingReply.ReplyPayload == null)
+                if (replyPayload == null)
                 {
                     throw new Exception("Reply payload was empty.");
                 }
 
-                if (queryAwaitingReply.ReplyPayload is RmQueryReplyException ex)
+                if (replyPayload is RmQueryReplyException ex)
                 {
                     throw ex.GetException();
                 }
 
-                if (queryAwaitingReply.ReplyPayload is T t)
+                if (replyPayload is T t)
                 {
                     return t;
                 }
 
-                throw new Exception($"Query expected a reply of type '{typeof(T).Name}', received '{queryAwaitingReply.ReplyPayload.GetType().Name}'.");
+                throw new Exception($"Query expected a reply of type '{typeof(T).Name}', received '{replyPayload.GetType().Name}'.");
             }
             catch (Exception ex)
             {
@@ -238,39 +238,44 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 onQueryPrepared?.Invoke();
                 stream.SafeWrite(context, frameBytes);
 
+                IRmQueryReply? replyPayload = null;
+
                 //Wait for a reply. When a reply is received, it will be routed to the correct query via ApplyQueryReply().
-                //ApplyQueryReply() will apply the payload data to queryAwaitingReply and trigger the wait event.
-                if (!queryAwaitingReply.WaitEvent.WaitOne(queryTimeout))
+                try
                 {
-                    context.QueriesAwaitingReplies.TryRemove(frameBody.Id, out _);
+                    replyPayload = queryAwaitingReply.Tcs.Task.WaitAsync(queryTimeout).Result;
+                }
+                catch (TimeoutException)
+                {
                     throw new Exception("Query timeout expired while waiting on reply.");
                 }
-
-                context.QueriesAwaitingReplies.TryRemove(frameBody.Id, out _);
-
-                if (queryAwaitingReply.Exception != null)
+                catch
                 {
-                    throw queryAwaitingReply.Exception;
+                    throw; // came from Tcs.SetException(ex) — e.g. connection terminated, etc.
+                }
+                finally
+                {
+                    context.QueriesAwaitingReplies.TryRemove(frameBody.Id, out _);
                 }
 
-                if (queryAwaitingReply.ReplyPayload == null)
+                if (replyPayload == null)
                 {
                     throw new Exception("Reply payload was empty.");
                 }
 
-                if (queryAwaitingReply.ReplyPayload is RmQueryReplyException ex)
+                if (replyPayload is RmQueryReplyException ex)
                 {
                     throw ex.GetException();
                 }
 
-                if (queryAwaitingReply.ReplyPayload is T t)
+                if (replyPayload is T t)
                 {
                     return t;
                 }
 
-                throw new Exception($"Query expected a reply of type '{typeof(T).Name}', received '{queryAwaitingReply.ReplyPayload.GetType().Name}'.");
+                throw new Exception($"Query expected a reply of type '{typeof(T).Name}', received '{replyPayload.GetType().Name}'.");
             }
-            catch (Exception ex)
+            catch
             {
                 if (queryAwaitingReply != null)
                 {
@@ -388,8 +393,9 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                         throw new Exception($"No waiting query was found for the reply with id '{frameBody.Id}'. Possible query timeout.");
                     }
 
-                    waitingQuery.ReplyPayload = reply;
-                    waitingQuery.WaitEvent.Set();
+                    //Set the reply payload data on the waiting query's TaskCompletionSource, this will
+                    //  trigger the wait event on the query and allow it to continue processing.
+                    waitingQuery.Tcs.SetResult(reply);
                 }
                 else if (framePayload is IRmNotification notification)
                 {
@@ -425,7 +431,8 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 else if (RmReflection.ImplementsGenericInterfaceWithArgument(framePayload.GetType(), typeof(IRmQuery<>), typeof(IRmQueryReply)))
                 {
                     if (!context.Messenger.Configuration.AsynchronousFrameProcessing
-                        && context.Messenger.Configuration.AsynchronousQueryWaiting)
+                        && context.Messenger.Configuration.
+                        AsynchronousQueryWaiting)
                     {
                         //Keep a reference to the frame payload that we are going to perform an async wait on.
                         var asynchronousFramePayloadReference = framePayload;

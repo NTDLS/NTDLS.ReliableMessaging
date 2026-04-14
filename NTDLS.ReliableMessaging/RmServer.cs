@@ -309,7 +309,10 @@ namespace NTDLS.ReliableMessaging
                         }
                     }
 
-                    Thread.Sleep(1);
+                    // This is not necessary because AcceptTcpClient is a blocking call, but if an exception
+                    //  is thrown we should wait a bit before trying to accept another connection to avoid a
+                    //  tight loop of exceptions if something is wrong with the listener.
+                    //Thread.Sleep(1);
                 }
                 catch (SocketException ex)
                 {
