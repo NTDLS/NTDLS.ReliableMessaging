@@ -409,7 +409,11 @@ namespace NTDLS.ReliableMessaging
             if (_keepReconnecting && Configuration.AutoReconnect && !_isReconnecting)
             {
                 _isReconnecting = true;
-                new Thread(ReconnectThreadProc) { IsBackground = true, Name = "RmClient:Reconnect" }.Start();
+                new Thread(ReconnectThreadProc)
+                {
+                    IsBackground = true,
+                    Name = "RmClient:Reconnect"
+                }.Start();
             }
         }
 
