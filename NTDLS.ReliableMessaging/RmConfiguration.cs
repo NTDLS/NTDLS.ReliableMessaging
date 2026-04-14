@@ -60,6 +60,17 @@
         public IRmCryptographyProvider? CryptographyProvider = null;
 
         /// <summary>
+        /// When true, the client will automatically attempt to reconnect after an unexpected disconnection.
+        /// Has no effect on RmServer. Call Disconnect() to stop reconnection attempts.
+        /// </summary>
+        public bool AutoReconnect { get; set; } = false;
+
+        /// <summary>
+        /// The amount of time to wait between reconnection attempts when AutoReconnect is true.
+        /// </summary>
+        public TimeSpan ReconnectDelay { get; set; } = TimeSpan.FromSeconds(5);
+
+        /// <summary>
         /// A user settable object that can be accessed via the Context.Endpoint.Parameter Especially useful for convention based calls.
         /// </summary>
         public object? Parameter { get; set; } = null;
