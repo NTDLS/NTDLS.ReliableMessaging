@@ -67,19 +67,18 @@ namespace NTDLS.ReliableMessaging.Internal
             //First we try to invoke functions that match the signature, if that fails we will fall back to invoking the OnNotificationReceived() event.
             if (GetCachedMethod(queryPayload, out var cachedMethod))
             {
-                if (GetCachedInstance(cachedMethod, out var cachedInstance))
-                {
-                    var method = MakeGenericMethodForPayload(cachedMethod, queryPayload);
+                var cachedInstance = GetOrCreatedCachedInstance(cachedMethod);
 
-                    switch (cachedMethod.MethodType)
-                    {
-                        case CachedMethodType.PayloadOnly:
-                            invocationResult = method.Invoke(cachedInstance, [queryPayload]) as IRmQueryReply;
-                            return true;
-                        case CachedMethodType.PayloadWithContext:
-                            invocationResult = method.Invoke(cachedInstance, [context, queryPayload]) as IRmQueryReply;
-                            return true;
-                    }
+                var method = MakeGenericMethodForPayload(cachedMethod, queryPayload);
+
+                switch (cachedMethod.MethodType)
+                {
+                    case CachedMethodType.PayloadOnly:
+                        invocationResult = method.Invoke(cachedInstance, [queryPayload]) as IRmQueryReply;
+                        return true;
+                    case CachedMethodType.PayloadWithContext:
+                        invocationResult = method.Invoke(cachedInstance, [context, queryPayload]) as IRmQueryReply;
+                        return true;
                 }
             }
 
@@ -97,19 +96,17 @@ namespace NTDLS.ReliableMessaging.Internal
             //First we try to invoke functions that match the signature, if that fails we will fall back to invoking the OnNotificationReceived() event.
             if (GetCachedMethod(notificationPayload, out var cachedMethod))
             {
-                if (GetCachedInstance(cachedMethod, out var cachedInstance))
-                {
-                    var method = MakeGenericMethodForPayload(cachedMethod, notificationPayload);
+                var cachedInstance = GetOrCreatedCachedInstance(cachedMethod);
+                var method = MakeGenericMethodForPayload(cachedMethod, notificationPayload);
 
-                    switch (cachedMethod.MethodType)
-                    {
-                        case CachedMethodType.PayloadOnly:
-                            method.Invoke(cachedInstance, [notificationPayload]);
-                            return true;
-                        case CachedMethodType.PayloadWithContext:
-                            method.Invoke(cachedInstance, [context, notificationPayload]);
-                            return true;
-                    }
+                switch (cachedMethod.MethodType)
+                {
+                    case CachedMethodType.PayloadOnly:
+                        method.Invoke(cachedInstance, [notificationPayload]);
+                        return true;
+                    case CachedMethodType.PayloadWithContext:
+                        method.Invoke(cachedInstance, [context, notificationPayload]);
+                        return true;
                 }
             }
 
@@ -167,29 +164,25 @@ namespace NTDLS.ReliableMessaging.Internal
         /// <summary>
         /// Gets the handler class instance from the pre-loaded handler instance cache.
         /// </summary>
-        private bool GetCachedInstance(CachedMethod cachedMethod, [NotNullWhen(true)] out IRmMessageHandler? cachedInstance)
+        private IRmMessageHandler GetOrCreatedCachedInstance(CachedMethod cachedMethod)
         {
             if (cachedMethod.Method.DeclaringType == null)
             {
-                cachedInstance = null;
-                return false;
-                //throw new Exception($"The handler function '{cachedMethod.Name}' does not have a container class.");
+                throw new Exception($"The handler function '{cachedMethod.Method.Name}' does not have a container class.");
             }
 
-            if (_handlerInstances.TryGetValue(cachedMethod.Method.DeclaringType, out cachedInstance))
+            if (_handlerInstances.TryGetValue(cachedMethod.Method.DeclaringType, out var cachedInstance) && cachedInstance != null)
             {
-                return true;
+                return cachedInstance;
             }
-
-            cachedInstance = Activator.CreateInstance(cachedMethod.Method.DeclaringType) as IRmMessageHandler;
-            if (cachedInstance == null)
+            else
             {
-                return false;
-                //throw new Exception($"Failed to instantiate container class '{cachedMethod.DeclaringType.Name}' for handler function '{cachedMethod.Name}'.");
-            }
-            _handlerInstances.Add(cachedMethod.Method.DeclaringType, cachedInstance);
+                var newInstance = Activator.CreateInstance(cachedMethod.Method.DeclaringType) as IRmMessageHandler
+                    ?? throw new Exception($"Failed to instantiate container class '{cachedMethod.Method.DeclaringType.Name}' for handler function '{cachedMethod.Method.Name}'.");
 
-            return true;
+                _handlerInstances.Add(cachedMethod.Method.DeclaringType, newInstance);
+                return newInstance;
+            }
         }
 
         /// <summary>

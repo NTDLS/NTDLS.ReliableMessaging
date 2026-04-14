@@ -309,7 +309,10 @@ namespace NTDLS.ReliableMessaging
                         }
                     }
 
-                    Thread.Sleep(1);
+                    // This is not necessary because AcceptTcpClient is a blocking call, but if an exception
+                    //  is thrown we should wait a bit before trying to accept another connection to avoid a
+                    //  tight loop of exceptions if something is wrong with the listener.
+                    //Thread.Sleep(1);
                 }
                 catch (SocketException ex)
                 {
@@ -337,12 +340,13 @@ namespace NTDLS.ReliableMessaging
         /// </summary>
         /// <param name="connectionId">The connection id of the client</param>
         /// <param name="notification">The notification message to send.</param>
-        public void Notify(Guid connectionId, IRmNotification notification)
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
+        public void Notify(Guid connectionId, IRmNotification notification, CancellationToken? cancellationToken = null)
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
                 ?? throw new Exception($"Connection with id {connectionId} was not found.");
 
-            connection.Context.Notify(notification);
+            connection.Context.Notify(notification, cancellationToken ?? CancellationToken.None);
         }
 
         /// <summary>
@@ -350,12 +354,13 @@ namespace NTDLS.ReliableMessaging
         /// </summary>
         /// <param name="connectionId">The connection id of the client</param>
         /// <param name="notification">The notification message to send.</param>
-        public async Task NotifyAsync(Guid connectionId, IRmNotification notification)
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
+        public async Task NotifyAsync(Guid connectionId, IRmNotification notification, CancellationToken? cancellationToken = null)
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
                 ?? throw new Exception($"Connection with id {connectionId} was not found.");
 
-            await connection.Context.NotifyAsync(notification);
+            await connection.Context.NotifyAsync(notification, cancellationToken ?? CancellationToken.None);
         }
 
         /// <summary>
@@ -364,12 +369,14 @@ namespace NTDLS.ReliableMessaging
         /// <typeparam name="T">The type of reply that is expected.</typeparam>
         /// <param name="connectionId">The connection id of the client</param>
         /// <param name="query">The query message to send.</param>
-        public T Query<T>(Guid connectionId, IRmQuery<T> query) where T : IRmQueryReply
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
+        public T Query<T>(Guid connectionId, IRmQuery<T> query, CancellationToken? cancellationToken = null)
+            where T : IRmQueryReply
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
                 ?? throw new Exception($"Connection with id {connectionId} was not found.");
 
-            return connection.Context.Query(query, Configuration.QueryTimeout);
+            return connection.Context.Query(query, Configuration.QueryTimeout, cancellationToken ?? CancellationToken.None);
         }
 
         /// <summary>
@@ -378,12 +385,14 @@ namespace NTDLS.ReliableMessaging
         /// <typeparam name="T">The type of reply that is expected.</typeparam>
         /// <param name="connectionId">The connection id of the client</param>
         /// <param name="query">The query message to send.</param>
-        public async Task<T> QueryAsync<T>(Guid connectionId, IRmQuery<T> query) where T : IRmQueryReply
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
+        public async Task<T> QueryAsync<T>(Guid connectionId, IRmQuery<T> query, CancellationToken? cancellationToken = null)
+            where T : IRmQueryReply
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
                 ?? throw new Exception($"Connection with id {connectionId} was not found.");
 
-            return await connection.Context.QueryAsync(query, Configuration.QueryTimeout);
+            return await connection.Context.QueryAsync(query, Configuration.QueryTimeout, cancellationToken ?? CancellationToken.None);
         }
 
         /// <summary>
@@ -393,12 +402,14 @@ namespace NTDLS.ReliableMessaging
         /// <param name="connectionId">The connection id of the client</param>
         /// <param name="query">The query message to send.</param>
         /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
-        public T Query<T>(Guid connectionId, IRmQuery<T> query, TimeSpan? queryTimeout) where T : IRmQueryReply
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
+        public T Query<T>(Guid connectionId, IRmQuery<T> query, TimeSpan? queryTimeout, CancellationToken? cancellationToken = null)
+            where T : IRmQueryReply
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
                 ?? throw new Exception($"Connection with id {connectionId} was not found.");
 
-            return connection.Context.Query(query, queryTimeout ?? Configuration.QueryTimeout);
+            return connection.Context.Query(query, queryTimeout ?? Configuration.QueryTimeout, cancellationToken ?? CancellationToken.None);
         }
 
         /// <summary>
@@ -408,12 +419,14 @@ namespace NTDLS.ReliableMessaging
         /// <param name="connectionId">The connection id of the client</param>
         /// <param name="query">The query message to send.</param>
         /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
-        public async Task<T> QueryAsync<T>(Guid connectionId, IRmQuery<T> query, TimeSpan? queryTimeout) where T : IRmQueryReply
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
+        public async Task<T> QueryAsync<T>(Guid connectionId, IRmQuery<T> query, TimeSpan? queryTimeout, CancellationToken? cancellationToken = null)
+            where T : IRmQueryReply
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
                 ?? throw new Exception($"Connection with id {connectionId} was not found.");
 
-            return await connection.Context.QueryAsync(query, queryTimeout ?? Configuration.QueryTimeout);
+            return await connection.Context.QueryAsync(query, queryTimeout ?? Configuration.QueryTimeout, cancellationToken ?? CancellationToken.None);
         }
 
         /// <summary>
@@ -423,12 +436,14 @@ namespace NTDLS.ReliableMessaging
         /// <param name="connectionId">The connection id of the client</param>
         /// <param name="query">The query message to send.</param>
         /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
-        public T Query<T>(Guid connectionId, IRmQuery<T> query, OnQueryPrepared onQueryPrepared) where T : IRmQueryReply
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
+        public T Query<T>(Guid connectionId, IRmQuery<T> query, OnQueryPrepared onQueryPrepared, CancellationToken? cancellationToken = null)
+            where T : IRmQueryReply
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
                 ?? throw new Exception($"Connection with id {connectionId} was not found.");
 
-            return connection.Context.Query(query, onQueryPrepared, Configuration.QueryTimeout);
+            return connection.Context.Query(query, onQueryPrepared, Configuration.QueryTimeout, cancellationToken ?? CancellationToken.None);
         }
 
         /// <summary>
@@ -438,28 +453,14 @@ namespace NTDLS.ReliableMessaging
         /// <param name="connectionId">The connection id of the client</param>
         /// <param name="query">The query message to send.</param>
         /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
-        public async Task<T> QueryAsync<T>(Guid connectionId, IRmQuery<T> query, OnQueryPrepared onQueryPrepared) where T : IRmQueryReply
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
+        public async Task<T> QueryAsync<T>(Guid connectionId, IRmQuery<T> query, OnQueryPrepared onQueryPrepared, CancellationToken? cancellationToken = null)
+            where T : IRmQueryReply
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
                 ?? throw new Exception($"Connection with id {connectionId} was not found.");
 
-            return await connection.Context.QueryAsync(query, onQueryPrepared, Configuration.QueryTimeout);
-        }
-
-        /// <summary>
-        /// Sends a query to the specified client and expects a reply.
-        /// </summary>
-        /// <typeparam name="T">The type of reply that is expected.</typeparam>
-        /// <param name="connectionId">The connection id of the client</param>
-        /// <param name="query">The query message to send.</param>
-        /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
-        /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
-        public T Query<T>(Guid connectionId, IRmQuery<T> query, OnQueryPrepared onQueryPrepared, TimeSpan? queryTimeout) where T : IRmQueryReply
-        {
-            var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
-                ?? throw new Exception($"Connection with id {connectionId} was not found.");
-
-            return connection.Context.Query(query, onQueryPrepared, queryTimeout ?? Configuration.QueryTimeout);
+            return await connection.Context.QueryAsync(query, onQueryPrepared, Configuration.QueryTimeout, cancellationToken ?? CancellationToken.None);
         }
 
         /// <summary>
@@ -470,12 +471,32 @@ namespace NTDLS.ReliableMessaging
         /// <param name="query">The query message to send.</param>
         /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
         /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
-        public async Task<T> QueryAsync<T>(Guid connectionId, IRmQuery<T> query, OnQueryPrepared onQueryPrepared, TimeSpan? queryTimeout) where T : IRmQueryReply
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
+        public T Query<T>(Guid connectionId, IRmQuery<T> query, OnQueryPrepared onQueryPrepared, TimeSpan? queryTimeout, CancellationToken? cancellationToken = null)
+            where T : IRmQueryReply
         {
             var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
                 ?? throw new Exception($"Connection with id {connectionId} was not found.");
 
-            return await connection.Context.QueryAsync(query, onQueryPrepared, queryTimeout ?? Configuration.QueryTimeout);
+            return connection.Context.Query(query, onQueryPrepared, queryTimeout ?? Configuration.QueryTimeout, cancellationToken ?? CancellationToken.None);
+        }
+
+        /// <summary>
+        /// Sends a query to the specified client and expects a reply.
+        /// </summary>
+        /// <typeparam name="T">The type of reply that is expected.</typeparam>
+        /// <param name="connectionId">The connection id of the client</param>
+        /// <param name="query">The query message to send.</param>
+        /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
+        /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
+        public async Task<T> QueryAsync<T>(Guid connectionId, IRmQuery<T> query, OnQueryPrepared onQueryPrepared, TimeSpan? queryTimeout, CancellationToken? cancellationToken = null)
+            where T : IRmQueryReply
+        {
+            var connection = _activeConnections.Use((o) => o.Where(c => c.ConnectionId == connectionId).FirstOrDefault())
+                ?? throw new Exception($"Connection with id {connectionId} was not found.");
+
+            return await connection.Context.QueryAsync(query, onQueryPrepared, queryTimeout ?? Configuration.QueryTimeout, cancellationToken ?? CancellationToken.None);
         }
 
         void IRmMessenger.InvokeOnConnected(RmContext context)
