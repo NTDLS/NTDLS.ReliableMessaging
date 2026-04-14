@@ -16,7 +16,7 @@ namespace Throughput
         public TestEndQueryReply TestEndQuery(TestEndQuery query)
         {
             var throughput = _testCase.GetThroughputMbPerSecond();
-            Console.WriteLine($"{_testCase.Name} {throughput:n2} {_testCase.ChunksReceived:n0}");
+            Console.WriteLine($"{_testCase.Name}, Throughput {throughput:n2}MB/s, Chunks: {_testCase.ChunksReceived:n0}");
             return new TestEndQueryReply();
         }
 
