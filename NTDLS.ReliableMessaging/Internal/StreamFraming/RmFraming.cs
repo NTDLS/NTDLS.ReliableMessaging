@@ -32,7 +32,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             {
                 if (kvp.Value.ConnectionId == connectionId)
                 {
-                    kvp.Value.Tcs.SetException(new Exception("The connection was terminated."));
+                    kvp.Value.Tcs.TrySetException(new Exception("The connection was terminated."));
                 }
             }
         }
@@ -250,7 +250,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 //Wait for a reply. When a reply is received, it will be routed to the correct query via ApplyQueryReply().
                 try
                 {
-                    replyPayload = queryAwaitingReply.Tcs.Task.WaitAsync(queryTimeout, cancellationToken).Result;
+                    replyPayload = queryAwaitingReply.Tcs.Task.WaitAsync(queryTimeout, cancellationToken).GetAwaiter().GetResult();
                 }
                 catch (TimeoutException)
                 {

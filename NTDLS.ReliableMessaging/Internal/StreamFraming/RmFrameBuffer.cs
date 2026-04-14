@@ -133,6 +133,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
 
                         if (frameDelimiter != RmConstants.FrameDelimiter || grossFrameSize < 0)
                         {
+                            SkipFrame(context, onException);
                             throw new Exception("Frame was corrupted.");
                         }
 
@@ -146,6 +147,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
 
                         if (RmCRC16.ComputeChecksum(FrameBuilder, RmConstants.GrossFrameHeaderSize, grossFrameSize - RmConstants.GrossFrameHeaderSize) != expectedCRC16)
                         {
+                            SkipFrame(context, onException);
                             throw new Exception("Frame was corrupted (size discrepancy).");
                         }
 

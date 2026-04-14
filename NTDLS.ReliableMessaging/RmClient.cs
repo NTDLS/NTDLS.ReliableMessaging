@@ -186,7 +186,7 @@ namespace NTDLS.ReliableMessaging
         public void ClearCompressionProvider()
         {
             Configuration.CompressionProvider = null;
-            _activeConnection?.Context.SetCryptographyProvider(null);
+            _activeConnection?.Context.SetCompressionProvider(null);
         }
 
         #endregion

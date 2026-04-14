@@ -233,6 +233,10 @@ namespace NTDLS.ReliableMessaging.Internal
                         }
 
                         var payloadParameterTypeName = RmReflection.GetAssemblyQualifiedTypeNameWithClosedGenerics(payloadParameter.ParameterType);
+                        if (_handlerMethods.ContainsKey(payloadParameterTypeName))
+                        {
+                            throw new Exception($"Multiple handler functions found for payload type '{payloadParameter.ParameterType.FullName}'. Ensure that only one handler function exists for each payload type.");
+                        }
                         _handlerMethods.Add(payloadParameterTypeName, new CachedMethod(CachedMethodType.PayloadOnly, method));
                     }
                 }
@@ -261,6 +265,10 @@ namespace NTDLS.ReliableMessaging.Internal
                         }
 
                         var payloadParameterTypeName = RmReflection.GetAssemblyQualifiedTypeNameWithClosedGenerics(payloadParameter.ParameterType);
+                        if (_handlerMethods.ContainsKey(payloadParameterTypeName))
+                        {
+                            throw new Exception($"Multiple handler functions found for payload type '{payloadParameter.ParameterType.FullName}'. Ensure that only one handler function exists for each payload type.");
+                        }
                         _handlerMethods.Add(payloadParameterTypeName, new CachedMethod(CachedMethodType.PayloadWithContext, method));
                     }
                 }
