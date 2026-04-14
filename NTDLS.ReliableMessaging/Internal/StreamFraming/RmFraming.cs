@@ -43,9 +43,9 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// Writes a byte array to the stream.
         /// This is a thread-safe method that uses a semaphore to ensure that only one thread can write to the stream at a time.
         /// </summary>
-        public async static Task SafeWriteAsync(this Stream stream, RmContext context, byte[] buffer)
+        public async static Task SafeWriteAsync(this Stream stream, RmContext context, byte[] buffer, CancellationToken cancellationToken)
         {
-            await context.StreamWriteLock.WaitAsync();
+            await context.StreamWriteLock.WaitAsync(cancellationToken);
             try
             {
                 if (context.TcpClient.Connected)
@@ -54,9 +54,8 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                     {
                         throw new Exception("Peer is connected but stream is unwritable.");
                     }
-                    await stream.WriteAsync(buffer);
+                    await stream.WriteAsync(buffer, cancellationToken);
                 }
-
             }
             finally
             {
@@ -68,9 +67,9 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// Writes a byte array to the stream.
         /// This is a thread-safe method that uses a semaphore to ensure that only one thread can write to the stream at a time.
         /// </summary>
-        public static void SafeWrite(this Stream stream, RmContext context, byte[] buffer)
+        public static void SafeWrite(this Stream stream, RmContext context, byte[] buffer, CancellationToken cancellationToken)
         {
-            context.StreamWriteLock.Wait();
+            context.StreamWriteLock.Wait(cancellationToken);
             try
             {
                 if (context.TcpClient.Connected)
@@ -135,9 +134,11 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <param name="framePayload">The query payload that will be written to the stream.</param>
         /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
         /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
         /// <returns>Returns the reply payload that is written to the stream from the recipient of the query.</returns>
         public static async Task<T> WriteQueryFrameAsync<T>(this Stream stream, RmContext context,
-            IRmQuery<T> framePayload, TimeSpan queryTimeout, OnQueryPrepared? onQueryPrepared) where T : IRmQueryReply
+            IRmQuery<T> framePayload, TimeSpan queryTimeout, OnQueryPrepared? onQueryPrepared, CancellationToken cancellationToken)
+            where T : IRmQueryReply
         {
             RmQueryAwaitingReply? queryAwaitingReply = null;
 
@@ -157,17 +158,21 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 var frameBytes = AssembleFrame(context, frameBody);
 
                 onQueryPrepared?.Invoke();
-                await stream.SafeWriteAsync(context, frameBytes);
+                await stream.SafeWriteAsync(context, frameBytes, cancellationToken);
                 IRmQueryReply? replyPayload = null;
 
                 //Wait for a reply. When a reply is received, it will be routed to the correct query via ApplyQueryReply().
                 try
                 {
-                    replyPayload = await queryAwaitingReply.Tcs.Task.WaitAsync(queryTimeout);
+                    replyPayload = await queryAwaitingReply.Tcs.Task.WaitAsync(queryTimeout, cancellationToken);
                 }
                 catch (TimeoutException)
                 {
                     throw new Exception("Query timeout expired while waiting on reply.");
+                }
+                catch (OperationCanceledException)
+                {
+                    throw new Exception("Query was canceled while waiting on reply.");
                 }
                 catch
                 {
@@ -214,9 +219,11 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <param name="framePayload">The query payload that will be written to the stream.</param>
         /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
         /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
         /// <returns>Returns the reply payload that is written to the stream from the recipient of the query.</returns>
         public static T WriteQueryFrame<T>(this Stream stream, RmContext context,
-            IRmQuery<T> framePayload, TimeSpan queryTimeout, OnQueryPrepared? onQueryPrepared) where T : IRmQueryReply
+            IRmQuery<T> framePayload, TimeSpan queryTimeout, OnQueryPrepared? onQueryPrepared, CancellationToken cancellationToken)
+            where T : IRmQueryReply
         {
             RmQueryAwaitingReply? queryAwaitingReply = null;
 
@@ -236,18 +243,22 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 var frameBytes = AssembleFrame(context, frameBody);
 
                 onQueryPrepared?.Invoke();
-                stream.SafeWrite(context, frameBytes);
+                stream.SafeWrite(context, frameBytes, cancellationToken);
 
                 IRmQueryReply? replyPayload = null;
 
                 //Wait for a reply. When a reply is received, it will be routed to the correct query via ApplyQueryReply().
                 try
                 {
-                    replyPayload = queryAwaitingReply.Tcs.Task.WaitAsync(queryTimeout).Result;
+                    replyPayload = queryAwaitingReply.Tcs.Task.WaitAsync(queryTimeout, cancellationToken).Result;
                 }
                 catch (TimeoutException)
                 {
                     throw new Exception("Query timeout expired while waiting on reply.");
+                }
+                catch (OperationCanceledException)
+                {
+                    throw new Exception("Query was canceled while waiting on reply.");
                 }
                 catch
                 {
@@ -293,8 +304,9 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <param name="context">Contains information about the endpoint and the connection.</param>
         /// <param name="queryFrameBody">The query frame that was received and that we are responding to.</param>
         /// <param name="framePayload">The query reply payload.</param>
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
         public static void WriteReplyFrame(this Stream stream, RmContext context, RmFrameBody queryFrameBody,
-            IRmQueryReply framePayload)
+            IRmQueryReply framePayload, CancellationToken cancellationToken)
         {
             if (stream == null)
             {
@@ -308,7 +320,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             };
 
             var frameBytes = AssembleFrame(context, frameBody);
-            stream.SafeWrite(context, frameBytes);
+            stream.SafeWrite(context, frameBytes, cancellationToken);
         }
 
         /// <summary>
@@ -317,7 +329,8 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <param name="stream">The open stream that will be written to.</param>
         /// <param name="context">Contains information about the endpoint and the connection.</param>
         /// <param name="framePayload">The notification payload that will be written to the stream.</param>
-        public static void WriteNotificationFrame(this Stream stream, RmContext context, IRmNotification framePayload)
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
+        public static void WriteNotificationFrame(this Stream stream, RmContext context, IRmNotification framePayload, CancellationToken cancellationToken)
         {
             if (stream == null)
             {
@@ -327,7 +340,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             var serializationProvider = context.GetSerializationProvider() ?? throw new Exception("Serialization provider is not set.");
             var frameBody = new RmFrameBody(serializationProvider, framePayload);
             var frameBytes = AssembleFrame(context, frameBody);
-            stream.SafeWrite(context, frameBytes);
+            stream.SafeWrite(context, frameBytes, cancellationToken);
         }
 
         /// <summary>
@@ -336,7 +349,8 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <param name="stream">The open stream that will be written to.</param>
         /// <param name="context">Contains information about the endpoint and the connection.</param>
         /// <param name="framePayload">The notification payload that will be written to the stream.</param>
-        public async static Task WriteNotificationFrameAsync(this Stream stream, RmContext context, IRmNotification framePayload)
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
+        public async static Task WriteNotificationFrameAsync(this Stream stream, RmContext context, IRmNotification framePayload, CancellationToken cancellationToken)
         {
             if (stream == null)
             {
@@ -346,7 +360,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             var serializationProvider = context.GetSerializationProvider() ?? throw new Exception("Serialization provider is not set.");
             var frameBody = new RmFrameBody(serializationProvider, framePayload);
             var frameBytes = AssembleFrame(context, frameBody);
-            await stream.SafeWriteAsync(context, frameBytes);
+            await stream.SafeWriteAsync(context, frameBytes, cancellationToken);
         }
 
         #endregion
@@ -441,7 +455,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                             try
                             {
                                 var replyPayload = processFrameQueryCallback(asynchronousFramePayloadReference);
-                                stream.WriteReplyFrame(context, frameBody, replyPayload);
+                                stream.WriteReplyFrame(context, frameBody, replyPayload, CancellationToken.None);
                             }
                             catch (Exception ex)
                             {
@@ -454,7 +468,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                         try
                         {
                             var replyPayload = processFrameQueryCallback(framePayload);
-                            stream.WriteReplyFrame(context, frameBody, replyPayload);
+                            stream.WriteReplyFrame(context, frameBody, replyPayload, CancellationToken.None);
                         }
                         catch (Exception ex)
                         {

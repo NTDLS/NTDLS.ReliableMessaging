@@ -48,7 +48,7 @@ namespace NTDLS.ReliableMessaging.Internal
                         (payload) => OnNotificationReceived(payload),
                         (payload) => OnQueryReceived(payload)))
                     {
-                        //the famous do nothing loop!
+                        //The famous do nothing loop!
                     }
                     Disconnect(false);
                 }

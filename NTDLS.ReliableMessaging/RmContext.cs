@@ -19,7 +19,6 @@ namespace NTDLS.ReliableMessaging
         private IRmCompressionProvider? _compressionProvider = null;
         private IRmCryptographyProvider? _cryptographyProvider = null;
 
-
         /// <summary>
         /// Used for TCPClient stream write operations to ensure that only one write operation
         /// is occurring at a time, since NetworkStream does not support concurrent writes.
@@ -162,43 +161,27 @@ namespace NTDLS.ReliableMessaging
         /// Dispatches a one way notification to the connected server.
         /// </summary>
         /// <param name="notification">The notification message to send.</param>
-        public void Notify(IRmNotification notification)
-            => Stream.WriteNotificationFrame(this, notification);
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
+        public void Notify(IRmNotification notification, CancellationToken? cancellationToken = null)
+            => Stream.WriteNotificationFrame(this, notification, cancellationToken ?? CancellationToken.None);
 
         /// <summary>
         /// Dispatches a one way notification to the connected server.
         /// </summary>
         /// <param name="notification">The notification message to send.</param>
-        public async Task NotifyAsync(IRmNotification notification)
-            => await Stream.WriteNotificationFrameAsync(this, notification);
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
+        public async Task NotifyAsync(IRmNotification notification, CancellationToken? cancellationToken = null)
+            => await Stream.WriteNotificationFrameAsync(this, notification, cancellationToken ?? CancellationToken.None);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply.
         /// </summary>
         /// <typeparam name="T">The type of reply that is expected.</typeparam>
         /// <param name="query">The query message to send.</param>
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
         /// <returns>Returns the result of the query.</returns>
-        public async Task<T> QueryAsync<T>(IRmQuery<T> query) where T : IRmQueryReply
-            => await Stream.WriteQueryFrameAsync(this, query, Messenger.Configuration.QueryTimeout, null);
-
-        /// <summary>
-        /// Sends a query to the specified client and expects a reply.
-        /// </summary>
-        /// <typeparam name="T">The type of reply that is expected.</typeparam>
-        /// <param name="query">The query message to send.</param>
-        /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
-        /// <returns>Returns the result of the query.</returns>
-        public async Task<T> QueryAsync<T>(IRmQuery<T> query, TimeSpan queryTimeout) where T : IRmQueryReply
-            => await Stream.WriteQueryFrameAsync(this, query, queryTimeout, null);
-
-        /// <summary>
-        /// Sends a query to the specified client and expects a reply.
-        /// </summary>
-        /// <typeparam name="T">The type of reply that is expected.</typeparam>
-        /// <param name="query">The query message to send.</param>
-        /// <returns>Returns the result of the query.</returns>
-        public T Query<T>(IRmQuery<T> query) where T : IRmQueryReply
-            => Stream.WriteQueryFrame(this, query, Messenger.Configuration.QueryTimeout, null);
+        public async Task<T> QueryAsync<T>(IRmQuery<T> query, CancellationToken? cancellationToken = null) where T : IRmQueryReply
+            => await Stream.WriteQueryFrameAsync(this, query, Messenger.Configuration.QueryTimeout, null, cancellationToken ?? CancellationToken.None);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply.
@@ -206,9 +189,31 @@ namespace NTDLS.ReliableMessaging
         /// <typeparam name="T">The type of reply that is expected.</typeparam>
         /// <param name="query">The query message to send.</param>
         /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
         /// <returns>Returns the result of the query.</returns>
-        public T Query<T>(IRmQuery<T> query, TimeSpan queryTimeout) where T : IRmQueryReply
-            => Stream.WriteQueryFrame(this, query, queryTimeout, null);
+        public async Task<T> QueryAsync<T>(IRmQuery<T> query, TimeSpan queryTimeout, CancellationToken? cancellationToken = null) where T : IRmQueryReply
+            => await Stream.WriteQueryFrameAsync(this, query, queryTimeout, null, cancellationToken ?? CancellationToken.None);
+
+        /// <summary>
+        /// Sends a query to the specified client and expects a reply.
+        /// </summary>
+        /// <typeparam name="T">The type of reply that is expected.</typeparam>
+        /// <param name="query">The query message to send.</param>
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
+        /// <returns>Returns the result of the query.</returns>
+        public T Query<T>(IRmQuery<T> query, CancellationToken? cancellationToken = null) where T : IRmQueryReply
+            => Stream.WriteQueryFrame(this, query, Messenger.Configuration.QueryTimeout, null, cancellationToken ?? CancellationToken.None);
+
+        /// <summary>
+        /// Sends a query to the specified client and expects a reply.
+        /// </summary>
+        /// <typeparam name="T">The type of reply that is expected.</typeparam>
+        /// <param name="query">The query message to send.</param>
+        /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
+        /// <returns>Returns the result of the query.</returns>
+        public T Query<T>(IRmQuery<T> query, TimeSpan queryTimeout, CancellationToken? cancellationToken = null) where T : IRmQueryReply
+            => Stream.WriteQueryFrame(this, query, queryTimeout, null, cancellationToken ?? CancellationToken.None);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply.
@@ -217,9 +222,11 @@ namespace NTDLS.ReliableMessaging
         /// <param name="query">The query message to send.</param>
         /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
         /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
         /// <returns>Returns the result of the query.</returns>
-        public async Task<T> QueryAsync<T>(IRmQuery<T> query, OnQueryPrepared onQueryPrepared, TimeSpan queryTimeout) where T : IRmQueryReply
-            => await Stream.WriteQueryFrameAsync(this, query, queryTimeout, onQueryPrepared);
+        public async Task<T> QueryAsync<T>(IRmQuery<T> query, OnQueryPrepared onQueryPrepared, TimeSpan queryTimeout, CancellationToken? cancellationToken = null)
+            where T : IRmQueryReply
+            => await Stream.WriteQueryFrameAsync(this, query, queryTimeout, onQueryPrepared, cancellationToken ?? CancellationToken.None);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply.
@@ -228,9 +235,11 @@ namespace NTDLS.ReliableMessaging
         /// <param name="query">The query message to send.</param>
         /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
         /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
         /// <returns>Returns the result of the query.</returns>
-        public T Query<T>(IRmQuery<T> query, OnQueryPrepared onQueryPrepared, TimeSpan queryTimeout) where T : IRmQueryReply
-            => Stream.WriteQueryFrame(this, query, queryTimeout, onQueryPrepared);
+        public T Query<T>(IRmQuery<T> query, OnQueryPrepared onQueryPrepared, TimeSpan queryTimeout, CancellationToken? cancellationToken = null)
+            where T : IRmQueryReply
+            => Stream.WriteQueryFrame(this, query, queryTimeout, onQueryPrepared, cancellationToken ?? CancellationToken.None);
 
         #endregion
     }

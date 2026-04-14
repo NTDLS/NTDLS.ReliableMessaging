@@ -317,18 +317,20 @@ namespace NTDLS.ReliableMessaging
         /// </summary>
         /// <typeparam name="T">The type of reply that is expected.</typeparam>
         /// <param name="query">The query message to send.</param>
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
         /// <returns>Returns the result of the query.</returns>
-        public T Query<T>(IRmQuery<T> query) where T : IRmQueryReply
-            => _activeConnection.EnsureNotNull().Context.Query<T>(query, Configuration.QueryTimeout);
+        public T Query<T>(IRmQuery<T> query, CancellationToken? cancellationToken = null) where T : IRmQueryReply
+            => _activeConnection.EnsureNotNull().Context.Query<T>(query, Configuration.QueryTimeout, cancellationToken);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply, using the default timeout.
         /// </summary>
         /// <typeparam name="T">The type of reply that is expected.</typeparam>
         /// <param name="query">The query message to send.</param>
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
         /// <returns>Returns the result of the query.</returns>
-        public async Task<T> QueryAsync<T>(IRmQuery<T> query) where T : IRmQueryReply
-            => await _activeConnection.EnsureNotNull().Context.QueryAsync<T>(query, Configuration.QueryTimeout);
+        public async Task<T> QueryAsync<T>(IRmQuery<T> query, CancellationToken? cancellationToken = null) where T : IRmQueryReply
+            => await _activeConnection.EnsureNotNull().Context.QueryAsync<T>(query, Configuration.QueryTimeout, cancellationToken);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply.
@@ -336,9 +338,10 @@ namespace NTDLS.ReliableMessaging
         /// <typeparam name="T">The type of reply that is expected.</typeparam>
         /// <param name="query">The query message to send.</param>
         /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
         /// <returns>Returns the result of the query.</returns>
-        public T Query<T>(IRmQuery<T> query, TimeSpan? queryTimeout) where T : IRmQueryReply
-            => _activeConnection.EnsureNotNull().Context.Query<T>(query, queryTimeout ?? Configuration.QueryTimeout);
+        public T Query<T>(IRmQuery<T> query, TimeSpan? queryTimeout, CancellationToken? cancellationToken = null) where T : IRmQueryReply
+            => _activeConnection.EnsureNotNull().Context.Query<T>(query, queryTimeout ?? Configuration.QueryTimeout, cancellationToken);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply.
@@ -346,19 +349,10 @@ namespace NTDLS.ReliableMessaging
         /// <typeparam name="T">The type of reply that is expected.</typeparam>
         /// <param name="query">The query message to send.</param>
         /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
         /// <returns>Returns the result of the query.</returns>
-        public async Task<T> QueryAsync<T>(IRmQuery<T> query, TimeSpan? queryTimeout) where T : IRmQueryReply
-            => await _activeConnection.EnsureNotNull().Context.QueryAsync<T>(query, queryTimeout ?? Configuration.QueryTimeout);
-
-        /// <summary>
-        /// Sends a query to the specified client and expects a reply, using the default timeout.
-        /// </summary>
-        /// <typeparam name="T">The type of reply that is expected.</typeparam>
-        /// <param name="query">The query message to send.</param>
-        /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
-        /// <returns>Returns the result of the query.</returns>
-        public T Query<T>(IRmQuery<T> query, OnQueryPrepared onQueryPrepared) where T : IRmQueryReply
-            => _activeConnection.EnsureNotNull().Context.Query<T>(query, onQueryPrepared, Configuration.QueryTimeout);
+        public async Task<T> QueryAsync<T>(IRmQuery<T> query, TimeSpan? queryTimeout, CancellationToken? cancellationToken = null) where T : IRmQueryReply
+            => await _activeConnection.EnsureNotNull().Context.QueryAsync<T>(query, queryTimeout ?? Configuration.QueryTimeout, cancellationToken);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply, using the default timeout.
@@ -366,9 +360,21 @@ namespace NTDLS.ReliableMessaging
         /// <typeparam name="T">The type of reply that is expected.</typeparam>
         /// <param name="query">The query message to send.</param>
         /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
         /// <returns>Returns the result of the query.</returns>
-        public async Task<T> QueryAsync<T>(IRmQuery<T> query, OnQueryPrepared onQueryPrepared) where T : IRmQueryReply
-            => await _activeConnection.EnsureNotNull().Context.QueryAsync<T>(query, onQueryPrepared, Configuration.QueryTimeout);
+        public T Query<T>(IRmQuery<T> query, OnQueryPrepared onQueryPrepared, CancellationToken? cancellationToken = null) where T : IRmQueryReply
+            => _activeConnection.EnsureNotNull().Context.Query<T>(query, onQueryPrepared, Configuration.QueryTimeout, cancellationToken);
+
+        /// <summary>
+        /// Sends a query to the specified client and expects a reply, using the default timeout.
+        /// </summary>
+        /// <typeparam name="T">The type of reply that is expected.</typeparam>
+        /// <param name="query">The query message to send.</param>
+        /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
+        /// <returns>Returns the result of the query.</returns>
+        public async Task<T> QueryAsync<T>(IRmQuery<T> query, OnQueryPrepared onQueryPrepared, CancellationToken? cancellationToken = null) where T : IRmQueryReply
+            => await _activeConnection.EnsureNotNull().Context.QueryAsync<T>(query, onQueryPrepared, Configuration.QueryTimeout, cancellationToken);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply.
@@ -377,9 +383,10 @@ namespace NTDLS.ReliableMessaging
         /// <param name="query">The query message to send.</param>
         /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
         /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
         /// <returns>Returns the result of the query.</returns>
-        public T Query<T>(IRmQuery<T> query, OnQueryPrepared onQueryPrepared, TimeSpan? queryTimeout) where T : IRmQueryReply
-            => _activeConnection.EnsureNotNull().Context.Query<T>(query, onQueryPrepared, queryTimeout ?? Configuration.QueryTimeout);
+        public T Query<T>(IRmQuery<T> query, OnQueryPrepared onQueryPrepared, TimeSpan? queryTimeout, CancellationToken? cancellationToken = null) where T : IRmQueryReply
+            => _activeConnection.EnsureNotNull().Context.Query<T>(query, onQueryPrepared, queryTimeout ?? Configuration.QueryTimeout, cancellationToken);
 
         /// <summary>
         /// Sends a query to the specified client and expects a reply.
@@ -388,9 +395,10 @@ namespace NTDLS.ReliableMessaging
         /// <param name="query">The query message to send.</param>
         /// <param name="onQueryPrepared">Optional callback that is called after the frame has been built but before the query is dispatched. This is useful when establishing encrypted connections, where we need to tell a peer that encryption is being initialized but we need to tell the peer before setting the provider.</param>
         /// <param name="queryTimeout">The amount of time to wait on a reply to the query.</param>
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
         /// <returns>Returns the result of the query.</returns>
-        public async Task<T> QueryAsync<T>(IRmQuery<T> query, OnQueryPrepared onQueryPrepared, TimeSpan? queryTimeout) where T : IRmQueryReply
-            => await _activeConnection.EnsureNotNull().Context.QueryAsync<T>(query, onQueryPrepared, queryTimeout ?? Configuration.QueryTimeout);
+        public async Task<T> QueryAsync<T>(IRmQuery<T> query, OnQueryPrepared onQueryPrepared, TimeSpan? queryTimeout, CancellationToken? cancellationToken = null) where T : IRmQueryReply
+            => await _activeConnection.EnsureNotNull().Context.QueryAsync<T>(query, onQueryPrepared, queryTimeout ?? Configuration.QueryTimeout, cancellationToken ?? CancellationToken.None);
 
         void IRmMessenger.InvokeOnConnected(RmContext context)
             => OnConnected?.Invoke(context);
