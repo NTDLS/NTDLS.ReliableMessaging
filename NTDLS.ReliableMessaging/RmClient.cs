@@ -18,13 +18,14 @@ namespace NTDLS.ReliableMessaging
         private string? _reconnectHost;
         private IPAddress? _reconnectIpAddress;
         private int _reconnectPort;
-        private volatile bool _keepReconnecting;
+        private volatile bool _explicitlyDisconnected = false;
         private volatile bool _isReconnecting;
 
         /// <summary>
         /// When true, the client is either currently connected or attempting to reconnect.
+        /// ExplicitlyDisconnected is set to true when the client is explicitly disconnected via the Disconnect() method.
         /// </summary>
-        public bool KeepReconnecting => _keepReconnecting;
+        public bool ExplicitlyDisconnected => _explicitlyDisconnected;
 
         /// <summary>
         /// When true, the client is currently attempting to reconnect.
@@ -246,7 +247,7 @@ namespace NTDLS.ReliableMessaging
             _reconnectHost = hostName;
             _reconnectIpAddress = null;
             _reconnectPort = port;
-            _keepReconnecting = true;
+            _explicitlyDisconnected = false;
 
             var tcpClient = new TcpClient(hostName, port);
             _activeConnection = new RmPeerConnection(this, tcpClient, Configuration,
@@ -272,7 +273,7 @@ namespace NTDLS.ReliableMessaging
             _reconnectHost = null;
             _reconnectIpAddress = ipAddress;
             _reconnectPort = port;
-            _keepReconnecting = true;
+            _explicitlyDisconnected = false;
 
             var tcpClient = new TcpClient();
             tcpClient.Connect(ipAddress, port);
@@ -289,7 +290,7 @@ namespace NTDLS.ReliableMessaging
         /// </summary>
         public void Disconnect()
         {
-            _keepReconnecting = false;
+            _explicitlyDisconnected = true;
             _activeConnection?.Disconnect(true);
         }
 
@@ -298,7 +299,7 @@ namespace NTDLS.ReliableMessaging
         /// </summary>
         public void Disconnect(bool wait)
         {
-            _keepReconnecting = false;
+            _explicitlyDisconnected = true;
             _activeConnection?.Disconnect(wait);
         }
 
@@ -425,7 +426,7 @@ namespace NTDLS.ReliableMessaging
 
             OnDisconnected?.Invoke(context);
 
-            if (_keepReconnecting && Configuration.AutoReconnect && !_isReconnecting)
+            if (!_explicitlyDisconnected && Configuration.AutoReconnect && !_isReconnecting)
             {
                 _isReconnecting = true;
                 new Thread(ReconnectThreadProc)
@@ -440,11 +441,11 @@ namespace NTDLS.ReliableMessaging
         {
             try
             {
-                while (_keepReconnecting)
+                while (!_explicitlyDisconnected)
                 {
                     Thread.Sleep(Configuration.ReconnectDelay);
 
-                    if (!_keepReconnecting)
+                    if (_explicitlyDisconnected)
                     {
                         break;
                     }
