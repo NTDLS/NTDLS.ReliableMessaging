@@ -22,6 +22,16 @@ namespace NTDLS.ReliableMessaging
         private volatile bool _isReconnecting;
 
         /// <summary>
+        /// When true, the client is either currently connected or attempting to reconnect.
+        /// </summary>
+        public bool KeepReconnecting => _keepReconnecting;
+
+        /// <summary>
+        /// When true, the client is currently attempting to reconnect.
+        /// </summary>
+        public bool IsReconnecting => _isReconnecting;
+
+        /// <summary>
         /// Configuration that was used to initialize the client.
         /// </summary>
         public RmConfiguration Configuration { get; }
@@ -75,7 +85,8 @@ namespace NTDLS.ReliableMessaging
         /// Event fired when a client connects to the server.
         /// </summary>
         /// <param name="context">Information about the connection.</param>
-        public delegate void ConnectedEvent(RmContext context);
+        /// /// <param name="isReconnect">True when the connection was an auto-reconnect, otherwise false.</param>
+        public delegate void ConnectedEvent(RmContext context, bool isReconnect);
 
         /// <summary>
         /// Event fired when a client is disconnected from the server.
@@ -401,7 +412,7 @@ namespace NTDLS.ReliableMessaging
             => await _activeConnection.EnsureNotNull().Context.QueryAsync<T>(query, onQueryPrepared, queryTimeout ?? Configuration.QueryTimeout, cancellationToken ?? CancellationToken.None);
 
         void IRmMessenger.InvokeOnConnected(RmContext context)
-            => OnConnected?.Invoke(context);
+            => OnConnected?.Invoke(context, _isReconnecting);
 
         void IRmMessenger.InvokeOnException(RmContext? context, Exception ex, IRmPayload? payload)
             => OnException?.Invoke(context, ex, payload);

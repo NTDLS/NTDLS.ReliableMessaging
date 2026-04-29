@@ -13,9 +13,9 @@
 		<RepositoryUrl>https://github.com/NTDLS/NTDLS.ReliableMessaging</RepositoryUrl>
 		<RepositoryType>Git</RepositoryType>
 		<PackageReleaseNotes>
-			Added cancellation support, improved error handling and logging, and made various performance optimizations.
+			Added additional reconnection indicators.
 		</PackageReleaseNotes>
-		<Version>3.4.0</Version>
+		<Version>3.4.1</Version>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageTags>rpc;tcpip;ipc;stream;encryption;messaging;message-framing;</PackageTags>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>

@@ -27,7 +27,7 @@ namespace Tests
             Console.WriteLine("Client disconnected.");
         }
 
-        private static void Client_OnConnected(RmContext context)
+        private static void Client_OnConnected(RmContext context, bool isReconnect)
         {
             Console.WriteLine("Client connected.");
         }
