@@ -70,6 +70,7 @@ namespace NTDLS.ReliableMessaging
         /// exception can be handled via the Task object.
         /// </summary>
         public event ExceptionEvent? OnException;
+
         /// <summary>
         /// Event fired when an exception occurs.
         /// </summary>
@@ -82,6 +83,7 @@ namespace NTDLS.ReliableMessaging
         /// Event fired when a client connects to the server.
         /// </summary>
         public event ConnectedEvent? OnConnected;
+
         /// <summary>
         /// Event fired when a client connects to the server.
         /// </summary>
@@ -93,6 +95,7 @@ namespace NTDLS.ReliableMessaging
         /// Event fired when a client is disconnected from the server.
         /// </summary>
         public event DisconnectedEvent? OnDisconnected;
+
         /// <summary>
         /// Event fired when a client is disconnected from the server.
         /// </summary>
@@ -103,6 +106,7 @@ namespace NTDLS.ReliableMessaging
         /// Event fired when a notification is received from a client.
         /// </summary>
         public event NotificationReceivedEvent? OnNotificationReceived;
+
         /// <summary>
         /// Event fired when a notification is received from a client.
         /// </summary>
@@ -114,6 +118,7 @@ namespace NTDLS.ReliableMessaging
         /// Event fired when a query is received from a client.
         /// </summary>
         public event QueryReceivedEvent? OnQueryReceived;
+
         /// <summary>
         /// Event fired when a query is received from a client.
         /// </summary>
