@@ -86,7 +86,7 @@ namespace NTDLS.ReliableMessaging
         /// Event fired when a client connects to the server.
         /// </summary>
         /// <param name="context">Information about the connection.</param>
-        /// /// <param name="isReconnect">True when the connection was an auto-reconnect, otherwise false.</param>
+        /// <param name="isReconnect">True when the connection was an auto-reconnect, otherwise false.</param>
         public delegate void ConnectedEvent(RmContext context, bool isReconnect);
 
         /// <summary>
