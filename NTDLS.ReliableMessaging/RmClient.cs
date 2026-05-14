@@ -1,4 +1,4 @@
-﻿using NTDLS.Helpers;
+using NTDLS.Helpers;
 using NTDLS.ReliableMessaging.Internal;
 using NTDLS.ReliableMessaging.Internal.StreamFraming;
 using System.Net;
@@ -264,6 +264,43 @@ namespace NTDLS.ReliableMessaging
         }
 
         /// <summary>
+        /// Connects to a specified message server by its host name, with cancellation support.
+        /// </summary>
+        /// <param name="hostName">The hostname of the message server.</param>
+        /// <param name="port">The listener port of the message server.</param>
+        /// <param name="cancellationToken">Token that cancels the connection attempt.</param>
+        public void Connect(string hostName, int port, CancellationToken cancellationToken)
+        {
+            if (IsConnected)
+            {
+                throw new Exception("Client is already connected.");
+            }
+
+            _reconnectHost = hostName;
+            _reconnectIpAddress = null;
+            _reconnectPort = port;
+            _explicitlyDisconnected = false;
+
+            var tcpClient = new TcpClient();
+            try
+            {
+                tcpClient.ConnectAsync(hostName, port).Wait(cancellationToken);
+            }
+            catch
+            {
+                tcpClient.Dispose();
+                throw;
+            }
+
+            _activeConnection = new RmPeerConnection(this, tcpClient, Configuration,
+                Configuration.SerializationProvider, Configuration.CompressionProvider, Configuration.CryptographyProvider);
+
+            _tcpClient = tcpClient;
+
+            _activeConnection.RunAsync();
+        }
+
+        /// <summary>
         /// Connects to a specified message server by its IP Address.
         /// </summary>
         /// <param name="ipAddress">The IP address of the message server.</param>
@@ -289,6 +326,44 @@ namespace NTDLS.ReliableMessaging
 
             _activeConnection.RunAsync();
         }
+
+        /// <summary>
+        /// Connects to a specified message server by its IP Address.
+        /// </summary>
+        /// <param name="ipAddress">The IP address of the message server.</param>
+        /// <param name="port">The listener port of the message server.</param>
+        /// <param name="cancellationToken">Token that cancels the connection attempt.</param>
+        public void Connect(IPAddress ipAddress, int port, CancellationToken cancellationToken)
+        {
+            if (IsConnected)
+            {
+                throw new Exception("Client is already connected.");
+            }
+
+            _reconnectHost = null;
+            _reconnectIpAddress = ipAddress;
+            _reconnectPort = port;
+            _explicitlyDisconnected = false;
+
+            var tcpClient = new TcpClient();
+            try
+            {
+                tcpClient.ConnectAsync(ipAddress, port).Wait(cancellationToken);
+            }
+            catch
+            {
+                tcpClient.Dispose();
+                throw;
+            }
+
+            _activeConnection = new RmPeerConnection(this, tcpClient, Configuration,
+                                Configuration.SerializationProvider, Configuration.CompressionProvider, Configuration.CryptographyProvider);
+
+            _tcpClient = tcpClient;
+
+            _activeConnection.RunAsync();
+        }
+
 
         /// <summary>
         /// Disconnects the client from the server and stops any pending reconnection attempts.
