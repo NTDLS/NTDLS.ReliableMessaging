@@ -26,11 +26,11 @@ namespace NTDLS.ReliableMessaging
         /// </summary>
         public RmBrotliCompressionProvider(CompressionLevel compressionLevel)
         {
-            CompressionLevel = CompressionLevel;
+            CompressionLevel = compressionLevel;
         }
 
         /// <summary>
-        /// Compressed the payload using deflate.
+        /// Compresses the payload using Brotli.
         /// </summary>
         public byte[] Compress(RmContext context, byte[] payload)
         {
@@ -47,7 +47,7 @@ namespace NTDLS.ReliableMessaging
         }
 
         /// <summary>
-        /// Decompress the payload using deflate.
+        /// Decompresses the payload using Brotli.
         /// </summary>
         public byte[] Decompress(RmContext context, byte[] compressedPayload)
         {

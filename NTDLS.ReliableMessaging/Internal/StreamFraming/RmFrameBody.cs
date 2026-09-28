@@ -13,7 +13,7 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// <summary>
         /// The unique ID of the frame body. This is also used to pair query replies with waiting queries.
         /// </summary>
-        [ProtoMember(1)]
+        [ProtoMember(1, IsRequired = true)]
         public Guid Id { get; set; } = Guid.NewGuid();
 
         /// <summary>
