@@ -18,7 +18,6 @@
 		<Version>3.4.7</Version>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageTags>rpc;tcpip;ipc;stream;encryption;messaging;message-framing;</PackageTags>
-		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<IncludeSymbols>True</IncludeSymbols>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
