@@ -11,6 +11,14 @@
         public bool AsynchronousFrameProcessing { get; set; } = true;
 
         /// <summary>
+        /// Server only. When true, the server listens on IPv6 as well as IPv4 using a single dual-stack listener that accepts both.
+        /// IPv4 clients then appear with IPv4-mapped addresses (::ffff:1.2.3.4). When false (the default) the server listens on
+        /// IPv4 only. If the operating system has no IPv6, or it cannot be used, the server listens on IPv4 only regardless.
+        /// The client is not affected: it can always connect to IPv6 addresses, and to host names that resolve to them.
+        /// </summary>
+        public bool ListenOnIPv6 { get; set; } = false;
+
+        /// <summary>
         /// When true, notification handlers are executed on a separate thread.
         /// This setting is ignored when MultiThreadedFrameProcessing is true because the entire frame (serialization, compression, cryptography, and the handler) is executed in a separate thread.
         /// </summary>

@@ -109,6 +109,28 @@ class MessageHandlers : IRmMessageHandler
 In this case, when the client or server sends a MyQuery type, this handler will be called with the deserialized object. Unlike notifications, both the event or the convention based handlers should return a reply to the query where the type is denoted by the signature of the query type. (e.g. for IRmQuery<IRmQueryReply>, the reply should be of type IRmQueryReply).
 Also note that the query message handlers also support generics, so if you have a class that use generics such as MyQuery <T> where T is another type, the signature just needs to match the same type that was sent via the call to Query().
 
+## IPv6
+
+**Client:** it can connect to an IPv6 address (`"::1"`, or `IPAddress.IPv6Loopback`) and to a host name that resolves to one. Nothing needs to be configured.
+
+```csharp
+client.Connect("::1", 31254);
+client.Connect(IPAddress.IPv6Loopback, 31254);
+```
+
+**Server:** by default it listens on IPv4 only, as it always has. Set `RmConfiguration.ListenOnIPv6` to true to listen on IPv6 as well, using a single dual-stack listener that accepts both.
+
+```csharp
+var server = new RmServer(new RmConfiguration { ListenOnIPv6 = true });
+server.Start(31254);
+```
+
+Things to know when it is turned on:
+
+- An IPv4 client appears with an IPv4-mapped address (`::ffff:192.168.1.2`) in `RmContext.TcpClient.Client.RemoteEndPoint`. Use `IPAddress.MapToIPv4()` if you need the plain IPv4 address, for example when comparing addresses or keeping an allow-list.
+- The server is then reachable on the machine's IPv6 addresses, which are often directly reachable from the internet (there is usually no NAT in front of them). Check the firewall's IPv6 rules.
+- If the operating system has no IPv6, or it cannot be used (for example it is disabled on the network adapters), the server listens on IPv4 only, without an error.
+
 ## Performance
 The throughput is regularly tested with each release of ReliableMessaging and notifications are suitable for multi-gigabit communication. Your miles will vary depending on whether you use compression, encryption, and the size of the messages that are being sent. Generally, larger messages have the highest throughput.
 

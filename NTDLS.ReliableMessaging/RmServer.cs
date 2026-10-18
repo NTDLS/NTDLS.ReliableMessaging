@@ -221,9 +221,9 @@ namespace NTDLS.ReliableMessaging
             {
                 return;
             }
-            _listener = new TcpListener(IPAddress.Any, listenPort);
+            _listener = RmNetwork.CreateListener(listenPort, Configuration.ListenOnIPv6);
 
-            _listener.Start();
+            _listener = RmNetwork.StartListener(_listener, listenPort);
 
             ListenPort = listenPort;
             _keepRunning = true;
@@ -547,4 +547,4 @@ namespace NTDLS.ReliableMessaging
             return OnQueryReceived.Invoke(context, payload);
         }
     }
-}
+}

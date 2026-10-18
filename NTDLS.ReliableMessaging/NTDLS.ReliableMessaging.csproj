@@ -15,7 +15,7 @@
 		<PackageReleaseNotes>
 			Fixed compression assignments.
 		</PackageReleaseNotes>
-		<Version>3.4.7</Version>
+		<Version>3.5.0</Version>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageTags>rpc;tcpip;ipc;stream;encryption;messaging;message-framing;</PackageTags>
 		<IncludeSymbols>True</IncludeSymbols>
