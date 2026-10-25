@@ -20,8 +20,8 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         ///  is  expected and will be routed to the originator and the appropriate waiting asynchronous task.
         /// </summary>
         /// <param name="query">The query payload</param>
-        /// <returns>The reply payload to return to the originator.</returns>
-        public delegate IRmQueryReply ProcessFrameQueryCallback(IRmPayload query);
+        /// <returns>The reply payload to return to the originator. This is only pending when the query was routed to an asynchronous handler.</returns>
+        public delegate ValueTask<IRmQueryReply> ProcessFrameQueryCallback(IRmPayload query);
 
         /// <summary>
         /// When a connection is dropped, we need to make sure that we cancel any waiting queries.
@@ -324,6 +324,32 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         }
 
         /// <summary>
+        /// Writes a reply to the stream, in reply to a stream query.
+        /// </summary>
+        /// <param name="stream">The open stream that will be written to.</param>
+        /// <param name="context">Contains information about the endpoint and the connection.</param>
+        /// <param name="queryFrameBody">The query frame that was received and that we are responding to.</param>
+        /// <param name="framePayload">The query reply payload.</param>
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
+        public async static Task WriteReplyFrameAsync(this Stream stream, RmContext context, RmFrameBody queryFrameBody,
+            IRmQueryReply framePayload, CancellationToken cancellationToken)
+        {
+            if (stream == null)
+            {
+                throw new ArgumentNullException(nameof(stream), "Stream cannot be null.");
+            }
+
+            var serializationProvider = context.GetSerializationProvider() ?? throw new Exception("Serialization provider is not set.");
+            var frameBody = new RmFrameBody(serializationProvider, framePayload)
+            {
+                Id = queryFrameBody.Id
+            };
+
+            var frameBytes = AssembleFrame(context, frameBody);
+            await stream.SafeWriteAsync(context, frameBytes, cancellationToken);
+        }
+
+        /// <summary>
         /// Writes a one-time fire-and-forget notification to the stream.
         /// </summary>
         /// <param name="stream">The open stream that will be written to.</param>
@@ -382,6 +408,45 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
             Buffer.BlockCopy(frameBodyBytes, 0, grossFrameBytes, RmConstants.GrossFrameHeaderSize, frameBodyBytes.Length);
 
             return grossFrameBytes;
+        }
+
+        /// <summary>
+        /// Executes the query handler and writes its reply to the stream. Synchronous handlers are replied to on the calling thread.
+        /// When the handler is asynchronous and still pending, the reply is written once it completes without blocking the calling thread.
+        /// </summary>
+        private static void ProcessQuery(this Stream stream, RmContext context, RmEvents.ExceptionEvent? onException,
+            RmFrameBody frameBody, IRmPayload framePayload, ProcessFrameQueryCallback processFrameQueryCallback)
+        {
+            try
+            {
+                var pendingReply = processFrameQueryCallback(framePayload);
+                if (pendingReply.IsCompletedSuccessfully)
+                {
+                    stream.WriteReplyFrame(context, frameBody, pendingReply.Result, CancellationToken.None);
+                }
+                else
+                {
+                    _ = stream.CompleteQueryAsync(context, onException, frameBody, framePayload, pendingReply);
+                }
+            }
+            catch (Exception ex)
+            {
+                onException?.Invoke(context, ex.GetRoot() ?? ex, framePayload);
+            }
+        }
+
+        private static async Task CompleteQueryAsync(this Stream stream, RmContext context, RmEvents.ExceptionEvent? onException,
+            RmFrameBody frameBody, IRmPayload framePayload, ValueTask<IRmQueryReply> pendingReply)
+        {
+            try
+            {
+                var replyPayload = await pendingReply.ConfigureAwait(false);
+                await stream.WriteReplyFrameAsync(context, frameBody, replyPayload, CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                onException?.Invoke(context, ex.GetRoot() ?? ex, framePayload);
+            }
         }
 
         private static void ProcessFrame(this Stream stream, RmContext context,
@@ -452,28 +517,12 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                         var asynchronousFramePayloadReference = framePayload;
                         Task.Run(() => //We do not wait on this task, we just fire and forget it.
                         {
-                            try
-                            {
-                                var replyPayload = processFrameQueryCallback(asynchronousFramePayloadReference);
-                                stream.WriteReplyFrame(context, frameBody, replyPayload, CancellationToken.None);
-                            }
-                            catch (Exception ex)
-                            {
-                                onException?.Invoke(context, ex.GetRoot() ?? ex, asynchronousFramePayloadReference);
-                            }
+                            stream.ProcessQuery(context, onException, frameBody, asynchronousFramePayloadReference, processFrameQueryCallback);
                         });
                     }
                     else
                     {
-                        try
-                        {
-                            var replyPayload = processFrameQueryCallback(framePayload);
-                            stream.WriteReplyFrame(context, frameBody, replyPayload, CancellationToken.None);
-                        }
-                        catch (Exception ex)
-                        {
-                            onException?.Invoke(context, ex.GetRoot() ?? ex, framePayload);
-                        }
+                        stream.ProcessQuery(context, onException, frameBody, framePayload, processFrameQueryCallback);
                     }
                 }
                 else

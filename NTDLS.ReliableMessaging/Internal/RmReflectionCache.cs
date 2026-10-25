@@ -61,8 +61,8 @@ namespace NTDLS.ReliableMessaging.Internal
         /// <summary>
         /// Calls the appropriate handler function for the given query payload.
         /// </summary>
-        /// <returns>Returns true if the function was found and executed.</returns>
-        internal bool RouteToQueryHander(RmContext context, IRmPayload queryPayload, out IRmQueryReply? invocationResult)
+        /// <returns>Returns true if the function was found and executed. The invocation result is only pending when the handler is asynchronous.</returns>
+        internal bool RouteToQueryHander(RmContext context, IRmPayload queryPayload, out ValueTask<IRmQueryReply?> invocationResult)
         {
             //First we try to invoke functions that match the signature, if that fails we will fall back to invoking the OnNotificationReceived() event.
             if (GetCachedMethod(queryPayload, out var cachedMethod))
@@ -74,17 +74,59 @@ namespace NTDLS.ReliableMessaging.Internal
                 switch (cachedMethod.MethodType)
                 {
                     case CachedMethodType.PayloadOnly:
-                        invocationResult = method.Invoke(cachedInstance, [queryPayload]) as IRmQueryReply;
+                        invocationResult = ToQueryReply(method.Invoke(cachedInstance, [queryPayload]));
                         return true;
                     case CachedMethodType.PayloadWithContext:
-                        invocationResult = method.Invoke(cachedInstance, [context, queryPayload]) as IRmQueryReply;
+                        invocationResult = ToQueryReply(method.Invoke(cachedInstance, [context, queryPayload]));
                         return true;
                 }
             }
 
-            invocationResult = null;
+            invocationResult = new((IRmQueryReply?)null);
 
             return false;
+        }
+
+        /// <summary>
+        /// Converts the return value of a query handler to a reply. Handlers may return either an IRmQueryReply or a Task of one.
+        /// </summary>
+        private static ValueTask<IRmQueryReply?> ToQueryReply(object? handlerResult)
+        {
+            if (handlerResult is Task task)
+            {
+                return task.IsCompletedSuccessfully
+                    ? new(GetTaskReply(task))
+                    : AwaitTaskReplyAsync(task);
+            }
+
+            return new(handlerResult as IRmQueryReply);
+        }
+
+        private static async ValueTask<IRmQueryReply?> AwaitTaskReplyAsync(Task task)
+        {
+            await task.ConfigureAwait(false);
+            return GetTaskReply(task);
+        }
+
+        /// <summary>
+        /// Gets the reply from a completed Task&lt;TReply&gt;. Tasks are not covariant, so we cannot simply cast to Task&lt;IRmQueryReply&gt;.
+        /// </summary>
+        private static IRmQueryReply? GetTaskReply(Task task)
+            => task.GetType().GetProperty(nameof(Task<IRmQueryReply>.Result))?.GetValue(task) as IRmQueryReply;
+
+        /// <summary>
+        /// Determines whether a handler return type is valid for a query: either an IRmQueryReply or a Task of one.
+        /// </summary>
+        private static bool IsQueryReplyReturnType(Type returnType)
+        {
+            if (typeof(IRmQueryReply).IsAssignableFrom(returnType))
+            {
+                return true;
+            }
+
+            return returnType.IsGenericType
+                && returnType.GetGenericTypeDefinition() == typeof(Task<>)
+                && typeof(IRmQueryReply).IsAssignableFrom(returnType.GetGenericArguments()[0]);
         }
 
         /// <summary>
@@ -226,9 +268,9 @@ namespace NTDLS.ReliableMessaging.Internal
                         //If the payload parameter is a IReliableMessagingQuery, then ensure that the return type is a IReliableMessagingQueryReply.
                         if (RmReflection.ImplementsGenericInterfaceWithArgument(payloadParameter.ParameterType, typeof(IRmQuery<>), typeof(IRmQueryReply)))
                         {
-                            if (typeof(IRmQueryReply).IsAssignableFrom(method.ReturnType) == false)
+                            if (IsQueryReplyReturnType(method.ReturnType) == false)
                             {
-                                continue; //Query handlers must return a IRMQueryReply type.
+                                continue; //Query handlers must return a IRMQueryReply type (or a Task of one).
                             }
                         }
 
@@ -258,9 +300,9 @@ namespace NTDLS.ReliableMessaging.Internal
                         //If the payload parameter is a IReliableMessagingQuery, then ensure that the return type is a IReliableMessagingQueryReply.
                         if (RmReflection.ImplementsGenericInterfaceWithArgument(payloadParameter.ParameterType, typeof(IRmQuery<>), typeof(IRmQueryReply)))
                         {
-                            if (typeof(IRmQueryReply).IsAssignableFrom(method.ReturnType) == false)
+                            if (IsQueryReplyReturnType(method.ReturnType) == false)
                             {
-                                continue; //Query handlers must return a IRMQueryReply type.
+                                continue; //Query handlers must return a IRMQueryReply type (or a Task of one).
                             }
                         }
 

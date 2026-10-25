@@ -85,7 +85,7 @@ namespace NTDLS.ReliableMessaging.Internal
             }
         }
 
-        private IRmQueryReply OnQueryReceived(IRmPayload payload)
+        private ValueTask<IRmQueryReply> OnQueryReceived(IRmPayload payload)
         {
             try
             {
@@ -93,19 +93,43 @@ namespace NTDLS.ReliableMessaging.Internal
                 if (Context.Messenger.ReflectionCache.RouteToQueryHander(Context, payload, out var invocationResult))
                 {
                     //Query was handled by handler routing.
-                    return invocationResult ?? throw new Exception("Query must return a valid instance of IRmQueryReply.");
+                    if (invocationResult.IsCompletedSuccessfully)
+                    {
+                        return new(invocationResult.Result ?? throw new Exception("Query must return a valid instance of IRmQueryReply."));
+                    }
+
+                    //The handler is asynchronous and has not yet completed.
+                    return AwaitQueryReplyAsync(payload, invocationResult);
                 }
 
                 //Try to handle the query with a bound event hander.
-                return Context.Messenger.InvokeOnQueryReceived(Context, payload);
+                return new(Context.Messenger.InvokeOnQueryReceived(Context, payload));
             }
             catch (Exception ex)
             {
-                var rootException = ex.GetBaseException();
-
-                Context.Messenger.InvokeOnException(Context, rootException, payload);
-                return new RmQueryReplyException(rootException);
+                return new(ReplyWithException(payload, ex));
             }
+        }
+
+        private async ValueTask<IRmQueryReply> AwaitQueryReplyAsync(IRmPayload payload, ValueTask<IRmQueryReply?> pendingReply)
+        {
+            try
+            {
+                return await pendingReply.ConfigureAwait(false)
+                    ?? throw new Exception("Query must return a valid instance of IRmQueryReply.");
+            }
+            catch (Exception ex)
+            {
+                return ReplyWithException(payload, ex);
+            }
+        }
+
+        private RmQueryReplyException ReplyWithException(IRmPayload payload, Exception ex)
+        {
+            var rootException = ex.GetBaseException();
+
+            Context.Messenger.InvokeOnException(Context, rootException, payload);
+            return new RmQueryReplyException(rootException);
         }
 
         public void Disconnect(bool waitOnThread)

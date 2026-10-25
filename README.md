@@ -109,6 +109,18 @@ class MessageHandlers : IRmMessageHandler
 In this case, when the client or server sends a MyQuery type, this handler will be called with the deserialized object. Unlike notifications, both the event or the convention based handlers should return a reply to the query where the type is denoted by the signature of the query type. (e.g. for IRmQuery<IRmQueryReply>, the reply should be of type IRmQueryReply).
 Also note that the query message handlers also support generics, so if you have a class that use generics such as MyQuery <T> where T is another type, the signature just needs to match the same type that was sent via the call to Query().
 
+Convention based query handlers can also be asynchronous by returning a Task of the reply type. The reply is sent when the task completes and no thread is held while it is pending, so use this whenever the handler awaits I/O such as database or network calls:
+```csharp
+class MessageHandlers : IRmMessageHandler
+{
+    public async Task<MyQueryReply> MyQueryReceived(RmContext context, MyQuery query)
+    {
+        var text = await LookupSomethingAsync(query.Message);
+        return new MyQueryReply(text);
+    }
+}
+```
+
 ## IPv6
 
 **Client:** it can connect to an IPv6 address (`"::1"`, or `IPAddress.IPv6Loopback`) and to a host name that resolves to one. Nothing needs to be configured.
