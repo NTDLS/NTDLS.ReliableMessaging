@@ -50,6 +50,15 @@
         public int MaxConcurrentQueries { get; set; } = 1000;
 
         /// <summary>
+        /// When true (the default), each frame is sent as soon as it is written. When false, the operating system applies
+        /// Nagle's algorithm: while earlier data is waiting to be acknowledged, it holds back small writes so it can combine them.
+        /// With several queries, replies or notifications in flight on one connection, that holds a frame back until the peer
+        /// acknowledges the one before it, which can wait on the peer's handler or its delayed acknowledgment timer.
+        /// Each frame is written in a single call, so turning this on costs little more than some extra packet headers.
+        /// </summary>
+        public bool NoDelay { get; set; } = true;
+
+        /// <summary>
         /// The default amount of time to wait for a query to reply before throwing a timeout exception.
         /// </summary>
         public TimeSpan QueryTimeout { get; set; } = TimeSpan.FromSeconds(30);

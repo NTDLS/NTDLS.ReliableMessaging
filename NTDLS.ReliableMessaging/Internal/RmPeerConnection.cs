@@ -15,6 +15,9 @@ namespace NTDLS.ReliableMessaging.Internal
         public RmPeerConnection(IRmMessenger messenger, TcpClient tcpClient, RmConfiguration configuration,
             IRmSerializationProvider? serializationProvider, IRmCompressionProvider? compressionProvider, IRmCryptographyProvider? cryptographyProvider)
         {
+            //Every connection, accepted by the server or opened by the client, comes through here before anything is written to it.
+            tcpClient.NoDelay = configuration.NoDelay;
+
             Context = new RmContext(messenger, tcpClient,
                 serializationProvider, compressionProvider, cryptographyProvider,
                 new Thread(DataPumpThreadProc), tcpClient.GetStream());
