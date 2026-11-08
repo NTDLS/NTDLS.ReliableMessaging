@@ -137,6 +137,7 @@ namespace NTDLS.ReliableMessaging.Internal
             if (_keepRunning)
             {
                 _keepRunning = false;
+                Context.CompleteDispatching();
 
                 Exceptions.Ignore(Context.Stream.Close);
                 Exceptions.Ignore(Context.Stream.Dispose);

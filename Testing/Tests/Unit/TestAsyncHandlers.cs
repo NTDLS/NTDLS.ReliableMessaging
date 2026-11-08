@@ -113,10 +113,9 @@ namespace Tests.Unit
         /// thread and the pool (which only adds a thread or two per second once exhausted) would serialize them.
         /// </summary>
         [Theory(DisplayName = "Pending async query handlers do not block threads.")]
-        [InlineData(true, false)]  //Default: frames are processed on the thread-pool.
-        [InlineData(false, true)]  //Frames processed inline, queries waited on via the thread-pool.
-        [InlineData(false, false)] //Everything inline on the connection's receive thread.
-        public async Task DoesNotBlock(bool asynchronousFrameProcessing, bool asynchronousQueryWaiting)
+        [InlineData(true)]  //Default: query handlers run on the thread-pool.
+        [InlineData(false)] //Query handlers start on the connection's receive thread.
+        public async Task DoesNotBlock(bool asynchronousQueryWaiting)
         {
             const int queryCount = 500;
             const int delayMs = 1000;
@@ -124,7 +123,6 @@ namespace Tests.Unit
             var handlers = new AsyncMessageHandlers();
             var (server, client) = Start(handlers, new RmConfiguration
             {
-                AsynchronousFrameProcessing = asynchronousFrameProcessing,
                 AsynchronousQueryWaiting = asynchronousQueryWaiting
             });
 

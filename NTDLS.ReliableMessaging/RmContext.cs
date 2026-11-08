@@ -1,4 +1,5 @@
-﻿using NTDLS.ReliableMessaging.Internal.StreamFraming;
+﻿using NTDLS.ReliableMessaging.Internal;
+using NTDLS.ReliableMessaging.Internal.StreamFraming;
 using System.Collections.Concurrent;
 using System.Net.Sockets;
 using static NTDLS.ReliableMessaging.Internal.StreamFraming.RmFraming;
@@ -29,6 +30,53 @@ namespace NTDLS.ReliableMessaging
         /// Gets or sets the collection of queries that are awaiting replies, identified by their FrameBody.Id.
         /// </summary>
         internal ConcurrentDictionary<Guid, RmQueryAwaitingReply> QueriesAwaitingReplies { get; set; } = new();
+
+        private RmNotificationDispatcher? _notificationDispatcher;
+        private SemaphoreSlim? _querySlots;
+        private readonly object _dispatchLock = new();
+
+        /// <summary>
+        /// Runs this connection's notification handlers in order. Created on first use, because many connections never receive one.
+        /// </summary>
+        internal RmNotificationDispatcher NotificationDispatcher
+        {
+            get
+            {
+                if (_notificationDispatcher == null)
+                {
+                    lock (_dispatchLock)
+                    {
+                        _notificationDispatcher ??= new RmNotificationDispatcher(Math.Max(1, Messenger.Configuration.MaxPendingNotifications));
+                    }
+                }
+                return _notificationDispatcher;
+            }
+        }
+
+        /// <summary>
+        /// Limits how many of this connection's query handlers run at once.
+        /// </summary>
+        internal SemaphoreSlim QuerySlots
+        {
+            get
+            {
+                if (_querySlots == null)
+                {
+                    lock (_dispatchLock)
+                    {
+                        var slots = Math.Max(1, Messenger.Configuration.MaxConcurrentQueries);
+                        _querySlots ??= new SemaphoreSlim(slots, slots);
+                    }
+                }
+                return _querySlots;
+            }
+        }
+
+        /// <summary>
+        /// Stops accepting notifications for handling, when the connection ends.
+        /// </summary>
+        internal void CompleteDispatching()
+            => _notificationDispatcher?.Complete();
 
         #region Public Properties.
 

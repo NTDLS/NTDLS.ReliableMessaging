@@ -107,16 +107,11 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
 
             if (frameBuffer.ReadStream(stream))
             {
+                //Frames are decoded here, on the connection's receive thread, so that they are handled in the order that they arrived.
+                //  ProcessFrame hands handlers on to run elsewhere, so this thread only does the decoding.
                 while (frameBuffer.GetNextFrame(context, onException, out var frameBodyBytes))
                 {
-                    if (context.Messenger.Configuration.AsynchronousFrameProcessing)
-                    {
-                        Task.Run(() => stream.ProcessFrame(context, onException, frameBodyBytes, processNotificationCallback, processFrameQueryCallback));
-                    }
-                    else
-                    {
-                        stream.ProcessFrame(context, onException, frameBodyBytes, processNotificationCallback, processFrameQueryCallback);
-                    }
+                    stream.ProcessFrame(context, onException, frameBodyBytes, processNotificationCallback, processFrameQueryCallback);
                 }
 
                 return true;
@@ -414,7 +409,8 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
         /// Executes the query handler and writes its reply to the stream. Synchronous handlers are replied to on the calling thread.
         /// When the handler is asynchronous and still pending, the reply is written once it completes without blocking the calling thread.
         /// </summary>
-        private static void ProcessQuery(this Stream stream, RmContext context, RmEvents.ExceptionEvent? onException,
+        /// <returns>A task that completes once the reply has been written.</returns>
+        private static Task ProcessQuery(this Stream stream, RmContext context, RmEvents.ExceptionEvent? onException,
             RmFrameBody frameBody, IRmPayload framePayload, ProcessFrameQueryCallback processFrameQueryCallback)
         {
             try
@@ -423,16 +419,39 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                 if (pendingReply.IsCompletedSuccessfully)
                 {
                     stream.WriteReplyFrame(context, frameBody, pendingReply.Result, CancellationToken.None);
+                    return Task.CompletedTask;
                 }
-                else
-                {
-                    _ = stream.CompleteQueryAsync(context, onException, frameBody, framePayload, pendingReply);
-                }
+
+                return stream.CompleteQueryAsync(context, onException, frameBody, framePayload, pendingReply);
             }
             catch (Exception ex)
             {
                 onException?.Invoke(context, ex.GetRoot() ?? ex, framePayload);
+                return Task.CompletedTask;
             }
+        }
+
+        /// <summary>
+        /// Runs a query handler on the thread pool, once one of the connection's query slots is free. Waiting for a slot
+        /// holds up the receive thread, which is what makes TCP slow down a peer that sends queries faster than they are handled.
+        /// </summary>
+        private static void DispatchQuery(this Stream stream, RmContext context, RmEvents.ExceptionEvent? onException,
+            RmFrameBody frameBody, IRmPayload framePayload, ProcessFrameQueryCallback processFrameQueryCallback)
+        {
+            var querySlots = context.QuerySlots;
+            querySlots.Wait();
+
+            Task.Run(async () =>
+            {
+                try
+                {
+                    await stream.ProcessQuery(context, onException, frameBody, framePayload, processFrameQueryCallback).ConfigureAwait(false);
+                }
+                finally
+                {
+                    querySlots.Release();
+                }
+            });
         }
 
         private static async Task CompleteQueryAsync(this Stream stream, RmContext context, RmEvents.ExceptionEvent? onException,
@@ -472,30 +491,13 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                         throw new Exception($"No waiting query was found for the reply with id '{frameBody.Id}'. Possible query timeout.");
                     }
 
-                    //Set the reply payload data on the waiting query's TaskCompletionSource, this will
-                    //  trigger the wait event on the query and allow it to continue processing.
-                    waitingQuery.Tcs.SetResult(reply);
+                    //Completing the waiting query here is cheap: its TaskCompletionSource runs continuations asynchronously,
+                    //  so the code that sent the query resumes on the thread pool rather than on this receive thread.
+                    waitingQuery.Tcs.TrySetResult(reply);
                 }
                 else if (framePayload is IRmNotification notification)
                 {
-                    if (!context.Messenger.Configuration.AsynchronousFrameProcessing
-                        && context.Messenger.Configuration.AsynchronousNotifications)
-                    {
-                        //Keep a reference to the frame payload that we are going to perform an async wait on.
-                        var asynchronousNotificationReference = notification;
-                        Task.Run(() => //We do not wait on this task, we just fire and forget it.
-                        {
-                            try
-                            {
-                                processNotificationCallback(asynchronousNotificationReference);
-                            }
-                            catch (Exception ex)
-                            {
-                                onException?.Invoke(context, ex.GetRoot() ?? ex, notification);
-                            }
-                        });
-                    }
-                    else
+                    void HandleNotification()
                     {
                         try
                         {
@@ -506,23 +508,26 @@ namespace NTDLS.ReliableMessaging.Internal.StreamFraming
                             onException?.Invoke(context, ex.GetRoot() ?? ex, notification);
                         }
                     }
-                }
-                else if (RmReflection.ImplementsGenericInterfaceWithArgument(framePayload.GetType(), typeof(IRmQuery<>), typeof(IRmQueryReply)))
-                {
-                    if (!context.Messenger.Configuration.AsynchronousFrameProcessing
-                        && context.Messenger.Configuration.
-                        AsynchronousQueryWaiting)
+
+                    if (context.Messenger.Configuration.AsynchronousNotifications)
                     {
-                        //Keep a reference to the frame payload that we are going to perform an async wait on.
-                        var asynchronousFramePayloadReference = framePayload;
-                        Task.Run(() => //We do not wait on this task, we just fire and forget it.
-                        {
-                            stream.ProcessQuery(context, onException, frameBody, asynchronousFramePayloadReference, processFrameQueryCallback);
-                        });
+                        context.NotificationDispatcher.Enqueue(HandleNotification);
                     }
                     else
                     {
-                        stream.ProcessQuery(context, onException, frameBody, framePayload, processFrameQueryCallback);
+                        HandleNotification();
+                    }
+                }
+                else if (RmReflection.ImplementsGenericInterfaceWithArgument(framePayload.GetType(), typeof(IRmQuery<>), typeof(IRmQueryReply)))
+                {
+                    if (context.Messenger.Configuration.AsynchronousQueryWaiting)
+                    {
+                        stream.DispatchQuery(context, onException, frameBody, framePayload, processFrameQueryCallback);
+                    }
+                    else
+                    {
+                        //An asynchronous handler that is still pending replies when it completes, without holding up this thread.
+                        _ = stream.ProcessQuery(context, onException, frameBody, framePayload, processFrameQueryCallback);
                     }
                 }
                 else

@@ -6,8 +6,11 @@
     public class RmConfiguration
     {
         /// <summary>
-        /// Whether to use a multiple thread for processing frames (serialization, compression, cryptography, and query/notification handlers).
+        /// No longer has any effect. Each connection's receive thread now decodes its own frames (cryptography, compression and
+        /// serialization), completes replies directly, and hands notifications and queries on as AsynchronousNotifications and
+        /// AsynchronousQueryWaiting describe. Handing every frame to the thread pool lost their order and had no limit.
         /// </summary>
+        [Obsolete("Frames are now decoded on the connection's receive thread. Use AsynchronousNotifications and AsynchronousQueryWaiting.")]
         public bool AsynchronousFrameProcessing { get; set; } = true;
 
         /// <summary>
@@ -19,16 +22,32 @@
         public bool ListenOnIPv6 { get; set; } = false;
 
         /// <summary>
-        /// When true, notification handlers are executed on a separate thread.
-        /// This setting is ignored when MultiThreadedFrameProcessing is true because the entire frame (serialization, compression, cryptography, and the handler) is executed in a separate thread.
+        /// When true, notification handlers run off the receive thread, one at a time per connection and in the order that the
+        /// notifications arrived, so that a slow handler does not hold up replies and queries. When false, they run on the
+        /// receive thread, which reads nothing else from the connection until each handler returns.
         /// </summary>
         public bool AsynchronousNotifications { get; set; } = true;
 
         /// <summary>
-        /// When true, query handlers are executed on a separate thread.
-        /// This setting is ignored when MultiThreadedFrameProcessing is true because the entire frame (serialization, compression, cryptography, and the handler) is executed in a separate thread.
+        /// When true, query handlers run on the thread pool, so that several queries from one connection can be handled at once,
+        /// up to MaxConcurrentQueries. When false, they run on the receive thread, which reads nothing else from the connection
+        /// until each handler returns (an asynchronous handler that is still pending replies when it completes).
         /// </summary>
         public bool AsynchronousQueryWaiting { get; set; } = true;
+
+        /// <summary>
+        /// The most notifications from one connection that can be waiting for their handlers when AsynchronousNotifications is true.
+        /// When this many are waiting, the connection stops reading until there is room, which makes TCP slow the sender down.
+        /// A notification handler that sends a query on the same connection and waits for the reply can wait forever if this fills up.
+        /// </summary>
+        public int MaxPendingNotifications { get; set; } = 10000;
+
+        /// <summary>
+        /// The most query handlers that can run at once for one connection when AsynchronousQueryWaiting is true. When this
+        /// many are running, the connection stops reading until one finishes, which makes TCP slow the sender down.
+        /// A query handler that sends a query on the same connection and waits for the reply can wait forever if this fills up.
+        /// </summary>
+        public int MaxConcurrentQueries { get; set; } = 1000;
 
         /// <summary>
         /// The default amount of time to wait for a query to reply before throwing a timeout exception.
